@@ -2,13 +2,20 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Flame, MessageCircle, Heart, Users } from "lucide-react";
 import { motion } from "motion/react";
 
-const items = [
+type NavItem = {
+  to: "/app" | "/app/decouvrir" | "/app/messages" | "/app/demandes" | "/app/communaute";
+  label: string;
+  icon: typeof Home;
+  exact?: boolean;
+};
+
+const items: NavItem[] = [
   { to: "/app", label: "Accueil", icon: Home, exact: true },
   { to: "/app/decouvrir", label: "Découvrir", icon: Flame },
   { to: "/app/messages", label: "Messages", icon: MessageCircle },
   { to: "/app/demandes", label: "Demandes", icon: Heart },
   { to: "/app/communaute", label: "Communauté", icon: Users },
-] as const;
+];
 
 export function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
