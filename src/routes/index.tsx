@@ -70,9 +70,7 @@ function Nav() {
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border/50">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <a href="#top" className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-full bg-primary grid place-items-center shadow-soft">
-            <Heart className="w-4 h-4 text-primary-foreground" fill="currentColor" />
-          </div>
+          <img src={logoAsset.url} alt="AgapeMeet" className="w-10 h-10 object-contain" />
           <span className="font-serif text-xl font-semibold tracking-tight">
             Agape<span className="text-gold">Meet</span>
           </span>
@@ -652,9 +650,7 @@ function Footer() {
       <div className="max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-4 gap-10">
         <div className="md:col-span-2">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-full bg-primary grid place-items-center">
-              <Heart className="w-4 h-4 text-primary-foreground" fill="currentColor" />
-            </div>
+            <img src={logoAsset.url} alt="AgapeMeet" className="w-10 h-10 object-contain" />
             <span className="font-serif text-xl font-semibold">
               Agape<span className="text-gold">Meet</span>
             </span>
