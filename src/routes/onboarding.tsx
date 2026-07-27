@@ -64,7 +64,7 @@ function GenderChoice({
   active: boolean;
   onClick: () => void;
   label: string;
-  icon: (props: { className?: string }) => JSX.Element;
+  icon: (props: { className?: string }) => React.ReactElement;
 }) {
   return (
     <button
