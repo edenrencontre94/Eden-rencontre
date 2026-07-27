@@ -752,7 +752,7 @@ function SuccessScreen({ data }: { data: OnboardingData }) {
               Retour à l'accueil
             </Button>
           </Link>
-          <Link to="/app/decouvrir">
+          <Link to="/app">
             <Button
               size="lg"
               className="bg-gradient-to-r from-primary to-primary/80 shadow-elegant w-full sm:w-auto"
