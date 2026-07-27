@@ -31,7 +31,7 @@ function HomePage() {
     { title: "Les plus compatibles", icon: Flame, data: mostCompatible },
     { title: "Nouveaux membres", icon: UserPlus, data: newMembers },
     { title: "Profils vérifiés", icon: ShieldCheck, data: verifiedProfiles },
-    { title: "Membres Premium", icon: Crown, data: premiumProfiles },
+    { title: "Membres N° 1", icon: Crown, data: premiumProfiles },
     { title: "Récemment actifs", icon: Activity, data: recentlyActive },
   ];
 
