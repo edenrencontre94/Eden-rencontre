@@ -670,6 +670,8 @@ function StepPhotos({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const MAX = 6;
+  const GenderAvatar =
+    data.gender === "femme" ? WomanIcon : data.gender === "homme" ? ManIcon : null;
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
@@ -729,6 +731,19 @@ function StepPhotos({
       />
 
       <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {data.photos.length === 0 && GenderAvatar && (
+          <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-secondary/40 flex flex-col items-center justify-center gap-3">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center ring-4 ring-primary/10">
+              <GenderAvatar className="w-10 h-10 text-primary" />
+            </div>
+            <span className="text-xs font-medium text-primary/80">
+              Aperçu de profil
+            </span>
+            <span className="absolute top-2 left-2 text-[10px] font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary">
+              Placeholder
+            </span>
+          </div>
+        )}
         {data.photos.map((p, i) => (
           <div
             key={p.id}
