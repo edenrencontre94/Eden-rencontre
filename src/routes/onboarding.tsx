@@ -389,16 +389,21 @@ function StepProfile({
             onChange={(e) => update("birthDate", e.target.value)}
           />
         </Field>
-        <Field label="Genre" htmlFor="gender">
-          <Select value={data.gender} onValueChange={(v) => update("gender", v)}>
-            <SelectTrigger id="gender">
-              <SelectValue placeholder="Sélectionner" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="femme">Femme</SelectItem>
-              <SelectItem value="homme">Homme</SelectItem>
-            </SelectContent>
-          </Select>
+        <Field label="Genre">
+          <div className="grid grid-cols-2 gap-3">
+            <GenderChoice
+              active={data.gender === "femme"}
+              onClick={() => update("gender", "femme")}
+              label="Femme"
+              icon={WomanIcon}
+            />
+            <GenderChoice
+              active={data.gender === "homme"}
+              onClick={() => update("gender", "homme")}
+              label="Homme"
+              icon={ManIcon}
+            />
+          </div>
         </Field>
         <Field label="Ville" htmlFor="city">
           <Input
@@ -574,18 +579,19 @@ function StepSearch({
       />
       <div className="grid gap-6 mt-8">
         <Field label="Je recherche">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {[
-              { v: "femme", l: "Une femme" },
-              { v: "homme", l: "Un homme" },
-            ].map((o) => (
-              <ChoiceChip
-                key={o.v}
-                active={data.seekingGender === o.v}
-                onClick={() => update("seekingGender", o.v)}
-                label={o.l}
-              />
-            ))}
+          <div className="grid grid-cols-2 gap-3">
+            <GenderChoice
+              active={data.seekingGender === "femme"}
+              onClick={() => update("seekingGender", "femme")}
+              label="Une femme"
+              icon={WomanIcon}
+            />
+            <GenderChoice
+              active={data.seekingGender === "homme"}
+              onClick={() => update("seekingGender", "homme")}
+              label="Un homme"
+              icon={ManIcon}
+            />
           </div>
         </Field>
 
