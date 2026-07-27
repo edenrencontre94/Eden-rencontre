@@ -752,13 +752,14 @@ function SuccessScreen({ data }: { data: OnboardingData }) {
               Retour à l'accueil
             </Button>
           </Link>
-          <Button
-            size="lg"
-            className="bg-gradient-to-r from-primary to-primary/80 shadow-elegant w-full sm:w-auto"
-            onClick={() => toast.info("L'écran de découverte arrive bientôt.")}
-          >
-            Découvrir des profils
-          </Button>
+          <Link to="/app/decouvrir">
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-primary to-primary/80 shadow-elegant w-full sm:w-auto"
+            >
+              Découvrir des profils
+            </Button>
+          </Link>
         </div>
       </motion.div>
     </div>
