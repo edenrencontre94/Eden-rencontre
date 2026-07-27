@@ -16,6 +16,7 @@ import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppMessagesRouteImport } from './routes/app.messages'
 import { Route as AppDemandesRouteImport } from './routes/app.demandes'
 import { Route as AppDecouvrirRouteImport } from './routes/app.decouvrir'
+import { Route as AppCommunauteRouteImport } from './routes/app.communaute'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -52,11 +53,17 @@ const AppDecouvrirRoute = AppDecouvrirRouteImport.update({
   path: '/decouvrir',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCommunauteRoute = AppCommunauteRouteImport.update({
+  id: '/communaute',
+  path: '/communaute',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/onboarding': typeof OnboardingRoute
+  '/app/communaute': typeof AppCommunauteRoute
   '/app/decouvrir': typeof AppDecouvrirRoute
   '/app/demandes': typeof AppDemandesRoute
   '/app/messages': typeof AppMessagesRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
+  '/app/communaute': typeof AppCommunauteRoute
   '/app/decouvrir': typeof AppDecouvrirRoute
   '/app/demandes': typeof AppDemandesRoute
   '/app/messages': typeof AppMessagesRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/onboarding': typeof OnboardingRoute
+  '/app/communaute': typeof AppCommunauteRoute
   '/app/decouvrir': typeof AppDecouvrirRoute
   '/app/demandes': typeof AppDemandesRoute
   '/app/messages': typeof AppMessagesRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/onboarding'
+    | '/app/communaute'
     | '/app/decouvrir'
     | '/app/demandes'
     | '/app/messages'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/onboarding'
+    | '/app/communaute'
     | '/app/decouvrir'
     | '/app/demandes'
     | '/app/messages'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/onboarding'
+    | '/app/communaute'
     | '/app/decouvrir'
     | '/app/demandes'
     | '/app/messages'
@@ -166,10 +178,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDecouvrirRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/communaute': {
+      id: '/app/communaute'
+      path: '/communaute'
+      fullPath: '/app/communaute'
+      preLoaderRoute: typeof AppCommunauteRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppCommunauteRoute: typeof AppCommunauteRoute
   AppDecouvrirRoute: typeof AppDecouvrirRoute
   AppDemandesRoute: typeof AppDemandesRoute
   AppMessagesRoute: typeof AppMessagesRoute
@@ -177,6 +197,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppCommunauteRoute: AppCommunauteRoute,
   AppDecouvrirRoute: AppDecouvrirRoute,
   AppDemandesRoute: AppDemandesRoute,
   AppMessagesRoute: AppMessagesRoute,
