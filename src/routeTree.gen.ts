@@ -13,6 +13,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppMessagesRouteImport } from './routes/app.messages'
 import { Route as AppDecouvrirRouteImport } from './routes/app.decouvrir'
 
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -35,6 +36,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMessagesRoute = AppMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDecouvrirRoute = AppDecouvrirRouteImport.update({
   id: '/decouvrir',
   path: '/decouvrir',
@@ -46,12 +52,14 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/app/decouvrir': typeof AppDecouvrirRoute
+  '/app/messages': typeof AppMessagesRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
   '/app/decouvrir': typeof AppDecouvrirRoute
+  '/app/messages': typeof AppMessagesRoute
   '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -60,14 +68,28 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/onboarding': typeof OnboardingRoute
   '/app/decouvrir': typeof AppDecouvrirRoute
+  '/app/messages': typeof AppMessagesRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/onboarding' | '/app/decouvrir' | '/app/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/onboarding'
+    | '/app/decouvrir'
+    | '/app/messages'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/onboarding' | '/app/decouvrir' | '/app'
-  id: '__root__' | '/' | '/app' | '/onboarding' | '/app/decouvrir' | '/app/'
+  to: '/' | '/onboarding' | '/app/decouvrir' | '/app/messages' | '/app'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/onboarding'
+    | '/app/decouvrir'
+    | '/app/messages'
+    | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +128,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/messages': {
+      id: '/app/messages'
+      path: '/messages'
+      fullPath: '/app/messages'
+      preLoaderRoute: typeof AppMessagesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/decouvrir': {
       id: '/app/decouvrir'
       path: '/decouvrir'
@@ -118,11 +147,13 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppDecouvrirRoute: typeof AppDecouvrirRoute
+  AppMessagesRoute: typeof AppMessagesRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDecouvrirRoute: AppDecouvrirRoute,
+  AppMessagesRoute: AppMessagesRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
