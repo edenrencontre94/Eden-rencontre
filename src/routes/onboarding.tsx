@@ -225,6 +225,12 @@ function OnboardingPage() {
   };
 
   if (submitted) return <SuccessScreen data={data} />;
+  if (!data.source)
+    return (
+      <SourceScreen
+        onSelect={(s) => update("source", s)}
+      />
+    );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-secondary/30">
