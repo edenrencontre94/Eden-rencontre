@@ -119,7 +119,7 @@ function Hero() {
             unit les <span className="italic text-gradient-gold">cœurs.</span>
           </h1>
           <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
-            AgapeMeet est la plateforme premium dédiée aux célibataires chrétiens qui recherchent un
+            AgapeMeet est la plateforme dédiée aux chrétiens qui recherchent un
             mariage centré sur Christ. Sécurisé. Bienveillant. Sérieux.
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-3">
@@ -209,7 +209,7 @@ function Hero() {
 
 function Stats() {
   const stats = [
-    { value: "120K+", label: "Célibataires chrétiens" },
+    { value: "120K+", label: "Membres chrétiens" },
     { value: "3 200+", label: "Couples formés" },
     { value: "24 pays", label: "Francophones" },
     { value: "4,9/5", label: "Note moyenne" },
@@ -532,7 +532,7 @@ function FAQ() {
   const faqs = [
     {
       q: "Qu'est-ce qui rend AgapeMeet différente ?",
-      a: "AgapeMeet est exclusivement dédiée aux célibataires chrétiens qui recherchent un mariage. Notre algorithme intègre la foi et la dénomination, et chaque profil est vérifié manuellement.",
+      a: "AgapeMeet est exclusivement dédiée aux chrétiens qui recherchent un mariage. Notre algorithme intègre la foi et la dénomination, et chaque profil est vérifié manuellement.",
     },
     {
       q: "Est-ce vraiment gratuit ?",

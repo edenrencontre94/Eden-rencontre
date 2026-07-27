@@ -215,7 +215,7 @@ function SwipeCard({
           )}
           {profile.premium && (
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gold text-gold-foreground text-xs font-semibold shadow-soft">
-              <Crown className="w-3.5 h-3.5" /> Premium
+              <Crown className="w-3.5 h-3.5" /> N° 1
             </span>
           )}
         </div>
