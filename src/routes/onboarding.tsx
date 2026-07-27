@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "motion/react";
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, type ReactElement } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -30,6 +30,68 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 
 type Photo = { id: string; url: string; name: string };
+
+// ---------- Gender icons (primary blue) ----------
+function ManIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+      <circle cx="32" cy="14" r="8" fill="currentColor" />
+      <path
+        d="M20 46c0-8 5.4-14 12-14s12 6 12 14v10h-6V44h-2v18h-8V44h-2v12h-6V46z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+function WomanIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+      <circle cx="32" cy="14" r="8" fill="currentColor" />
+      <path
+        d="M32 22c-6.5 0-11 4.5-12.5 11L15 46h8l1.5-10h1L22 62h8l1.2-16h1.6L34 62h8l-3.5-26h1L41 46h8l-4.5-13C43 26.5 38.5 22 32 22z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function GenderChoice({
+  active,
+  onClick,
+  label,
+  icon: Icon,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  icon: (props: { className?: string }) => ReactElement;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group flex flex-col items-center justify-center gap-2 rounded-2xl border-2 py-5 px-4 transition-all ${
+        active
+          ? "border-primary bg-primary/5 shadow-elegant"
+          : "border-border hover:border-primary/40 bg-background"
+      }`}
+      aria-pressed={active}
+    >
+      <Icon
+        className={`w-10 h-10 transition-colors ${
+          active ? "text-primary" : "text-primary/60 group-hover:text-primary"
+        }`}
+      />
+      <span
+        className={`text-sm font-medium ${
+          active ? "text-foreground" : "text-muted-foreground"
+        }`}
+      >
+        {label}
+      </span>
+    </button>
+  );
+}
 
 type OnboardingData = {
   firstName: string;
@@ -327,16 +389,21 @@ function StepProfile({
             onChange={(e) => update("birthDate", e.target.value)}
           />
         </Field>
-        <Field label="Genre" htmlFor="gender">
-          <Select value={data.gender} onValueChange={(v) => update("gender", v)}>
-            <SelectTrigger id="gender">
-              <SelectValue placeholder="Sélectionner" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="femme">Femme</SelectItem>
-              <SelectItem value="homme">Homme</SelectItem>
-            </SelectContent>
-          </Select>
+        <Field label="Genre">
+          <div className="grid grid-cols-2 gap-3">
+            <GenderChoice
+              active={data.gender === "femme"}
+              onClick={() => update("gender", "femme")}
+              label="Femme"
+              icon={WomanIcon}
+            />
+            <GenderChoice
+              active={data.gender === "homme"}
+              onClick={() => update("gender", "homme")}
+              label="Homme"
+              icon={ManIcon}
+            />
+          </div>
         </Field>
         <Field label="Ville" htmlFor="city">
           <Input
@@ -512,18 +579,19 @@ function StepSearch({
       />
       <div className="grid gap-6 mt-8">
         <Field label="Je recherche">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {[
-              { v: "femme", l: "Une femme" },
-              { v: "homme", l: "Un homme" },
-            ].map((o) => (
-              <ChoiceChip
-                key={o.v}
-                active={data.seekingGender === o.v}
-                onClick={() => update("seekingGender", o.v)}
-                label={o.l}
-              />
-            ))}
+          <div className="grid grid-cols-2 gap-3">
+            <GenderChoice
+              active={data.seekingGender === "femme"}
+              onClick={() => update("seekingGender", "femme")}
+              label="Une femme"
+              icon={WomanIcon}
+            />
+            <GenderChoice
+              active={data.seekingGender === "homme"}
+              onClick={() => update("seekingGender", "homme")}
+              label="Un homme"
+              icon={ManIcon}
+            />
           </div>
         </Field>
 
