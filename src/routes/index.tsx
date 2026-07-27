@@ -511,8 +511,8 @@ function Pricing() {
                   </li>
                 ))}
               </ul>
-              <a
-                href="#cta"
+              <Link
+                to="/onboarding"
                 className={`mt-8 inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition ${
                   p.highlight
                     ? "bg-gold text-gold-foreground hover:bg-gold/90"
@@ -520,7 +520,7 @@ function Pricing() {
                 }`}
               >
                 {p.cta}
-              </a>
+              </Link>
             </div>
           ))}
         </div>
@@ -625,13 +625,13 @@ function FinalCTA() {
               Créez votre profil en quelques minutes. C'est gratuit, sécurisé et centré sur ce qui compte.
             </p>
             <div className="mt-10 flex flex-wrap justify-center gap-3">
-              <a
-                href="#top"
+              <Link
+                to="/onboarding"
                 className="inline-flex items-center gap-2 rounded-full bg-gold text-gold-foreground px-8 py-4 text-base font-medium hover:brightness-105 transition shadow-soft"
               >
                 Commencer gratuitement
                 <ArrowRight className="w-4 h-4" />
-              </a>
+              </Link>
               <a
                 href="#temoignages"
                 className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/30 text-primary-foreground px-8 py-4 text-base font-medium hover:bg-primary-foreground/10 transition"
