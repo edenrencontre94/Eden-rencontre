@@ -31,6 +31,68 @@ import { toast } from "sonner";
 
 type Photo = { id: string; url: string; name: string };
 
+// ---------- Gender icons (primary blue) ----------
+function ManIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+      <circle cx="32" cy="14" r="8" fill="currentColor" />
+      <path
+        d="M20 46c0-8 5.4-14 12-14s12 6 12 14v10h-6V44h-2v18h-8V44h-2v12h-6V46z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+function WomanIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
+      <circle cx="32" cy="14" r="8" fill="currentColor" />
+      <path
+        d="M32 22c-6.5 0-11 4.5-12.5 11L15 46h8l1.5-10h1L22 62h8l1.2-16h1.6L34 62h8l-3.5-26h1L41 46h8l-4.5-13C43 26.5 38.5 22 32 22z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function GenderChoice({
+  active,
+  onClick,
+  label,
+  icon: Icon,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  icon: (props: { className?: string }) => JSX.Element;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`group flex flex-col items-center justify-center gap-2 rounded-2xl border-2 py-5 px-4 transition-all ${
+        active
+          ? "border-primary bg-primary/5 shadow-elegant"
+          : "border-border hover:border-primary/40 bg-background"
+      }`}
+      aria-pressed={active}
+    >
+      <Icon
+        className={`w-10 h-10 transition-colors ${
+          active ? "text-primary" : "text-primary/60 group-hover:text-primary"
+        }`}
+      />
+      <span
+        className={`text-sm font-medium ${
+          active ? "text-foreground" : "text-muted-foreground"
+        }`}
+      >
+        {label}
+      </span>
+    </button>
+  );
+}
+
 type OnboardingData = {
   firstName: string;
   lastName: string;
