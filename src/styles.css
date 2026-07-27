@@ -183,3 +183,11 @@
 @utility shadow-soft {
   box-shadow: var(--shadow-soft);
 }
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

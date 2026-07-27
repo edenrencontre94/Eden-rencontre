@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import {
   Heart,
@@ -84,13 +84,13 @@ function Nav() {
           <a href="#tarifs" className="hover:text-foreground transition">Tarifs</a>
           <a href="#faq" className="hover:text-foreground transition">FAQ</a>
         </nav>
-        <a
-          href="#cta"
+        <Link
+          to="/onboarding"
           className="inline-flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-5 py-2.5 text-sm font-medium hover:bg-primary/90 transition shadow-soft"
         >
           Commencer
           <ArrowRight className="w-4 h-4" />
-        </a>
+        </Link>
       </div>
     </header>
   );
@@ -124,19 +124,19 @@ function Hero() {
             mariage centré sur Christ. Sécurisé. Bienveillant. Sérieux.
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-3">
-            <a
-              href="#cta"
+            <Link
+              to="/onboarding"
               className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-7 py-4 text-base font-medium hover:bg-primary/90 transition shadow-elegant"
             >
               Commencer gratuitement
               <ArrowRight className="w-4 h-4" />
-            </a>
-            <a
-              href="#comment"
+            </Link>
+            <Link
+              to="/app"
               className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-7 py-4 text-base font-medium hover:bg-secondary transition"
             >
-              Découvrir comment
-            </a>
+              Explorer l'app
+            </Link>
           </div>
           <div className="mt-10 flex items-center gap-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">

@@ -10,11 +10,22 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppMessagesRouteImport } from './routes/app.messages'
+import { Route as AppDemandesRouteImport } from './routes/app.demandes'
+import { Route as AppDecouvrirRouteImport } from './routes/app.decouvrir'
+import { Route as AppCommunauteRouteImport } from './routes/app.communaute'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -22,30 +33,97 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMessagesRoute = AppMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDemandesRoute = AppDemandesRouteImport.update({
+  id: '/demandes',
+  path: '/demandes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDecouvrirRoute = AppDecouvrirRouteImport.update({
+  id: '/decouvrir',
+  path: '/decouvrir',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCommunauteRoute = AppCommunauteRouteImport.update({
+  id: '/communaute',
+  path: '/communaute',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
   '/onboarding': typeof OnboardingRoute
+  '/app/communaute': typeof AppCommunauteRoute
+  '/app/decouvrir': typeof AppDecouvrirRoute
+  '/app/demandes': typeof AppDemandesRoute
+  '/app/messages': typeof AppMessagesRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
+  '/app/communaute': typeof AppCommunauteRoute
+  '/app/decouvrir': typeof AppDecouvrirRoute
+  '/app/demandes': typeof AppDemandesRoute
+  '/app/messages': typeof AppMessagesRoute
+  '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
   '/onboarding': typeof OnboardingRoute
+  '/app/communaute': typeof AppCommunauteRoute
+  '/app/decouvrir': typeof AppDecouvrirRoute
+  '/app/demandes': typeof AppDemandesRoute
+  '/app/messages': typeof AppMessagesRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/onboarding'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/onboarding'
+    | '/app/communaute'
+    | '/app/decouvrir'
+    | '/app/demandes'
+    | '/app/messages'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/onboarding'
-  id: '__root__' | '/' | '/onboarding'
+  to:
+    | '/'
+    | '/onboarding'
+    | '/app/communaute'
+    | '/app/decouvrir'
+    | '/app/demandes'
+    | '/app/messages'
+    | '/app'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/onboarding'
+    | '/app/communaute'
+    | '/app/decouvrir'
+    | '/app/demandes'
+    | '/app/messages'
+    | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
   OnboardingRoute: typeof OnboardingRoute
 }
 
@@ -58,6 +136,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -65,11 +150,65 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/messages': {
+      id: '/app/messages'
+      path: '/messages'
+      fullPath: '/app/messages'
+      preLoaderRoute: typeof AppMessagesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/demandes': {
+      id: '/app/demandes'
+      path: '/demandes'
+      fullPath: '/app/demandes'
+      preLoaderRoute: typeof AppDemandesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/decouvrir': {
+      id: '/app/decouvrir'
+      path: '/decouvrir'
+      fullPath: '/app/decouvrir'
+      preLoaderRoute: typeof AppDecouvrirRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/communaute': {
+      id: '/app/communaute'
+      path: '/communaute'
+      fullPath: '/app/communaute'
+      preLoaderRoute: typeof AppCommunauteRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppCommunauteRoute: typeof AppCommunauteRoute
+  AppDecouvrirRoute: typeof AppDecouvrirRoute
+  AppDemandesRoute: typeof AppDemandesRoute
+  AppMessagesRoute: typeof AppMessagesRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppCommunauteRoute: AppCommunauteRoute,
+  AppDecouvrirRoute: AppDecouvrirRoute,
+  AppDemandesRoute: AppDemandesRoute,
+  AppMessagesRoute: AppMessagesRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
   OnboardingRoute: OnboardingRoute,
 }
 export const routeTree = rootRouteImport
