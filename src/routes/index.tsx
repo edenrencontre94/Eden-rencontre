@@ -135,7 +135,7 @@ function Hero() {
               to="/app"
               className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-7 py-4 text-base font-medium hover:bg-secondary transition"
             >
-              Explorer l'app
+              Accéder à l'app
             </Link>
           </div>
           <div className="mt-10 flex items-center gap-6 text-sm text-muted-foreground">
