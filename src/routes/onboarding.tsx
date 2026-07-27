@@ -95,6 +95,7 @@ function GenderChoice({
 
 type OnboardingData = {
   firstName: string;
+  source: string;
   lastName: string;
   birthDate: string;
   gender: string;
@@ -115,6 +116,7 @@ type OnboardingData = {
 
 const initialData: OnboardingData = {
   firstName: "",
+  source: "",
   lastName: "",
   birthDate: "",
   gender: "",
