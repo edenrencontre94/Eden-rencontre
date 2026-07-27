@@ -36,9 +36,13 @@ type Photo = { id: string; url: string; name: string };
 function ManIcon({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
-      <circle cx="32" cy="14" r="8" fill="currentColor" />
+      {/* Head + shoulders silhouette with short hair */}
       <path
-        d="M20 46c0-8 5.4-14 12-14s12 6 12 14v10h-6V44h-2v18h-8V44h-2v12h-6V46z"
+        d="M20 22c0-7 5.5-13 12-13s12 6 12 13c0 2-.4 4-1 6 1 .5 1.5 1.5 1.5 2.5 0 1.5-1 3-2.5 3.5C40.5 39 36.8 43 32 43s-8.5-4-10-9c-1.5-.5-2.5-2-2.5-3.5 0-1 .5-2 1.5-2.5-.6-2-1-4-1-6z"
+        fill="currentColor"
+      />
+      <path
+        d="M14 58c0-8 7-14 18-14s18 6 18 14v2H14v-2z"
         fill="currentColor"
       />
     </svg>
@@ -47,9 +51,13 @@ function ManIcon({ className = "" }: { className?: string }) {
 function WomanIcon({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden="true">
-      <circle cx="32" cy="14" r="8" fill="currentColor" />
+      {/* Head + shoulders silhouette with long hair */}
       <path
-        d="M32 22c-6.5 0-11 4.5-12.5 11L15 46h8l1.5-10h1L22 62h8l1.2-16h1.6L34 62h8l-3.5-26h1L41 46h8l-4.5-13C43 26.5 38.5 22 32 22z"
+        d="M18 34c0-3 1-5 2.5-6.5C19.5 26 19 24 19 22c0-8 5.8-14 13-14s13 6 13 14c0 2-.5 4-1.5 5.5C45 29 46 31 46 34c0 2-1 4-3 5-1.4 5-5.6 8.5-11 8.5s-9.6-3.5-11-8.5c-2-1-3-3-3-5z"
+        fill="currentColor"
+      />
+      <path
+        d="M14 60c0-9 8-15 18-15s18 6 18 15H14z"
         fill="currentColor"
       />
     </svg>
