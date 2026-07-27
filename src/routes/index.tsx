@@ -18,6 +18,7 @@ import {
   Twitter,
   Mail,
 } from "lucide-react";
+import logoAsset from "@/assets/agapemeet-logo.png.asset.json";
 import { useState } from "react";
 import heroCouple from "@/assets/hero-couple.jpg";
 import testimonial1 from "@/assets/testimonial-1.jpg";
