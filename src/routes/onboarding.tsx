@@ -13,6 +13,7 @@ import {
   X,
   Sparkles,
 } from "lucide-react";
+import { Music2, Instagram, Facebook, Youtube, Users, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logoAsset from "@/assets/agapemeet-logo.png.asset.json";
 import { Input } from "@/components/ui/input";
@@ -95,6 +96,7 @@ function GenderChoice({
 
 type OnboardingData = {
   firstName: string;
+  source: string;
   lastName: string;
   birthDate: string;
   gender: string;
@@ -115,6 +117,7 @@ type OnboardingData = {
 
 const initialData: OnboardingData = {
   firstName: "",
+  source: "",
   lastName: "",
   birthDate: "",
   gender: "",
@@ -223,6 +226,12 @@ function OnboardingPage() {
   };
 
   if (submitted) return <SuccessScreen data={data} />;
+  if (!data.source)
+    return (
+      <SourceScreen
+        onSelect={(s) => update("source", s)}
+      />
+    );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-secondary/30">
@@ -912,5 +921,64 @@ function ChoiceChip({
         {active && <Check className="w-4 h-4 text-primary shrink-0" />}
       </span>
     </button>
+  );
+}
+
+// ---------- Source (pre-step) ----------
+function SourceScreen({ onSelect }: { onSelect: (s: string) => void }) {
+  const options: { id: string; label: string; icon: ReactElement; color: string }[] = [
+    { id: "tiktok", label: "TikTok", icon: <Music2 className="w-6 h-6" />, color: "bg-foreground text-background" },
+    { id: "instagram", label: "Instagram", icon: <Instagram className="w-6 h-6" />, color: "bg-gradient-to-tr from-fuchsia-500 via-pink-500 to-amber-400 text-white" },
+    { id: "facebook", label: "Facebook", icon: <Facebook className="w-6 h-6" />, color: "bg-[#1877F2] text-white" },
+    { id: "youtube", label: "YouTube", icon: <Youtube className="w-6 h-6" />, color: "bg-[#FF0000] text-white" },
+    { id: "recommandation", label: "Une recommandation", icon: <Users className="w-6 h-6" />, color: "bg-[#25D366] text-white" },
+    { id: "autre", label: "Autre", icon: <MoreHorizontal className="w-6 h-6" />, color: "bg-primary/10 text-primary" },
+  ];
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-secondary/30">
+      <header className="border-b border-border/40 backdrop-blur-md bg-background/80 sticky top-0 z-40">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 group">
+            <img src={logoAsset.url} alt="AgapeMeet" className="w-10 h-10 object-contain" />
+            <span className="font-serif text-xl font-semibold">AgapeMeet</span>
+          </Link>
+        </div>
+      </header>
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 pt-10 pb-24">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="bg-card rounded-3xl shadow-elegant border border-border/50 p-6 sm:p-10"
+        >
+          <div className="text-center mb-8">
+            <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-foreground">
+              Comment nous as-tu découvert ?
+            </h1>
+            <p className="text-muted-foreground mt-2 text-sm">Dis-nous d'où tu viens</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            {options.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => onSelect(o.id)}
+                className="group flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-border hover:border-primary/50 bg-background hover:bg-primary/5 py-6 px-4 transition-all shadow-soft hover:shadow-elegant"
+              >
+                <span className={`w-12 h-12 rounded-xl flex items-center justify-center ${o.color}`}>
+                  {o.icon}
+                </span>
+                <span className="text-sm font-medium text-foreground text-center">
+                  {o.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </motion.div>
+        <p className="text-center text-xs text-muted-foreground mt-6">
+          Cela nous aide à mieux vous connaître.
+        </p>
+      </main>
+    </div>
   );
 }
