@@ -27,17 +27,17 @@ import testimonial3 from "@/assets/testimonial-3.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "AgapeMeet — Là où la foi unit les cœurs" },
+      { title: "AgapeMeet  , Là où la foi unit les cœurs" },
       {
         name: "description",
         content:
-          "AgapeMeet, la plateforme premium de rencontres sérieuses chrétiennes. Rencontrez votre futur conjoint dans un espace sécurisé, centré sur la foi et le mariage.",
+          "AgapeMeet, la plateforme №1 de rencontres sérieuses chrétiennes. Rencontrez votre futur conjoint dans un espace sécurisé, centré sur la foi et le mariage.",
       },
-      { property: "og:title", content: "AgapeMeet — Là où la foi unit les cœurs" },
+      { property: "og:title", content: "AgapeMeet  , Là où la foi unit les cœurs" },
       {
         property: "og:description",
         content:
-          "Rencontres chrétiennes sérieuses orientées vers le mariage. Foi, valeurs, vérification, communauté.",
+          "AgapeMeet, la plateforme №1 de rencontres sérieuses chrétiennes. Rencontrez votre futur conjoint dans un espace sécurisé, centré sur la foi et le mariage.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

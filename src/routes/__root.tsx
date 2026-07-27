@@ -78,14 +78,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "AgapeMeet  , Là où la foi unit les cœurs" },
+      { name: "description", content: "AgapeMeet, la plateforme №1 de rencontres sérieuses chrétiennes. Rencontrez votre futur conjoint dans un espace sécurisé, centré sur la foi et le mariage." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "AgapeMeet  , Là où la foi unit les cœurs" },
+      { property: "og:description", content: "AgapeMeet, la plateforme №1 de rencontres sérieuses chrétiennes. Rencontrez votre futur conjoint dans un espace sécurisé, centré sur la foi et le mariage." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "AgapeMeet  , Là où la foi unit les cœurs" },
+      { name: "twitter:description", content: "AgapeMeet, la plateforme №1 de rencontres sérieuses chrétiennes. Rencontrez votre futur conjoint dans un espace sécurisé, centré sur la foi et le mariage." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/005cfc4a-9b60-4c4b-aa23-9d1c14b290b7/id-preview-32b7531d--f98624a1-2b01-45b6-87b9-708813d7375a.lovable.app-1785110518566.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/005cfc4a-9b60-4c4b-aa23-9d1c14b290b7/id-preview-32b7531d--f98624a1-2b01-45b6-87b9-708813d7375a.lovable.app-1785110518566.png" },
     ],
     links: [
       {
