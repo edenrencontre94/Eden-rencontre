@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "motion/react";
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, type ReactElement } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -64,7 +64,7 @@ function GenderChoice({
   active: boolean;
   onClick: () => void;
   label: string;
-  icon: (props: { className?: string }) => React.ReactElement;
+  icon: (props: { className?: string }) => ReactElement;
 }) {
   return (
     <button
