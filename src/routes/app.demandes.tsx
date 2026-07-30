@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
 import {
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { requests, type MatchRequest } from "@/lib/mock-data";
 import { toast } from "sonner";
+import { useSubscription } from "@/lib/subscription";
 
 export const Route = createFileRoute("/app/demandes")({
   head: () => ({
@@ -41,8 +42,9 @@ type TabId = (typeof tabs)[number]["id"];
 
 function RequestsPage() {
   const [active, setActive] = useState<TabId>("like");
+  const { features } = useSubscription();
   const list = useMemo(() => requests.filter((r) => r.type === active), [active]);
-  const isPremiumLocked = active === "visit";
+  const isPremiumLocked = active === "visit" && !features.visitors;
 
   return (
     <div className="px-4 pt-4">
@@ -159,12 +161,12 @@ function PremiumGate() {
         <p className="text-sm opacity-90 mt-2 max-w-sm mx-auto">
           Passez N° 1 pour voir qui a visité votre profil et accéder à toutes les fonctionnalités avancées.
         </p>
-        <button
-          onClick={() => toast.info("Bientôt disponible")}
+        <Link
+          to="/app/abonnement"
           className="mt-5 inline-flex px-6 py-2.5 rounded-full bg-gold text-gold-foreground font-semibold shadow-elegant"
         >
           Devenir N° 1
-        </button>
+        </Link>
       </div>
     </div>
   );

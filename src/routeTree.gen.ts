@@ -17,6 +17,7 @@ import { Route as AppMessagesRouteImport } from './routes/app.messages'
 import { Route as AppDemandesRouteImport } from './routes/app.demandes'
 import { Route as AppDecouvrirRouteImport } from './routes/app.decouvrir'
 import { Route as AppCommunauteRouteImport } from './routes/app.communaute'
+import { Route as AppAbonnementRouteImport } from './routes/app.abonnement'
 
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
@@ -58,11 +59,17 @@ const AppCommunauteRoute = AppCommunauteRouteImport.update({
   path: '/communaute',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAbonnementRoute = AppAbonnementRouteImport.update({
+  id: '/abonnement',
+  path: '/abonnement',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/onboarding': typeof OnboardingRoute
+  '/app/abonnement': typeof AppAbonnementRoute
   '/app/communaute': typeof AppCommunauteRoute
   '/app/decouvrir': typeof AppDecouvrirRoute
   '/app/demandes': typeof AppDemandesRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRoute
+  '/app/abonnement': typeof AppAbonnementRoute
   '/app/communaute': typeof AppCommunauteRoute
   '/app/decouvrir': typeof AppDecouvrirRoute
   '/app/demandes': typeof AppDemandesRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/onboarding': typeof OnboardingRoute
+  '/app/abonnement': typeof AppAbonnementRoute
   '/app/communaute': typeof AppCommunauteRoute
   '/app/decouvrir': typeof AppDecouvrirRoute
   '/app/demandes': typeof AppDemandesRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/onboarding'
+    | '/app/abonnement'
     | '/app/communaute'
     | '/app/decouvrir'
     | '/app/demandes'
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/onboarding'
+    | '/app/abonnement'
     | '/app/communaute'
     | '/app/decouvrir'
     | '/app/demandes'
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/onboarding'
+    | '/app/abonnement'
     | '/app/communaute'
     | '/app/decouvrir'
     | '/app/demandes'
@@ -185,10 +197,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCommunauteRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/abonnement': {
+      id: '/app/abonnement'
+      path: '/abonnement'
+      fullPath: '/app/abonnement'
+      preLoaderRoute: typeof AppAbonnementRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppAbonnementRoute: typeof AppAbonnementRoute
   AppCommunauteRoute: typeof AppCommunauteRoute
   AppDecouvrirRoute: typeof AppDecouvrirRoute
   AppDemandesRoute: typeof AppDemandesRoute
@@ -197,6 +217,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppAbonnementRoute: AppAbonnementRoute,
   AppCommunauteRoute: AppCommunauteRoute,
   AppDecouvrirRoute: AppDecouvrirRoute,
   AppDemandesRoute: AppDemandesRoute,
@@ -214,13 +235,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
