@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "motion/react";
 import { useMemo, useState } from "react";
 import {
@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { profiles, type Profile } from "@/lib/mock-data";
 import { toast } from "sonner";
+import { useSubscription } from "@/lib/subscription";
 
 export const Route = createFileRoute("/app/decouvrir")({
   head: () => ({
@@ -37,12 +38,24 @@ function DiscoverPage() {
   const [index, setIndex] = useState(0);
   const [history, setHistory] = useState<{ id: string; action: string }[]>([]);
   const [detail, setDetail] = useState<Profile | null>(null);
+  const navigate = useNavigate();
+  const { superLikesLeft, boostsLeft, consumeSuperLike, consumeBoost } = useSubscription();
+
+  const upsell = (message: string) => {
+    toast.error(message, {
+      action: { label: "Voir les formules", onClick: () => navigate({ to: "/app/abonnement" }) },
+    });
+  };
 
   const current = deck[index];
   const next = deck[index + 1];
 
   const swipe = (action: "left" | "right" | "super") => {
     if (!current) return;
+    if (action === "super" && !consumeSuperLike()) {
+      upsell("Plus de Super Likes aujourd'hui");
+      return;
+    }
     setHistory((h) => [...h, { id: current.id, action }]);
     if (action === "right") toast.success(`Vous aimez ${current.firstName}`);
     if (action === "super") toast.success(`Super Like envoyé à ${current.firstName} ⭐`);
@@ -59,13 +72,30 @@ function DiscoverPage() {
     toast.info("Action annulée");
   };
 
-  const boost = () => toast.success("Boost activé pour 30 minutes ⚡");
+  const boost = () => {
+    if (!consumeBoost()) {
+      upsell("Boost réservé aux membres N° 1");
+      return;
+    }
+    toast.success("Boost activé pour 30 minutes ⚡");
+  };
 
   return (
     <div className="px-4 pt-4">
       <div className="text-center mb-4">
         <h1 className="font-serif text-2xl font-semibold">Découvrir</h1>
         <p className="text-xs text-muted-foreground">Trouvez votre âme sœur, un swipe à la fois</p>
+        <div className="mt-2 inline-flex items-center gap-3 px-3 py-1 rounded-full bg-secondary/60 border border-border/60 text-[11px] font-medium">
+          <span className="inline-flex items-center gap-1">
+            <Star className="w-3 h-3 text-primary" fill="currentColor" />
+            {superLikesLeft === -1 ? "∞" : superLikesLeft} Super Likes
+          </span>
+          <span className="w-px h-3 bg-border" />
+          <span className="inline-flex items-center gap-1">
+            <Zap className="w-3 h-3 text-gold" />
+            {boostsLeft === -1 ? "∞" : boostsLeft} Boosts
+          </span>
+        </div>
       </div>
 
       <div className="relative h-[560px] max-h-[70vh] w-full mx-auto max-w-md">
