@@ -4,7 +4,14 @@ import { Bell, Crown, User } from "lucide-react";
 import { SubscriptionProvider } from "@/lib/subscription";
 import logo from "@/assets/logo.jpg";
 import { useEffect, useState } from "react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Settings, Languages, Package, CreditCard, Ban, Trash2, LogOut } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -33,6 +40,7 @@ function AppLayout() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleDeleteAccount = async () => {
@@ -148,8 +156,8 @@ function AppLayout() {
                 <Bell className="w-4 h-4" />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
               </button>
-              <Sheet>
-                <SheetTrigger asChild>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
                   <button
                     aria-label="Menu"
                     className="w-9 h-9 rounded-full border border-border bg-background hover:bg-secondary flex items-center justify-center overflow-hidden transition-transform hover:scale-105"
@@ -160,121 +168,129 @@ function AppLayout() {
                       <User className="w-4 h-4" />
                     )}
                   </button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-[85vw] max-w-sm sm:max-w-md bg-secondary/30 p-0 border-l border-border/50">
-                  <div className="h-full bg-background/50 backdrop-blur-xl flex flex-col pt-12 pb-6 px-4 gap-2">
-                    <Link
-                      to="/app/profil"
-                      className="flex items-center gap-4 p-4 rounded-2xl hover:bg-primary/5 transition-colors group"
-                    >
-                      <User className="w-6 h-6 text-foreground/80 group-hover:text-primary transition-colors" />
-                      <span className="text-base font-medium group-hover:text-primary transition-colors">Mon profil</span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64 rounded-2xl shadow-elegant border-border/50 bg-background/95 backdrop-blur-xl p-2 mt-2">
+                  <DropdownMenuLabel className="px-2 py-1.5 text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Mon Compte
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-border/50" />
+                  
+                  <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-primary/10">
+                    <Link to="/app/profil" className="flex items-center gap-3 py-2.5 px-2">
+                      <User className="w-4 h-4" />
+                      <span className="font-medium">Mon profil</span>
                     </Link>
-                    <Link
-                      to="/app/parametres/securite"
-                      className="flex items-center gap-4 p-4 rounded-2xl hover:bg-secondary transition-colors"
-                    >
-                      <Settings className="w-6 h-6 text-foreground/80" />
-                      <span className="text-base font-medium">Paramètres de sécurité</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
+                    <Link to="/app/abonnement" className="flex items-center gap-3 py-2.5 px-2">
+                      <Crown className="w-4 h-4 text-gold" />
+                      <span className="font-medium">Abonnement & Facturation</span>
                     </Link>
-                    <Link
-                      to="/app/parametres/notifications"
-                      className="flex items-center gap-4 p-4 rounded-2xl hover:bg-secondary transition-colors"
-                    >
-                      <Bell className="w-6 h-6 text-foreground/80" />
-                      <span className="text-base font-medium">Paramètres de notification</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator className="bg-border/50 mt-2 mb-2" />
+                  <DropdownMenuLabel className="px-2 py-1.5 text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Paramètres
+                  </DropdownMenuLabel>
+                  
+                  <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
+                    <Link to="/app/parametres/securite" className="flex items-center gap-3 py-2.5 px-2">
+                      <Settings className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-medium">Sécurité</span>
                     </Link>
-                    <Link
-                      to="/app/parametres/langue"
-                      className="flex items-center gap-4 p-4 rounded-2xl hover:bg-secondary transition-colors"
-                    >
-                      <Languages className="w-6 h-6 text-foreground/80" />
-                      <span className="text-base font-medium">Paramètres de la langue</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
+                    <Link to="/app/parametres/notifications" className="flex items-center gap-3 py-2.5 px-2">
+                      <Bell className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-medium">Notifications</span>
                     </Link>
-                    <Link
-                      to="/app/abonnement"
-                      className="flex items-center gap-4 p-4 rounded-2xl hover:bg-secondary transition-colors"
-                    >
-                      <Package className="w-6 h-6 text-foreground/80" />
-                      <span className="text-base font-medium">Abonnement</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
+                    <Link to="/app/parametres/langue" className="flex items-center gap-3 py-2.5 px-2">
+                      <Languages className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-medium">Langue</span>
                     </Link>
-                    <Link
-                      to="/app/abonnement"
-                      className="flex items-center gap-4 p-4 rounded-2xl hover:bg-secondary transition-colors"
-                    >
-                      <CreditCard className="w-6 h-6 text-foreground/80" />
-                      <span className="text-base font-medium">Facturation</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
+                    <Link to="/app/parametres/bloques" className="flex items-center gap-3 py-2.5 px-2">
+                      <Ban className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-medium">Profils bloqués</span>
                     </Link>
-                    <Link
-                      to="/app/parametres/bloques"
-                      className="flex items-center gap-4 p-4 rounded-2xl hover:bg-secondary transition-colors"
-                    >
-                      <Ban className="w-6 h-6 text-foreground/80" />
-                      <span className="text-base font-medium">Profils bloqués</span>
-                    </Link>
-                    
-                    <div className="mt-auto pt-4 border-t border-border/50">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <button
-                            className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-destructive/10 text-foreground/80 hover:text-destructive transition-colors"
-                          >
-                            <Trash2 className="w-6 h-6" />
-                            <span className="text-base font-medium">Supprimer le compte</span>
-                          </button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="w-[90vw] rounded-3xl">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
-                            <AlertDialogDescription className="space-y-3">
-                              <p>
-                                Cette action est irréversible. Elle supprimera définitivement votre compte, 
-                                vos photos, vos matchs et vos messages.
-                              </p>
-                              <p className="font-medium text-foreground">
-                                Veuillez taper <strong className="text-destructive">SUPPRIMER</strong> pour confirmer.
-                              </p>
-                              <Input 
-                                value={deleteConfirm}
-                                onChange={(e) => setDeleteConfirm(e.target.value)}
-                                placeholder="SUPPRIMER"
-                                className="mt-2"
-                              />
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter className="mt-4 gap-2 sm:gap-0">
-                            <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={(e) => {
-                                if (deleteConfirm !== "SUPPRIMER") {
-                                  e.preventDefault();
-                                  toast.error("Veuillez taper SUPPRIMER pour confirmer.");
-                                } else {
-                                  handleDeleteAccount();
-                                }
-                              }}
-                              className="rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                              disabled={isDeleting}
-                            >
-                              {isDeleting ? "Suppression..." : "Supprimer mon compte"}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                      <button
-                        onClick={async () => {
-                          await supabase.auth.signOut();
-                          navigate({ to: "/login" });
-                        }}
-                        className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-secondary transition-colors"
-                      >
-                        <LogOut className="w-6 h-6 text-foreground/80" />
-                        <span className="text-base font-medium">Déconnexion</span>
-                      </button>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator className="bg-border/50 mt-2 mb-2" />
+                  
+                  <DropdownMenuItem 
+                    onSelect={(e) => {
+                      e.preventDefault(); // Prevent dropdown from closing immediately which breaks dialog focus
+                      setIsDeleteDialogOpen(true);
+                    }}
+                    className="rounded-xl cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <div className="flex items-center gap-3 py-2.5 px-2 w-full">
+                      <Trash2 className="w-4 h-4" />
+                      <span className="font-medium">Supprimer le compte</span>
                     </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem 
+                    onSelect={async () => {
+                      await supabase.auth.signOut();
+                      navigate({ to: "/login" });
+                    }}
+                    className="rounded-xl cursor-pointer hover:bg-secondary"
+                  >
+                    <div className="flex items-center gap-3 py-2.5 px-2 w-full">
+                      <LogOut className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-medium">Déconnexion</span>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent className="w-[90vw] max-w-md rounded-3xl">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
+                    <AlertDialogDescription className="space-y-3">
+                      <p>
+                        Cette action est irréversible. Elle supprimera définitivement votre compte, 
+                        vos photos, vos matchs et vos messages.
+                      </p>
+                      <p className="font-medium text-foreground">
+                        Veuillez taper <strong className="text-destructive">SUPPRIMER</strong> pour confirmer.
+                      </p>
+                      <Input 
+                        value={deleteConfirm}
+                        onChange={(e) => setDeleteConfirm(e.target.value)}
+                        placeholder="SUPPRIMER"
+                        className="mt-2"
+                      />
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter className="mt-4 gap-2 sm:gap-0">
+                    <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={(e) => {
+                        if (deleteConfirm !== "SUPPRIMER") {
+                          e.preventDefault();
+                          toast.error("Veuillez taper SUPPRIMER pour confirmer.");
+                        } else {
+                          handleDeleteAccount();
+                        }
+                      }}
+                      className="rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? "Suppression..." : "Supprimer mon compte"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </header>
