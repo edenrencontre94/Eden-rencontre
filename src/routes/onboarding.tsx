@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "motion/react";
-import { useState, useRef, useMemo, type ReactElement } from "react";
+import { useState, useEffect, useRef, useMemo, type ReactElement } from "react";
 import { Heart, Search, Camera, Church, ArrowRight, ArrowLeft, Upload, X, Sparkles, Check, Lock, Crown, Video } from "lucide-react";
 import { Music2, Instagram, Facebook, Youtube, Users, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
