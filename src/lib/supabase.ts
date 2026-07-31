@@ -15,7 +15,7 @@ export const supabase = supabaseUrl && supabaseAnonKey
       auth: {
         persistSession: true,
         storageKey: "agapemeet-auth",
-        storage: window.localStorage,
+        storage: typeof window !== "undefined" ? window.localStorage : undefined,
         autoRefreshToken: true,
         detectSessionInUrl: true,
       },
