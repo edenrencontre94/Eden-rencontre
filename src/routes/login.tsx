@@ -1,6 +1,6 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, ArrowRight, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,13 +9,6 @@ import logoAsset from "@/assets/logo.jpg";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
-  beforeLoad: async () => {
-    const { supabase } = await import("@/lib/supabase");
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      throw redirect({ to: "/app" });
-    }
-  },
   head: () => ({
     meta: [
       { title: "Se connecter — AgapeMeet" },
@@ -31,6 +24,16 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Client-side redirect: if user already has a session, go to /app immediately
+  useEffect(() => {
+    import("@/lib/supabase").then(({ supabase }) => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) window.location.replace("/app");
+      });
+    });
+  }, []);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
