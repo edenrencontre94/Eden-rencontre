@@ -136,13 +136,6 @@ function AppLayout() {
                       onClick={() => toast.info("Bientôt disponible")}
                       className="flex items-center gap-4 p-4 rounded-2xl hover:bg-secondary transition-colors"
                     >
-                      <Camera className="w-6 h-6 text-foreground/80" />
-                      <span className="text-base font-medium">Mes photos</span>
-                    </button>
-                    <button
-                      onClick={() => toast.info("Bientôt disponible")}
-                      className="flex items-center gap-4 p-4 rounded-2xl hover:bg-secondary transition-colors"
-                    >
                       <Settings className="w-6 h-6 text-foreground/80" />
                       <span className="text-base font-medium">Paramètres de sécurité</span>
                     </button>
