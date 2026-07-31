@@ -9,6 +9,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Settings, Languages, Package, CreditCard, Ban, Trash2, LogOut } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/app")({
   // No beforeLoad — auth is checked client-side only to avoid SSR logout on refresh
@@ -19,7 +31,33 @@ function AppLayout() {
   const [authChecked, setAuthChecked] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm !== "SUPPRIMER") {
+      toast.error("Veuillez taper SUPPRIMER pour confirmer.");
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Optionnel : Vous pouvez appeler une fonction RPC Supabase ici 
+        // pour supprimer les données associées ou le compte auth.
+        // ex: await supabase.rpc('delete_user_data');
+        await supabase.from('profiles').delete().eq('id', user.id);
+      }
+      await supabase.auth.signOut();
+      navigate({ to: "/login" });
+      toast.success("Compte supprimé avec succès.");
+    } catch (e) {
+      toast.error("Erreur lors de la suppression.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   useEffect(() => {
     // This only runs in the browser, after hydration.
@@ -132,27 +170,27 @@ function AppLayout() {
                       <User className="w-6 h-6 text-foreground/80 group-hover:text-primary transition-colors" />
                       <span className="text-base font-medium group-hover:text-primary transition-colors">Mon profil</span>
                     </Link>
-                    <button
-                      onClick={() => toast.info("Bientôt disponible")}
+                    <Link
+                      to="/app/parametres/securite"
                       className="flex items-center gap-4 p-4 rounded-2xl hover:bg-secondary transition-colors"
                     >
                       <Settings className="w-6 h-6 text-foreground/80" />
                       <span className="text-base font-medium">Paramètres de sécurité</span>
-                    </button>
-                    <button
-                      onClick={() => toast.info("Bientôt disponible")}
+                    </Link>
+                    <Link
+                      to="/app/parametres/notifications"
                       className="flex items-center gap-4 p-4 rounded-2xl hover:bg-secondary transition-colors"
                     >
                       <Bell className="w-6 h-6 text-foreground/80" />
                       <span className="text-base font-medium">Paramètres de notification</span>
-                    </button>
-                    <button
-                      onClick={() => toast.info("Bientôt disponible")}
-                      className="flex items-center gap-4 p-4 rounded-2xl bg-background shadow-sm hover:bg-secondary transition-colors"
+                    </Link>
+                    <Link
+                      to="/app/parametres/langue"
+                      className="flex items-center gap-4 p-4 rounded-2xl hover:bg-secondary transition-colors"
                     >
-                      <Languages className="w-6 h-6 text-primary" />
-                      <span className="text-base font-medium text-primary">Paramètres de la langue</span>
-                    </button>
+                      <Languages className="w-6 h-6 text-foreground/80" />
+                      <span className="text-base font-medium">Paramètres de la langue</span>
+                    </Link>
                     <Link
                       to="/app/abonnement"
                       className="flex items-center gap-4 p-4 rounded-2xl hover:bg-secondary transition-colors"
@@ -160,29 +198,69 @@ function AppLayout() {
                       <Package className="w-6 h-6 text-foreground/80" />
                       <span className="text-base font-medium">Abonnement</span>
                     </Link>
-                    <button
-                      onClick={() => toast.info("Bientôt disponible")}
+                    <Link
+                      to="/app/abonnement"
                       className="flex items-center gap-4 p-4 rounded-2xl hover:bg-secondary transition-colors"
                     >
                       <CreditCard className="w-6 h-6 text-foreground/80" />
                       <span className="text-base font-medium">Facturation</span>
-                    </button>
-                    <button
-                      onClick={() => toast.info("Bientôt disponible")}
+                    </Link>
+                    <Link
+                      to="/app/parametres/bloques"
                       className="flex items-center gap-4 p-4 rounded-2xl hover:bg-secondary transition-colors"
                     >
                       <Ban className="w-6 h-6 text-foreground/80" />
                       <span className="text-base font-medium">Profils bloqués</span>
-                    </button>
+                    </Link>
                     
                     <div className="mt-auto pt-4 border-t border-border/50">
-                      <button
-                        onClick={() => toast.info("Bientôt disponible")}
-                        className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-destructive/10 text-foreground/80 hover:text-destructive transition-colors"
-                      >
-                        <Trash2 className="w-6 h-6" />
-                        <span className="text-base font-medium">Supprimer le compte</span>
-                      </button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <button
+                            className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-destructive/10 text-foreground/80 hover:text-destructive transition-colors"
+                          >
+                            <Trash2 className="w-6 h-6" />
+                            <span className="text-base font-medium">Supprimer le compte</span>
+                          </button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="w-[90vw] rounded-3xl">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
+                            <AlertDialogDescription className="space-y-3">
+                              <p>
+                                Cette action est irréversible. Elle supprimera définitivement votre compte, 
+                                vos photos, vos matchs et vos messages.
+                              </p>
+                              <p className="font-medium text-foreground">
+                                Veuillez taper <strong className="text-destructive">SUPPRIMER</strong> pour confirmer.
+                              </p>
+                              <Input 
+                                value={deleteConfirm}
+                                onChange={(e) => setDeleteConfirm(e.target.value)}
+                                placeholder="SUPPRIMER"
+                                className="mt-2"
+                              />
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="mt-4 gap-2 sm:gap-0">
+                            <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={(e) => {
+                                if (deleteConfirm !== "SUPPRIMER") {
+                                  e.preventDefault();
+                                  toast.error("Veuillez taper SUPPRIMER pour confirmer.");
+                                } else {
+                                  handleDeleteAccount();
+                                }
+                              }}
+                              className="rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                              disabled={isDeleting}
+                            >
+                              {isDeleting ? "Suppression..." : "Supprimer mon compte"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                       <button
                         onClick={async () => {
                           await supabase.auth.signOut();
