@@ -114,7 +114,7 @@ function DiscoverPage() {
             country: p.country || "",
             denomination: p.denomination || "Non précisé",
             compatibility: Math.floor(Math.random() * 20) + 80,
-            verified: p.is_verified || Math.random() > 0.5, // Mock pour l'instant
+            verified: p.is_verified || false,
             premium: false,
             lastActive: "Récemment",
             photo: p.photos && p.photos.length > 0 ? p.photos[0] : 'https://placehold.co/400x600/1a1a2e/gold?text=😊',
@@ -130,8 +130,8 @@ function DiscoverPage() {
             favoriteVerse: "",
             church: p.church_attendance || "",
             faithImportance: p.practice_level || "",
-            // Mock online status for filter demo
-            online: Math.random() > 0.7
+            // No mock online status
+            online: false
           }));
           setDeck(formatted);
         }
