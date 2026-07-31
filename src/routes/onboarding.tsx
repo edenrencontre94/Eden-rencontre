@@ -156,11 +156,14 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 function OnboardingPage() {
-  // Restaurer depuis localStorage si disponible (côté client uniquement)
   const [step, setStep] = useState<number>(() => {
     if (typeof window === "undefined") return 1;
-    const saved = localStorage.getItem("agape_onboarding_step");
-    return saved ? parseInt(saved, 10) : 1;
+    try {
+      const saved = localStorage.getItem("agape_onboarding_step");
+      return saved ? parseInt(saved, 10) : 1;
+    } catch {
+      return 1;
+    }
   });
   const [data, setData] = useState<OnboardingData>(() => {
     if (typeof window === "undefined") return initialData;
@@ -168,7 +171,7 @@ function OnboardingPage() {
       const saved = localStorage.getItem("agape_onboarding_data");
       if (saved) {
         const parsed = JSON.parse(saved);
-        return { ...parsed, photos: [] };
+        return { ...initialData, ...parsed, photos: [] };
       }
     } catch {}
     return initialData;
@@ -177,13 +180,17 @@ function OnboardingPage() {
 
   // Sauvegarder dans localStorage à chaque changement
   useEffect(() => {
-    localStorage.setItem("agape_onboarding_step", String(step));
+    try {
+      localStorage.setItem("agape_onboarding_step", String(step));
+    } catch {}
   }, [step]);
 
   useEffect(() => {
-    // Ne pas sauvegarder les photos (blobs non sérialisables)
-    const toSave = { ...data, photos: [] };
-    localStorage.setItem("agape_onboarding_data", JSON.stringify(toSave));
+    // Ne pas sauvegarder les photos (fichiers locaux)
+    const { photos, ...toSave } = data;
+    try {
+      localStorage.setItem("agape_onboarding_data", JSON.stringify(toSave));
+    } catch {}
   }, [data]);
 
   const update = <K extends keyof OnboardingData>(
@@ -262,9 +269,11 @@ function OnboardingPage() {
           } else {
             // 3. Dernier recours : sessionStorage (email non confirmé)
             if (typeof window !== "undefined") {
-              userId = sessionStorage.getItem("agape_pending_user_id");
-              firstName = sessionStorage.getItem("agape_pending_first_name") || "";
-              lastName = sessionStorage.getItem("agape_pending_last_name") || "";
+              try {
+                userId = sessionStorage.getItem("agape_pending_user_id");
+                firstName = sessionStorage.getItem("agape_pending_first_name") || "";
+                lastName = sessionStorage.getItem("agape_pending_last_name") || "";
+              } catch {}
             }
           }
         }
@@ -319,11 +328,13 @@ function OnboardingPage() {
         toast.dismiss("saving");
         // Nettoyer sessionStorage et localStorage après enregistrement réussi
         if (typeof window !== "undefined") {
-          sessionStorage.removeItem("agape_pending_user_id");
-          sessionStorage.removeItem("agape_pending_first_name");
-          sessionStorage.removeItem("agape_pending_last_name");
-          localStorage.removeItem("agape_onboarding_step");
-          localStorage.removeItem("agape_onboarding_data");
+          try {
+            sessionStorage.removeItem("agape_pending_user_id");
+            sessionStorage.removeItem("agape_pending_first_name");
+            sessionStorage.removeItem("agape_pending_last_name");
+            localStorage.removeItem("agape_onboarding_step");
+            localStorage.removeItem("agape_onboarding_data");
+          } catch {}
         }
         setSubmitted(true);
         toast.success("Profil créé avec succès !");
