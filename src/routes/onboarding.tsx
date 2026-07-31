@@ -156,17 +156,18 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 function OnboardingPage() {
-  // Restaurer depuis localStorage si disponible
+  // Restaurer depuis localStorage si disponible (côté client uniquement)
   const [step, setStep] = useState<number>(() => {
+    if (typeof window === "undefined") return 1;
     const saved = localStorage.getItem("agape_onboarding_step");
     return saved ? parseInt(saved, 10) : 1;
   });
   const [data, setData] = useState<OnboardingData>(() => {
+    if (typeof window === "undefined") return initialData;
     try {
       const saved = localStorage.getItem("agape_onboarding_data");
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Les photos (objets avec URL blob) ne survivent pas au refresh — on les réinitialise
         return { ...parsed, photos: [] };
       }
     } catch {}
@@ -260,9 +261,11 @@ function OnboardingPage() {
             lastName = user.user_metadata?.last_name || "";
           } else {
             // 3. Dernier recours : sessionStorage (email non confirmé)
-            userId = sessionStorage.getItem("agape_pending_user_id");
-            firstName = sessionStorage.getItem("agape_pending_first_name") || "";
-            lastName = sessionStorage.getItem("agape_pending_last_name") || "";
+            if (typeof window !== "undefined") {
+              userId = sessionStorage.getItem("agape_pending_user_id");
+              firstName = sessionStorage.getItem("agape_pending_first_name") || "";
+              lastName = sessionStorage.getItem("agape_pending_last_name") || "";
+            }
           }
         }
 
@@ -315,11 +318,13 @@ function OnboardingPage() {
 
         toast.dismiss("saving");
         // Nettoyer sessionStorage et localStorage après enregistrement réussi
-        sessionStorage.removeItem("agape_pending_user_id");
-        sessionStorage.removeItem("agape_pending_first_name");
-        sessionStorage.removeItem("agape_pending_last_name");
-        localStorage.removeItem("agape_onboarding_step");
-        localStorage.removeItem("agape_onboarding_data");
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("agape_pending_user_id");
+          sessionStorage.removeItem("agape_pending_first_name");
+          sessionStorage.removeItem("agape_pending_last_name");
+          localStorage.removeItem("agape_onboarding_step");
+          localStorage.removeItem("agape_onboarding_data");
+        }
         setSubmitted(true);
         toast.success("Profil créé avec succès !");
 

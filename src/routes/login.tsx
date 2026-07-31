@@ -144,7 +144,7 @@ function LoginPage() {
             <div className="mt-6 pt-6 border-t border-border/50 text-center">
               <p className="text-sm text-muted-foreground">
                 Pas encore de compte ?{" "}
-                <Link to="/onboarding" className="text-primary font-semibold hover:opacity-80 transition">
+                <Link to="/inscription" className="text-primary font-semibold hover:opacity-80 transition">
                   Creer mon compte
                 </Link>
               </p>
