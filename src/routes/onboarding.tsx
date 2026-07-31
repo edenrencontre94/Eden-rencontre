@@ -1081,7 +1081,7 @@ function SourceScreen({ onSelect, onBack }: { onSelect: (s: string) => void; onB
       <header className="border-b border-border/40 backdrop-blur-md bg-background/80 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
-            <img src={logoAsset.url} alt="AgapeMeet" className="w-10 h-10 object-contain" />
+            <img src={logoAsset} alt="AgapeMeet" className="w-10 h-10 object-contain" />
             <span className="font-serif text-xl font-semibold">AgapeMeet</span>
           </Link>
           <button
