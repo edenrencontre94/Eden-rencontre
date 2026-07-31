@@ -18,7 +18,7 @@ import {
   Twitter,
   Mail,
 } from "lucide-react";
-import logoAsset from "@/assets/agapemeet-logo.png.asset.json";
+import logoAsset from "@/assets/logo.jpg";
 import { useState } from "react";
 import heroCouple from "@/assets/hero-couple.jpg";
 import testimonial1 from "@/assets/testimonial-1.jpg";
@@ -71,7 +71,7 @@ function Nav() {
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-background/70 border-b border-border/50">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <a href="#top" className="flex items-center gap-2">
-          <img src={logoAsset.url} alt="AgapeMeet" className="w-10 h-10 object-contain" />
+          <img src={logoAsset} alt="AgapeMeet" className="w-10 h-10 object-contain" />
           <span className="font-serif text-xl font-semibold tracking-tight">
             Agape<span className="text-gold">Meet</span>
           </span>
@@ -84,7 +84,7 @@ function Nav() {
           <a href="#faq" className="hover:text-foreground transition">FAQ</a>
         </nav>
         <Link
-          to="/onboarding"
+          to="/inscription"
           className="inline-flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-5 py-2.5 text-sm font-medium hover:bg-primary/90 transition shadow-soft"
         >
           Commencer
@@ -124,7 +124,7 @@ function Hero() {
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-3">
             <Link
-              to="/onboarding"
+              to="/inscription"
               className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-7 py-4 text-base font-medium hover:bg-primary/90 transition shadow-elegant"
             >
               Commencer gratuitement
@@ -436,10 +436,10 @@ function Pricing() {
       highlight: false,
     },
     {
-      name: "Premium",
+      name: "Alliance",
       price: "12,99€",
       period: "par mois",
-      desc: "L'expérience complète pour trouver votre conjoint.",
+      desc: "Pour ceux qui visent le mariage",
       features: [
         "Voir qui vous aime",
         "Likes & Super Likes illimités",
@@ -511,7 +511,7 @@ function Pricing() {
                 ))}
               </ul>
               <Link
-                to="/onboarding"
+                to="/inscription"
                 className={`mt-8 inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition ${
                   p.highlight
                     ? "bg-gold text-gold-foreground hover:bg-gold/90"
@@ -625,7 +625,7 @@ function FinalCTA() {
             </p>
             <div className="mt-10 flex flex-wrap justify-center gap-3">
               <Link
-                to="/onboarding"
+                to="/inscription"
                 className="inline-flex items-center gap-2 rounded-full bg-gold text-gold-foreground px-8 py-4 text-base font-medium hover:brightness-105 transition shadow-soft"
               >
                 Commencer gratuitement
@@ -651,7 +651,7 @@ function Footer() {
       <div className="max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-4 gap-10">
         <div className="md:col-span-2">
           <div className="flex items-center gap-2">
-            <img src={logoAsset.url} alt="AgapeMeet" className="w-10 h-10 object-contain" />
+            <img src={logoAsset} alt="AgapeMeet" className="w-10 h-10 object-contain" />
             <span className="font-serif text-xl font-semibold">
               Agape<span className="text-gold">Meet</span>
             </span>

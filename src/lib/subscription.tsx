@@ -59,8 +59,8 @@ export const PLANS: Plan[] = [
   },
   {
     id: "premium",
-    name: "N° 1",
-    tagline: "L'expérience complète AgapeMeet",
+    name: "Alliance",
+    tagline: "Pour ceux qui visent le mariage",
     priceMonthly: 6500,
     priceYearly: 54000,
     highlight: true,
@@ -85,12 +85,12 @@ export const PLANS: Plan[] = [
   },
   {
     id: "alliance",
-    name: "Alliance",
-    tagline: "Pour ceux qui visent le mariage",
+    name: "Agape",
+    tagline: "Il représente l'amour inconditionnel de Dieu.",
     priceMonthly: 12000,
     priceYearly: 98000,
     perks: [
-      "Tout le plan N° 1",
+      "Tout le plan Alliance",
       "Super Likes et Boosts illimités",
       "Mode incognito",
       "Vérification identité + foi prioritaire",

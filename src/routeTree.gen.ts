@@ -9,19 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as InscriptionRouteImport } from './routes/inscription'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AppIndexRouteImport } from './routes/app.index'
-import { Route as AppMessagesRouteImport } from './routes/app.messages'
-import { Route as AppDemandesRouteImport } from './routes/app.demandes'
-import { Route as AppDecouvrirRouteImport } from './routes/app.decouvrir'
-import { Route as AppCommunauteRouteImport } from './routes/app.communaute'
 import { Route as AppAbonnementRouteImport } from './routes/app.abonnement'
+import { Route as AppCommunauteRouteImport } from './routes/app.communaute'
+import { Route as AppDecouvrirRouteImport } from './routes/app.decouvrir'
+import { Route as AppDemandesRouteImport } from './routes/app.demandes'
+import { Route as AppMessagesRouteImport } from './routes/app.messages'
+import { Route as AppProfilRouteImport } from './routes/app.profil'
 
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -29,9 +32,19 @@ const AppRoute = AppRouteImport.update({
   path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const InscriptionRoute = InscriptionRouteImport.update({
+  id: '/inscription',
+  path: '/inscription',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -39,19 +52,9 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppMessagesRoute = AppMessagesRouteImport.update({
-  id: '/messages',
-  path: '/messages',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDemandesRoute = AppDemandesRouteImport.update({
-  id: '/demandes',
-  path: '/demandes',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDecouvrirRoute = AppDecouvrirRouteImport.update({
-  id: '/decouvrir',
-  path: '/decouvrir',
+const AppAbonnementRoute = AppAbonnementRouteImport.update({
+  id: '/abonnement',
+  path: '/abonnement',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCommunauteRoute = AppCommunauteRouteImport.update({
@@ -59,43 +62,67 @@ const AppCommunauteRoute = AppCommunauteRouteImport.update({
   path: '/communaute',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAbonnementRoute = AppAbonnementRouteImport.update({
-  id: '/abonnement',
-  path: '/abonnement',
+const AppDecouvrirRoute = AppDecouvrirRouteImport.update({
+  id: '/decouvrir',
+  path: '/decouvrir',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDemandesRoute = AppDemandesRouteImport.update({
+  id: '/demandes',
+  path: '/demandes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMessagesRoute = AppMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProfilRoute = AppProfilRouteImport.update({
+  id: '/profil',
+  path: '/profil',
   getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/inscription': typeof InscriptionRoute
+  '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/app/abonnement': typeof AppAbonnementRoute
   '/app/communaute': typeof AppCommunauteRoute
   '/app/decouvrir': typeof AppDecouvrirRoute
   '/app/demandes': typeof AppDemandesRoute
   '/app/messages': typeof AppMessagesRoute
+  '/app/profil': typeof AppProfilRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/inscription': typeof InscriptionRoute
+  '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/app/abonnement': typeof AppAbonnementRoute
   '/app/communaute': typeof AppCommunauteRoute
   '/app/decouvrir': typeof AppDecouvrirRoute
   '/app/demandes': typeof AppDemandesRoute
   '/app/messages': typeof AppMessagesRoute
+  '/app/profil': typeof AppProfilRoute
   '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/inscription': typeof InscriptionRoute
+  '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/app/abonnement': typeof AppAbonnementRoute
   '/app/communaute': typeof AppCommunauteRoute
   '/app/decouvrir': typeof AppDecouvrirRoute
   '/app/demandes': typeof AppDemandesRoute
   '/app/messages': typeof AppMessagesRoute
+  '/app/profil': typeof AppProfilRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
@@ -103,49 +130,60 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/inscription'
+    | '/login'
     | '/onboarding'
     | '/app/abonnement'
     | '/app/communaute'
     | '/app/decouvrir'
     | '/app/demandes'
     | '/app/messages'
+    | '/app/profil'
     | '/app/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/inscription'
+    | '/login'
     | '/onboarding'
     | '/app/abonnement'
     | '/app/communaute'
     | '/app/decouvrir'
     | '/app/demandes'
     | '/app/messages'
+    | '/app/profil'
     | '/app'
   id:
     | '__root__'
     | '/'
     | '/app'
+    | '/inscription'
+    | '/login'
     | '/onboarding'
     | '/app/abonnement'
     | '/app/communaute'
     | '/app/decouvrir'
     | '/app/demandes'
     | '/app/messages'
+    | '/app/profil'
     | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  InscriptionRoute: typeof InscriptionRoute
+  LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app': {
@@ -155,11 +193,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/inscription': {
+      id: '/inscription'
+      path: '/inscription'
+      fullPath: '/inscription'
+      preLoaderRoute: typeof InscriptionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/': {
@@ -169,25 +221,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/messages': {
-      id: '/app/messages'
-      path: '/messages'
-      fullPath: '/app/messages'
-      preLoaderRoute: typeof AppMessagesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/demandes': {
-      id: '/app/demandes'
-      path: '/demandes'
-      fullPath: '/app/demandes'
-      preLoaderRoute: typeof AppDemandesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/app/decouvrir': {
-      id: '/app/decouvrir'
-      path: '/decouvrir'
-      fullPath: '/app/decouvrir'
-      preLoaderRoute: typeof AppDecouvrirRouteImport
+    '/app/abonnement': {
+      id: '/app/abonnement'
+      path: '/abonnement'
+      fullPath: '/app/abonnement'
+      preLoaderRoute: typeof AppAbonnementRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/communaute': {
@@ -197,11 +235,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCommunauteRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/abonnement': {
-      id: '/app/abonnement'
-      path: '/abonnement'
-      fullPath: '/app/abonnement'
-      preLoaderRoute: typeof AppAbonnementRouteImport
+    '/app/decouvrir': {
+      id: '/app/decouvrir'
+      path: '/decouvrir'
+      fullPath: '/app/decouvrir'
+      preLoaderRoute: typeof AppDecouvrirRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/demandes': {
+      id: '/app/demandes'
+      path: '/demandes'
+      fullPath: '/app/demandes'
+      preLoaderRoute: typeof AppDemandesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/messages': {
+      id: '/app/messages'
+      path: '/messages'
+      fullPath: '/app/messages'
+      preLoaderRoute: typeof AppMessagesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/profil': {
+      id: '/app/profil'
+      path: '/profil'
+      fullPath: '/app/profil'
+      preLoaderRoute: typeof AppProfilRouteImport
       parentRoute: typeof AppRoute
     }
   }
@@ -213,6 +272,7 @@ interface AppRouteChildren {
   AppDecouvrirRoute: typeof AppDecouvrirRoute
   AppDemandesRoute: typeof AppDemandesRoute
   AppMessagesRoute: typeof AppMessagesRoute
+  AppProfilRoute: typeof AppProfilRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
@@ -222,6 +282,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDecouvrirRoute: AppDecouvrirRoute,
   AppDemandesRoute: AppDemandesRoute,
   AppMessagesRoute: AppMessagesRoute,
+  AppProfilRoute: AppProfilRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
@@ -230,8 +291,20 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  InscriptionRoute: InscriptionRoute,
+  LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

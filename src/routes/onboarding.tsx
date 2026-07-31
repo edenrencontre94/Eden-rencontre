@@ -1,21 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useRef, useMemo, type ReactElement } from "react";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  Heart,
-  Church,
-  Search,
-  Camera,
-  Upload,
-  X,
-  Sparkles,
-} from "lucide-react";
+import { Heart, Search, Camera, Church, ArrowRight, ArrowLeft, Upload, X, Sparkles, Check, Lock, Crown, Video } from "lucide-react";
 import { Music2, Instagram, Facebook, Youtube, Users, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import logoAsset from "@/assets/agapemeet-logo.png.asset.json";
+import logoAsset from "@/assets/logo.jpg";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -103,9 +92,7 @@ function GenderChoice({
 }
 
 type OnboardingData = {
-  firstName: string;
   source: string;
-  lastName: string;
   birthDate: string;
   gender: string;
   city: string;
@@ -116,17 +103,14 @@ type OnboardingData = {
   baptized: string;
   churchAttendance: string;
   seekingGender: string;
-  ageRange: [number, number];
-  distance: number;
   marriageIntent: string;
+  hasChildren: string;
   wantsChildren: string;
   photos: Photo[];
 };
 
 const initialData: OnboardingData = {
-  firstName: "",
   source: "",
-  lastName: "",
   birthDate: "",
   gender: "",
   city: "",
@@ -137,9 +121,8 @@ const initialData: OnboardingData = {
   baptized: "",
   churchAttendance: "",
   seekingGender: "",
-  ageRange: [22, 35],
-  distance: 50,
   marriageIntent: "",
+  hasChildren: "",
   wantsChildren: "",
   photos: [],
 };
@@ -173,9 +156,34 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 function OnboardingPage() {
-  const [step, setStep] = useState(1);
-  const [data, setData] = useState<OnboardingData>(initialData);
+  // Restaurer depuis localStorage si disponible
+  const [step, setStep] = useState<number>(() => {
+    const saved = localStorage.getItem("agape_onboarding_step");
+    return saved ? parseInt(saved, 10) : 1;
+  });
+  const [data, setData] = useState<OnboardingData>(() => {
+    try {
+      const saved = localStorage.getItem("agape_onboarding_data");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Les photos (objets avec URL blob) ne survivent pas au refresh — on les réinitialise
+        return { ...parsed, photos: [] };
+      }
+    } catch {}
+    return initialData;
+  });
   const [submitted, setSubmitted] = useState(false);
+
+  // Sauvegarder dans localStorage à chaque changement
+  useEffect(() => {
+    localStorage.setItem("agape_onboarding_step", String(step));
+  }, [step]);
+
+  useEffect(() => {
+    // Ne pas sauvegarder les photos (blobs non sérialisables)
+    const toSave = { ...data, photos: [] };
+    localStorage.setItem("agape_onboarding_data", JSON.stringify(toSave));
+  }, [data]);
 
   const update = <K extends keyof OnboardingData>(
     key: K,
@@ -183,15 +191,24 @@ function OnboardingPage() {
   ) => setData((d) => ({ ...d, [key]: value }));
 
   const canNext = useMemo(() => {
-    if (step === 1)
+    if (step === 1) {
+      const isAdult = (() => {
+        if (!data.birthDate) return false;
+        const birth = new Date(data.birthDate);
+        const today = new Date();
+        const age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        return age > 18 || (age === 18 && m >= 0 && (m > 0 || today.getDate() >= birth.getDate()));
+      })();
       return (
-        data.firstName.trim().length >= 2 &&
-        data.lastName.trim().length >= 2 &&
         data.birthDate !== "" &&
+        isAdult &&
         data.gender !== "" &&
         data.city.trim().length >= 2 &&
-        data.country !== ""
+        data.country !== "" &&
+        data.bio.trim().length >= 10
       );
+    }
     if (step === 2)
       return (
         data.denomination !== "" &&
@@ -203,29 +220,113 @@ function OnboardingPage() {
       return (
         data.seekingGender !== "" &&
         data.marriageIntent !== "" &&
+        data.hasChildren !== "" &&
         data.wantsChildren !== ""
       );
-    if (step === 4) return data.photos.length >= 2;
+    if (step === 4) return data.photos.length >= 1;
     return false;
   }, [step, data]);
 
   const progress = (step / steps.length) * 100;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!canNext) {
       toast.error("Veuillez compléter tous les champs requis");
       return;
     }
-    if (step < 4) setStep(step + 1);
-    else {
+    if (step < 4) {
+      setStep(step + 1);
+    } else {
       try {
-        localStorage.setItem(
-          "agapemeet_onboarding",
-          JSON.stringify({ ...data, photos: data.photos.map((p) => p.name) }),
-        );
-      } catch {}
-      setSubmitted(true);
-      toast.success("Profil créé avec succès !");
+        const { supabase } = await import('@/lib/supabase');
+        
+        // Récupérer la session active (getSession inclut le token JWT pour RLS)
+        let userId: string | null = null;
+        let firstName = "";
+        let lastName = "";
+
+        // 1. Essayer la session active
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          userId = session.user.id;
+          firstName = session.user.user_metadata?.first_name || "";
+          lastName = session.user.user_metadata?.last_name || "";
+        } else {
+          // 2. Fallback : tenter de récupérer l'utilisateur (refreshToken)
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            userId = user.id;
+            firstName = user.user_metadata?.first_name || "";
+            lastName = user.user_metadata?.last_name || "";
+          } else {
+            // 3. Dernier recours : sessionStorage (email non confirmé)
+            userId = sessionStorage.getItem("agape_pending_user_id");
+            firstName = sessionStorage.getItem("agape_pending_first_name") || "";
+            lastName = sessionStorage.getItem("agape_pending_last_name") || "";
+          }
+        }
+
+        if (!userId) throw new Error("Erreur: Utilisateur non connecté. Veuillez vous inscrire d'abord.");
+
+        toast.info("Enregistrement du profil en cours...", { id: "saving" });
+
+        const uploadedPhotos = [];
+        for (const [index, photo] of data.photos.entries()) {
+          try {
+            const res = await fetch(photo.url);
+            const blob = await res.blob();
+            const ext = photo.name.split('.').pop() || 'jpg';
+            const filePath = `${userId}/${Date.now()}-${index}.${ext}`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('photos')
+              .upload(filePath, blob, { contentType: blob.type });
+              
+            if (!uploadError) {
+              const { data: publicUrlData } = supabase.storage.from('photos').getPublicUrl(filePath);
+              uploadedPhotos.push(publicUrlData.publicUrl);
+            }
+          } catch (e) {
+            console.error("Erreur lors de l'upload de la photo:", e);
+          }
+        }
+
+        const { error: profileError } = await supabase.from('profiles').insert({
+          id: userId,
+          first_name: firstName,
+          last_name: lastName,
+          birth_date: data.birthDate,
+          gender: data.gender,
+          city: data.city,
+          country: data.country,
+          bio: data.bio,
+          denomination: data.denomination,
+          practice_level: data.practiceLevel,
+          baptized: data.baptized,
+          church_attendance: data.churchAttendance,
+          seeking_gender: data.seekingGender,
+          marriage_intent: data.marriageIntent,
+          has_children: data.hasChildren,
+          wants_children: data.wantsChildren,
+          photos: uploadedPhotos
+        });
+
+        if (profileError) throw profileError;
+
+        toast.dismiss("saving");
+        // Nettoyer sessionStorage et localStorage après enregistrement réussi
+        sessionStorage.removeItem("agape_pending_user_id");
+        sessionStorage.removeItem("agape_pending_first_name");
+        sessionStorage.removeItem("agape_pending_last_name");
+        localStorage.removeItem("agape_onboarding_step");
+        localStorage.removeItem("agape_onboarding_data");
+        setSubmitted(true);
+        toast.success("Profil créé avec succès !");
+
+      } catch (error: any) {
+        toast.dismiss("saving");
+        toast.error("Erreur lors de l'inscription : " + error.message);
+      }
     }
   };
 
@@ -234,24 +335,25 @@ function OnboardingPage() {
   };
 
   if (submitted) return <SuccessScreen data={data} />;
+
   if (!data.source)
     return (
       <SourceScreen
         onSelect={(s) => update("source", s)}
+        onBack={() => {}} // Could redirect to home or login if needed
       />
     );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-secondary/30">
-      {/* Header */}
       <header className="border-b border-border/40 backdrop-blur-md bg-background/80 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
-            <img src={logoAsset.url} alt="AgapeMeet" className="w-10 h-10 object-contain" />
+            <img src={logoAsset} alt="AgapeMeet" className="w-10 h-10 object-contain" />
             <span className="font-serif text-xl font-semibold">AgapeMeet</span>
           </Link>
           <span className="text-sm text-muted-foreground">
-            Étape {step} <span className="text-foreground/40">/ 4</span>
+            Étape {step} <span className="text-foreground/40">/ {steps.length}</span>
           </span>
         </div>
       </header>
@@ -326,27 +428,30 @@ function OnboardingPage() {
             </motion.div>
           </AnimatePresence>
 
-          {/* Nav */}
           <div className="px-6 sm:px-10 py-5 border-t border-border/50 bg-secondary/30 flex items-center justify-between">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={handleBack}
-              disabled={step === 1}
-              className="gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Retour
-            </Button>
-            <Button
-              type="button"
-              onClick={handleNext}
-              size="lg"
-              className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 shadow-elegant"
-            >
-              {step === 4 ? "Terminer" : "Continuer"}
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={handleBack}
+                disabled={step === 1}
+                className="gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Retour
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                type="button"
+                onClick={handleNext}
+                size="lg"
+                className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 shadow-elegant"
+              >
+                {step === 4 ? "Terminer" : "Continuer"}
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </motion.div>
           </div>
         </div>
 
@@ -371,57 +476,57 @@ function StepProfile({
     <div>
       <StepHeader
         eyebrow="Étape 1"
-        title="Créez votre profil"
-        description="Ces informations apparaîtront sur votre profil."
+        title="Votre Profil"
+        description="Ces informations apparaîtront publiquement sur votre profil."
       />
       <div className="grid sm:grid-cols-2 gap-5 mt-8">
-        <Field label="Prénom" htmlFor="firstName">
-          <Input
-            id="firstName"
-            maxLength={50}
-            value={data.firstName}
-            onChange={(e) => update("firstName", e.target.value)}
-            placeholder="Marie"
-          />
-        </Field>
-        <Field label="Nom" htmlFor="lastName">
-          <Input
-            id="lastName"
-            maxLength={50}
-            value={data.lastName}
-            onChange={(e) => update("lastName", e.target.value)}
-            placeholder="Dupont"
-          />
-        </Field>
-        <Field label="Date de naissance" htmlFor="birthDate">
-          <Input
-            id="birthDate"
-            type="date"
-            value={data.birthDate}
-            max={new Date(
-              new Date().setFullYear(new Date().getFullYear() - 18),
-            )
-              .toISOString()
-              .split("T")[0]}
-            onChange={(e) => update("birthDate", e.target.value)}
-          />
-        </Field>
-        <Field label="Genre">
-          <div className="grid grid-cols-2 gap-3">
-            <GenderChoice
-              active={data.gender === "femme"}
-              onClick={() => update("gender", "femme")}
-              label="Femme"
-              icon={WomanIcon}
+        <div className="sm:col-span-2">
+          <Field label="Date de naissance" htmlFor="birthDate">
+            <Input
+              id="birthDate"
+              type="date"
+              value={data.birthDate}
+              max={new Date(
+                new Date().setFullYear(new Date().getFullYear() - 18),
+              )
+                .toISOString()
+                .split("T")[0]}
+              onChange={(e) => update("birthDate", e.target.value)}
             />
-            <GenderChoice
-              active={data.gender === "homme"}
-              onClick={() => update("gender", "homme")}
-              label="Homme"
-              icon={ManIcon}
-            />
-          </div>
-        </Field>
+          </Field>
+          {data.birthDate && (() => {
+            const birth = new Date(data.birthDate);
+            const today = new Date();
+            const age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            const isAdult = age > 18 || (age === 18 && m >= 0 && (m > 0 || today.getDate() >= birth.getDate()));
+            if (!isAdult) return (
+              <div className="mt-2 flex items-center gap-2 px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-sm font-medium">
+                <span>⛔</span>
+                <span>Vous devez avoir au moins <strong>18 ans</strong> pour vous inscrire sur AgapeMeet.</span>
+              </div>
+            );
+            return null;
+          })()}
+        </div>
+        <div className="sm:col-span-2">
+          <Field label="Genre">
+            <div className="grid grid-cols-2 gap-3">
+              <GenderChoice
+                active={data.gender === "femme"}
+                onClick={() => update("gender", "femme")}
+                label="Femme"
+                icon={WomanIcon}
+              />
+              <GenderChoice
+                active={data.gender === "homme"}
+                onClick={() => update("gender", "homme")}
+                label="Homme"
+                icon={ManIcon}
+              />
+            </div>
+          </Field>
+        </div>
         <Field label="Ville" htmlFor="city">
           <Input
             id="city"
@@ -463,7 +568,7 @@ function StepProfile({
           </Select>
         </Field>
         <div className="sm:col-span-2">
-          <Field label="Présentation (optionnel)" htmlFor="bio">
+          <Field label="Présentation" htmlFor="bio">
             <Textarea
               id="bio"
               maxLength={500}
@@ -612,32 +717,6 @@ function StepSearch({
           </div>
         </Field>
 
-        <Field
-          label={`Tranche d'âge : ${data.ageRange[0]} – ${data.ageRange[1]} ans`}
-        >
-          <div className="px-2 pt-3">
-            <Slider
-              min={18}
-              max={70}
-              step={1}
-              value={data.ageRange}
-              onValueChange={(v) => update("ageRange", [v[0], v[1]] as [number, number])}
-            />
-          </div>
-        </Field>
-
-        <Field label={`Distance maximale : ${data.distance} km`}>
-          <div className="px-2 pt-3">
-            <Slider
-              min={5}
-              max={500}
-              step={5}
-              value={[data.distance]}
-              onValueChange={(v) => update("distance", v[0])}
-            />
-          </div>
-        </Field>
-
         <Field label="Intention par rapport au mariage">
           <div className="grid sm:grid-cols-3 gap-2">
             {[
@@ -655,12 +734,27 @@ function StepSearch({
           </div>
         </Field>
 
-        <Field label="Souhaitez-vous des enfants ?">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <Field label="Avez-vous des enfants ?">
+          <div className="grid grid-cols-2 sm:grid-cols-2 gap-2">
+            {[
+              { v: "oui", l: "Oui" },
+              { v: "non", l: "Non" },
+            ].map((o) => (
+              <ChoiceChip
+                key={o.v}
+                active={data.hasChildren === o.v}
+                onClick={() => update("hasChildren", o.v)}
+                label={o.l}
+              />
+            ))}
+          </div>
+        </Field>
+
+        <Field label="Souhaitez-vous avoir des enfants ?">
+          <div className="grid grid-cols-3 gap-2">
             {[
               { v: "oui", l: "Oui" },
               { v: "peut-etre", l: "Peut-être" },
-              { v: "deja", l: "J'en ai déjà" },
               { v: "non", l: "Non" },
             ].map((o) => (
               <ChoiceChip
@@ -686,7 +780,8 @@ function StepPhotos({
   update: <K extends keyof OnboardingData>(k: K, v: OnboardingData[K]) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const MAX = 6;
+  const isPremium = false; // Sera géré dynamiquement selon l'état de l'utilisateur
+  const MAX = isPremium ? 5 : 1;
   const GenderAvatar =
     data.gender === "femme" ? WomanIcon : data.gender === "homme" ? ManIcon : null;
 
@@ -744,7 +839,7 @@ function StepPhotos({
       <StepHeader
         eyebrow="Étape 4"
         title="Ajoutez vos photos"
-        description="Minimum 2 photos, jusqu'à 6. La première sera votre photo principale."
+        description="Minimum 1 photo pour continuer. Passez Premium pour plus de photos et une vidéo."
       />
 
       <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -800,6 +895,38 @@ function StepPhotos({
             <span className="text-xs">{data.photos.length}/{MAX}</span>
           </button>
         )}
+
+        {/* Locked Premium Photos */}
+        {!isPremium && Array.from({ length: 4 }).map((_, i) => (
+          <button
+            key={`locked-photo-${i}`}
+            type="button"
+            onClick={() => toast.error("Devenez membre Premium pour ajouter jusqu'à 5 photos !")}
+            className="aspect-[3/4] rounded-2xl border border-border bg-secondary/20 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:bg-secondary/40 transition group"
+          >
+            <Lock className="w-5 h-5 text-muted-foreground group-hover:text-gold transition" />
+            <span className="text-xs font-medium">Photo {i + 2}</span>
+            <div className="flex items-center gap-1 text-[10px] text-gold font-bold bg-gold/10 px-2 py-0.5 rounded-full mt-1">
+              <Crown className="w-3 h-3" /> Premium
+            </div>
+          </button>
+        ))}
+
+        {/* Locked Premium Video */}
+        {!isPremium && (
+          <button
+            type="button"
+            onClick={() => toast.error("La vidéo de profil (jusqu'à 20 Mo) est réservée aux membres Premium !")}
+            className="aspect-[3/4] rounded-2xl border border-border bg-secondary/20 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:bg-secondary/40 transition group col-span-2 sm:col-span-1"
+          >
+            <Video className="w-6 h-6 text-muted-foreground group-hover:text-gold transition" />
+            <span className="text-sm font-medium">Vidéo</span>
+            <span className="text-xs text-center px-2">Présentez-vous en vidéo</span>
+            <div className="flex items-center gap-1 text-[10px] text-gold font-bold bg-gold/10 px-2 py-0.5 rounded-full mt-1">
+              <Crown className="w-3 h-3" /> Premium
+            </div>
+          </button>
+        )}
       </div>
 
       <input
@@ -839,7 +966,7 @@ function SuccessScreen({ data }: { data: OnboardingData }) {
           <Sparkles className="w-10 h-10 text-primary-foreground" />
         </div>
         <h1 className="font-serif text-3xl mt-6">
-          Bienvenue{data.firstName ? `, ${data.firstName}` : ""} !
+          Bienvenue !
         </h1>
         <p className="text-muted-foreground mt-3">
           Votre profil AgapeMeet est prêt. Nous préparons vos premières
@@ -915,8 +1042,10 @@ function ChoiceChip({
   label: string;
 }) {
   return (
-    <button
+    <motion.button
       type="button"
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className={`px-4 py-3 rounded-xl text-sm font-medium border transition-all text-left ${
         active
@@ -928,12 +1057,12 @@ function ChoiceChip({
         {label}
         {active && <Check className="w-4 h-4 text-primary shrink-0" />}
       </span>
-    </button>
+    </motion.button>
   );
 }
 
 // ---------- Source (pre-step) ----------
-function SourceScreen({ onSelect }: { onSelect: (s: string) => void }) {
+function SourceScreen({ onSelect, onBack }: { onSelect: (s: string) => void; onBack: () => void }) {
   const options: { id: string; label: string; icon: ReactElement; color: string }[] = [
     { id: "tiktok", label: "TikTok", icon: <Music2 className="w-6 h-6" />, color: "bg-foreground text-background" },
     { id: "instagram", label: "Instagram", icon: <Instagram className="w-6 h-6" />, color: "bg-gradient-to-tr from-fuchsia-500 via-pink-500 to-amber-400 text-white" },
@@ -950,6 +1079,14 @@ function SourceScreen({ onSelect }: { onSelect: (s: string) => void }) {
             <img src={logoAsset.url} alt="AgapeMeet" className="w-10 h-10 object-contain" />
             <span className="font-serif text-xl font-semibold">AgapeMeet</span>
           </Link>
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Retour
+          </button>
         </div>
       </header>
       <main className="max-w-2xl mx-auto px-4 sm:px-6 pt-10 pb-24">
@@ -963,13 +1100,15 @@ function SourceScreen({ onSelect }: { onSelect: (s: string) => void }) {
             <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-foreground">
               Comment nous as-tu découvert ?
             </h1>
-            <p className="text-muted-foreground mt-2 text-sm">Dis-nous d'où tu viens</p>
+            <p className="text-muted-foreground mt-2 text-sm">Dis-nous d'où tu viens 😊</p>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {options.map((o) => (
-              <button
+              <motion.button
                 key={o.id}
                 type="button"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => onSelect(o.id)}
                 className="group flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-border hover:border-primary/50 bg-background hover:bg-primary/5 py-6 px-4 transition-all shadow-soft hover:shadow-elegant"
               >
@@ -979,7 +1118,7 @@ function SourceScreen({ onSelect }: { onSelect: (s: string) => void }) {
                 <span className="text-sm font-medium text-foreground text-center">
                   {o.label}
                 </span>
-              </button>
+              </motion.button>
             ))}
           </div>
         </motion.div>

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import {
   Heart,
@@ -15,13 +15,8 @@ import {
   CheckCircle2,
   Crown,
 } from "lucide-react";
-import {
-  posts as seedPosts,
-  coupleTestimonials,
-  verseOfTheDay,
-  weeklyChallenge,
-  type Post,
-} from "@/lib/mock-data";
+import { supabase } from "@/lib/supabase";
+import { verseOfTheDay, weeklyChallenge, coupleTestimonials } from "@/lib/mock-data";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/communaute")({
@@ -47,46 +42,149 @@ const categories = [
   "Expérience",
 ] as const;
 
+type CategoryType = (typeof categories)[number];
 const sorts = ["Récentes", "Populaires"] as const;
 
+type CommunityPost = {
+  id: string;
+  user_id: string;
+  category: string;
+  text: string;
+  image_url: string | null;
+  likes_count: number;
+  created_at: string;
+  profile: {
+    id: string;
+    first_name: string;
+    city: string | null;
+    photos: string[] | null;
+    is_verified: boolean | null;
+    is_premium: boolean | null;
+  } | null;
+  liked: boolean;
+  saved: boolean;
+};
+
+function timeAgo(iso: string): string {
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60) return "À l'instant";
+  if (diff < 3600) return `${Math.floor(diff / 60)} min`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} h`;
+  return `${Math.floor(diff / 86400)} j`;
+}
+
 function CommunityPage() {
-  const [posts, setPosts] = useState<Post[]>(seedPosts);
-  const [category, setCategory] = useState<(typeof categories)[number]>("Tous");
+  const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState<CategoryType>("Tous");
   const [sort, setSort] = useState<(typeof sorts)[number]>("Récentes");
   const [composer, setComposer] = useState("");
+  const [publishing, setPublishing] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
+
+  useEffect(() => {
+    async function init() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+        const { data: p } = await supabase.from('profiles').select('first_name, city, photos').eq('id', user.id).single();
+        setCurrentUserProfile(p);
+      }
+    }
+    init();
+  }, []);
+
+  useEffect(() => {
+    async function loadPosts() {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('community_posts')
+          .select(`
+            id, user_id, category, text, image_url, likes_count, created_at,
+            profiles!community_posts_user_id_fkey(id, first_name, city, photos, is_verified, is_premium)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (error) throw error;
+        if (data) {
+          setPosts(data.map((p: any) => ({
+            ...p,
+            profile: p.profiles,
+            liked: false,
+            saved: false,
+          })));
+        }
+      } catch (err) {
+        console.error("Erreur chargement posts:", err);
+        // Graceful fallback: empty list
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadPosts();
+  }, []);
 
   const visible = useMemo(() => {
     let list = posts;
     if (category !== "Tous") list = list.filter((p) => p.category === category);
-    if (sort === "Populaires") list = [...list].sort((a, b) => b.likes - a.likes);
+    if (sort === "Populaires") list = [...list].sort((a, b) => b.likes_count - a.likes_count);
     return list;
   }, [posts, category, sort]);
 
-  const toggle = (id: string, key: "liked" | "saved") =>
+  const toggleLike = async (id: string) => {
     setPosts((all) =>
       all.map((p) => {
         if (p.id !== id) return p;
-        const next = { ...p, [key]: !p[key] };
-        if (key === "liked") next.likes = next.liked ? p.likes + 1 : p.likes - 1;
-        return next;
-      }),
+        const liked = !p.liked;
+        return { ...p, liked, likes_count: liked ? p.likes_count + 1 : p.likes_count - 1 };
+      })
     );
+    // Note: Real persistence would need a post_likes table
+  };
 
-  const publish = () => {
+  const toggleSave = (id: string) => {
+    setPosts((all) => all.map((p) => p.id !== id ? p : { ...p, saved: !p.saved }));
+  };
+
+  const publish = async () => {
     if (!composer.trim()) return;
-    const newPost: Post = {
-      id: `me-${Date.now()}`,
-      author: seedPosts[0].author,
-      category: "Réflexion",
-      time: "À l'instant",
-      text: composer.trim(),
-      likes: 0,
-      comments: 0,
-      shares: 0,
-    };
-    setPosts((p) => [newPost, ...p]);
-    setComposer("");
-    toast.success("Publication partagée avec la communauté");
+    if (!currentUserId) { toast.error("Vous devez être connecté pour publier"); return; }
+    setPublishing(true);
+    try {
+      const { data, error } = await supabase.from('community_posts').insert({
+        user_id: currentUserId,
+        category: "Réflexion",
+        text: composer.trim(),
+        likes_count: 0,
+      }).select().single();
+
+      if (error) throw error;
+
+      const newPost: CommunityPost = {
+        ...data,
+        profile: {
+          id: currentUserId,
+          first_name: currentUserProfile?.first_name || "Moi",
+          city: currentUserProfile?.city || null,
+          photos: currentUserProfile?.photos || null,
+          is_verified: false,
+          is_premium: false,
+        },
+        liked: false,
+        saved: false,
+      };
+      setPosts((prev) => [newPost, ...prev]);
+      setComposer("");
+      toast.success("Publication partagée avec la communauté ✨");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur lors de la publication");
+    } finally {
+      setPublishing(false);
+    }
   };
 
   return (
@@ -130,7 +228,7 @@ function CommunityPage() {
           <Sparkles className="w-4 h-4 text-primary" />
           <h3 className="font-serif text-lg font-semibold">Couples AgapeMeet</h3>
         </div>
-        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4">
+        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-none">
           {coupleTestimonials.map((c) => (
             <div key={c.id} className="shrink-0 w-64 rounded-2xl overflow-hidden bg-card border border-border/50 shadow-soft">
               <div className="aspect-[4/3]">
@@ -147,25 +245,35 @@ function CommunityPage() {
       </div>
 
       {/* Composer */}
-      <div className="rounded-2xl bg-card border border-border/50 p-3 mb-4">
-        <textarea
-          value={composer}
-          onChange={(e) => setComposer(e.target.value)}
-          placeholder="Partagez un témoignage, une prière, un verset…"
-          rows={2}
-          maxLength={800}
-          className="w-full resize-none bg-transparent focus:outline-none text-sm"
-        />
-        <div className="flex items-center justify-between mt-2">
-          <button className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary">
+      <div className="rounded-2xl bg-card border border-border/50 p-3 mb-4 shadow-soft">
+        <div className="flex items-start gap-3">
+          <img
+            src={currentUserProfile?.photos?.[0] || "https://placehold.co/100/1a1a2e/gold?text=😊"}
+            alt="Moi"
+            className="w-9 h-9 rounded-full object-cover flex-shrink-0 mt-1"
+          />
+          <div className="flex-1">
+            <textarea
+              value={composer}
+              onChange={(e) => setComposer(e.target.value)}
+              placeholder="Partagez un témoignage, une prière, un verset…"
+              rows={2}
+              maxLength={800}
+              className="w-full resize-none bg-transparent focus:outline-none text-sm placeholder:text-muted-foreground"
+            />
+          </div>
+        </div>
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40">
+          <button className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors">
             <ImageIcon className="w-4 h-4" /> Ajouter une photo
           </button>
           <button
             onClick={publish}
-            disabled={!composer.trim()}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-medium shadow-elegant disabled:opacity-40 disabled:shadow-none"
+            disabled={!composer.trim() || publishing}
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-sm font-medium shadow-elegant disabled:opacity-40 disabled:shadow-none transition-opacity"
           >
-            <Send className="w-3.5 h-3.5" /> Publier
+            {publishing ? <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+            Publier
           </button>
         </div>
       </div>
@@ -191,7 +299,7 @@ function CommunityPage() {
           <button
             key={s}
             onClick={() => setSort(s)}
-            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+            className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
               sort === s ? "bg-secondary text-primary" : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -201,59 +309,77 @@ function CommunityPage() {
       </div>
 
       {/* Feed */}
-      <div className="space-y-4">
-        {visible.map((p, i) => (
-          <motion.article
-            key={p.id}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.03 }}
-            className="rounded-2xl bg-card border border-border/50 shadow-soft overflow-hidden"
-          >
-            <header className="flex items-center gap-3 p-3">
-              <img src={p.author.photo} alt={p.author.firstName} className="w-10 h-10 rounded-full object-cover" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-sm truncate">{p.author.firstName}</span>
-                  {p.author.verified && <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />}
-                  {p.author.premium && <Crown className="w-3.5 h-3.5 text-gold shrink-0" />}
+      {loading ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-2xl bg-secondary/40 animate-pulse h-36" />
+          ))}
+        </div>
+      ) : visible.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border py-14 text-center text-sm text-muted-foreground">
+          Aucune publication pour l'instant. Soyez le premier à partager !
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {visible.map((p, i) => (
+            <motion.article
+              key={p.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.03 }}
+              className="rounded-2xl bg-card border border-border/50 shadow-soft overflow-hidden"
+            >
+              <header className="flex items-center gap-3 p-3">
+                <img
+                  src={p.profile?.photos?.[0] || "https://placehold.co/100/1a1a2e/gold?text=😊"}
+                  alt={p.profile?.first_name || "Membre"}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-semibold text-sm truncate">{p.profile?.first_name || "Membre"}</span>
+                    {p.profile?.is_verified && <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />}
+                    {p.profile?.is_premium && <Crown className="w-3.5 h-3.5 text-gold shrink-0" />}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {timeAgo(p.created_at)} · {p.profile?.city || ""}
+                  </div>
                 </div>
-                <div className="text-[11px] text-muted-foreground">{p.time} · {p.author.city}</div>
-              </div>
-              <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-secondary text-primary font-semibold">
-                {p.category}
-              </span>
-            </header>
-            <div className="px-4 pb-3 text-sm leading-relaxed whitespace-pre-line">{p.text}</div>
-            {p.image && (
-              <div className="max-h-96 overflow-hidden">
-                <img src={p.image} alt="" className="w-full object-cover" />
-              </div>
-            )}
-            <footer className="grid grid-cols-5 divide-x divide-border/50 border-t border-border/50">
-              <PostAction
-                icon={Heart}
-                label={String(p.likes)}
-                active={p.liked}
-                activeClass="text-red-500"
-                onClick={() => toggle(p.id, "liked")}
-                fillWhenActive
-              />
-              <PostAction icon={MessageCircle} label={String(p.comments)} onClick={() => toast.info("Commentaires bientôt disponibles")} />
-              <PostAction icon={Share2} label="Partager" onClick={() => toast.success("Lien copié")} />
-              <PostAction
-                icon={Bookmark}
-                label={p.saved ? "Sauvé" : "Sauver"}
-                active={p.saved}
-                activeClass="text-primary"
-                onClick={() => toggle(p.id, "saved")}
-                fillWhenActive
-              />
-              <PostAction icon={Flag} label="" onClick={() => toast.info("Signalement envoyé")} />
-            </footer>
-          </motion.article>
-        ))}
-      </div>
+                <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-secondary text-primary font-semibold">
+                  {p.category}
+                </span>
+              </header>
+              <div className="px-4 pb-3 text-sm leading-relaxed whitespace-pre-line">{p.text}</div>
+              {p.image_url && (
+                <div className="max-h-96 overflow-hidden">
+                  <img src={p.image_url} alt="" className="w-full object-cover" />
+                </div>
+              )}
+              <footer className="grid grid-cols-5 divide-x divide-border/50 border-t border-border/50">
+                <PostAction
+                  icon={Heart}
+                  label={String(p.likes_count)}
+                  active={p.liked}
+                  activeClass="text-red-500"
+                  onClick={() => toggleLike(p.id)}
+                  fillWhenActive
+                />
+                <PostAction icon={MessageCircle} label="0" onClick={() => toast.info("Commentaires bientôt disponibles")} />
+                <PostAction icon={Share2} label="Partager" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Lien copié"); }} />
+                <PostAction
+                  icon={Bookmark}
+                  label={p.saved ? "Sauvé" : "Sauver"}
+                  active={p.saved}
+                  activeClass="text-primary"
+                  onClick={() => toggleSave(p.id)}
+                  fillWhenActive
+                />
+                <PostAction icon={Flag} label="" onClick={() => toast.info("Signalement envoyé")} />
+              </footer>
+            </motion.article>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

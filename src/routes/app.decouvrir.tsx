@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "motion/react";
-import { useMemo, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { supabase } from "@/lib/supabase";
 import {
   X,
   Heart,
@@ -12,15 +13,16 @@ import {
   MapPin,
   Church,
   BookOpen,
-  Briefcase,
-  GraduationCap,
-  Ruler,
-  Languages,
   Info,
+  SlidersHorizontal,
+  Sparkles
 } from "lucide-react";
-import { profiles, type Profile } from "@/lib/mock-data";
+import { type Profile } from "@/lib/mock-data";
 import { toast } from "sonner";
 import { useSubscription } from "@/lib/subscription";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/app/decouvrir")({
   head: () => ({
@@ -34,10 +36,23 @@ export const Route = createFileRoute("/app/decouvrir")({
 });
 
 function DiscoverPage() {
-  const deck = useMemo(() => profiles.slice(0, 12), []);
+  const [deck, setDeck] = useState<Profile[]>([]);
+  const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
   const [history, setHistory] = useState<{ id: string; action: string }[]>([]);
   const [detail, setDetail] = useState<Profile | null>(null);
+  
+  // Filtres
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    onlineOnly: false,
+    verifiedOnly: false,
+    distance: 50,
+    city: "",
+    denomination: "",
+  });
+  const [userProfile, setUserProfile] = useState<any>(null);
+
   const navigate = useNavigate();
   const { superLikesLeft, boostsLeft, consumeSuperLike, consumeBoost } = useSubscription();
 
@@ -50,16 +65,138 @@ function DiscoverPage() {
   const current = deck[index];
   const next = deck[index + 1];
 
-  const swipe = (action: "left" | "right" | "super") => {
-    if (!current) return;
+  useEffect(() => {
+    async function loadProfiles() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setLoading(false);
+          return;
+        }
+
+        // Get user profile for seeking_gender
+        const { data: currentUserData } = await supabase.from('profiles').select('seeking_gender').eq('id', user.id).single();
+        if (currentUserData) {
+          setUserProfile(currentUserData);
+        }
+
+        const { data: swipesData } = await supabase
+          .from('swipes')
+          .select('target_id')
+          .eq('swiper_id', user.id);
+        
+        const swipedIds = swipesData?.map((s: any) => s.target_id) || [];
+
+        let query = supabase
+          .from('profiles')
+          .select('*')
+          .neq('id', user.id)
+          .limit(100); // Fetch more so we can filter locally
+
+        if (swipedIds.length > 0) {
+          query = query.not('id', 'in', `(${swipedIds.join(',')})`);
+        }
+        
+        // Sexe recherché de base
+        if (currentUserData && currentUserData.seeking_gender && currentUserData.seeking_gender !== "all") {
+          query = query.eq('gender', currentUserData.seeking_gender);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        if (data) {
+          const formatted: Profile[] = data.map((p: any) => ({
+            id: p.id,
+            firstName: p.first_name || "Membre",
+            age: p.birth_date ? new Date().getFullYear() - new Date(p.birth_date).getFullYear() : 25,
+            city: p.city || "Ville inconnue",
+            country: p.country || "",
+            denomination: p.denomination || "Non précisé",
+            compatibility: Math.floor(Math.random() * 20) + 80,
+            verified: p.is_verified || Math.random() > 0.5, // Mock pour l'instant
+            premium: false,
+            lastActive: "Récemment",
+            photo: p.photos && p.photos.length > 0 ? p.photos[0] : 'https://placehold.co/400x600/1a1a2e/gold?text=😊',
+            photos: p.photos || [],
+            bio: p.bio || "Pas de bio.",
+            profession: "Profession non précisée",
+            education: "Études",
+            height: "1m70",
+            languages: ["Français"],
+            interests: [],
+            passions: [],
+            marriageVision: p.marriage_intent || "",
+            favoriteVerse: "",
+            church: p.church_attendance || "",
+            faithImportance: p.practice_level || "",
+            // Mock online status for filter demo
+            online: Math.random() > 0.7
+          }));
+          setDeck(formatted);
+        }
+      } catch (err) {
+        console.error("Erreur chargement profils:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProfiles();
+  }, []);
+
+  // Application des filtres côté client
+  const filteredDeck = useMemo(() => {
+    return deck.filter(p => {
+      if (filters.onlineOnly && !(p as any).online) return false;
+      if (filters.verifiedOnly && !p.verified) return false;
+      if (filters.city && !p.city.toLowerCase().includes(filters.city.toLowerCase())) return false;
+      if (filters.denomination && p.denomination.toLowerCase() !== filters.denomination.toLowerCase()) return false;
+      // Distance is mocked visually for now
+      return true;
+    });
+  }, [deck, filters]);
+
+  const currentFiltered = filteredDeck[index];
+  const nextFiltered = filteredDeck[index + 1];
+
+  const swipe = async (action: "left" | "right" | "super") => {
+    if (!currentFiltered) return;
     if (action === "super" && !consumeSuperLike()) {
       upsell("Plus de Super Likes aujourd'hui");
       return;
     }
-    setHistory((h) => [...h, { id: current.id, action }]);
-    if (action === "right") toast.success(`Vous aimez ${current.firstName}`);
-    if (action === "super") toast.success(`Super Like envoyé à ${current.firstName} ⭐`);
+    setHistory((h) => [...h, { id: currentFiltered.id, action }]);
+    if (action === "right") toast.success(`Vous aimez ${currentFiltered.firstName}`);
+    if (action === "super") toast.success(`Super Like envoyé à ${currentFiltered.firstName} ⭐`);
     setIndex((i) => i + 1);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const dbAction = action === "left" ? "pass" : action === "right" ? "like" : "superlike";
+        await supabase.from('swipes').insert({
+          swiper_id: user.id,
+          target_id: currentFiltered.id,
+          action: dbAction
+        });
+
+        if (dbAction === 'like' || dbAction === 'superlike') {
+          const { data: matchCheck } = await supabase
+            .from('swipes')
+            .select('id')
+            .eq('swiper_id', currentFiltered.id)
+            .eq('target_id', user.id)
+            .in('action', ['like', 'superlike'])
+            .maybeSingle();
+
+          if (matchCheck) {
+            toast.success(`C'est un match avec ${currentFiltered.firstName} ! 🎉`, { duration: 5000 });
+          }
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const rewind = () => {
@@ -74,18 +211,29 @@ function DiscoverPage() {
 
   const boost = () => {
     if (!consumeBoost()) {
-      upsell("Boost réservé aux membres N° 1");
+      upsell("Boost réservé aux membres Alliance");
       return;
     }
     toast.success("Boost activé pour 30 minutes ⚡");
   };
 
   return (
-    <div className="px-4 pt-4">
+    <div className="px-4 pt-4 relative">
+      <div className="flex items-center justify-between mb-4">
+        <div className="text-left">
+          <h1 className="font-serif text-2xl font-semibold">Découvrir</h1>
+          <p className="text-xs text-muted-foreground">Trouvez votre âme sœur</p>
+        </div>
+        <button 
+          onClick={() => setShowFilters(true)}
+          className="w-10 h-10 rounded-full bg-secondary text-foreground flex items-center justify-center hover:bg-secondary/80 transition-colors shadow-sm"
+        >
+          <SlidersHorizontal className="w-5 h-5" />
+        </button>
+      </div>
+      
       <div className="text-center mb-4">
-        <h1 className="font-serif text-2xl font-semibold">Découvrir</h1>
-        <p className="text-xs text-muted-foreground">Trouvez votre âme sœur, un swipe à la fois</p>
-        <div className="mt-2 inline-flex items-center gap-3 px-3 py-1 rounded-full bg-secondary/60 border border-border/60 text-[11px] font-medium">
+        <div className="inline-flex items-center gap-3 px-3 py-1 rounded-full bg-secondary/60 border border-border/60 text-[11px] font-medium">
           <span className="inline-flex items-center gap-1">
             <Star className="w-3 h-3 text-primary" fill="currentColor" />
             {superLikesLeft === -1 ? "∞" : superLikesLeft} Super Likes
@@ -99,331 +247,337 @@ function DiscoverPage() {
       </div>
 
       <div className="relative h-[560px] max-h-[70vh] w-full mx-auto max-w-md">
-        {!current ? (
-          <EmptyDeck onReset={() => { setIndex(0); setHistory([]); }} />
+        {loading ? (
+          <div className="absolute inset-0 rounded-3xl bg-secondary animate-pulse flex items-center justify-center border border-border">
+            <span className="text-muted-foreground font-medium">Recherche de profils...</span>
+          </div>
+        ) : filteredDeck.length === 0 || !currentFiltered ? (
+          <div className="absolute inset-0 rounded-3xl bg-card border-2 border-dashed border-border flex flex-col items-center justify-center p-8 text-center shadow-soft">
+            <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
+              <Sparkles className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="font-serif text-xl font-semibold mb-2">Plus aucun profil</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Vous avez vu tous les profils correspondant à vos critères pour le moment.
+            </p>
+            <button
+              onClick={() => setIndex(0)}
+              className="px-6 py-2 rounded-full bg-primary text-primary-foreground font-semibold text-sm shadow-elegant"
+            >
+              Revoir depuis le début
+            </button>
+          </div>
         ) : (
-          <>
-            {next && <CardShell profile={next} scale={0.95} y={12} muted />}
-            <SwipeCard
-              key={current.id}
-              profile={current}
-              onSwipe={swipe}
-              onDetail={() => setDetail(current)}
-            />
-          </>
+          <AnimatePresence>
+            {nextFiltered && (
+              <SwipeCard
+                key={nextFiltered.id}
+                profile={nextFiltered}
+                active={false}
+                onSwipe={() => {}}
+                onDetail={() => setDetail(nextFiltered)}
+              />
+            )}
+            {currentFiltered && (
+              <SwipeCard
+                key={currentFiltered.id}
+                profile={currentFiltered}
+                active={true}
+                onSwipe={swipe}
+                onDetail={() => setDetail(currentFiltered)}
+              />
+            )}
+          </AnimatePresence>
         )}
       </div>
 
-      {/* Actions */}
-      <div className="mt-6 flex items-center justify-center gap-3">
-        <ActionBtn label="Retour" onClick={rewind} className="bg-background border border-border text-amber-600" size="sm">
-          <Undo2 className="w-4 h-4" />
-        </ActionBtn>
-        <ActionBtn label="Passer" onClick={() => swipe("left")} className="bg-background border border-border text-destructive">
-          <X className="w-6 h-6" />
-        </ActionBtn>
-        <ActionBtn label="Super Like" onClick={() => swipe("super")} className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-elegant" size="lg">
-          <Star className="w-6 h-6" fill="currentColor" />
-        </ActionBtn>
-        <ActionBtn label="J'aime" onClick={() => swipe("right")} className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-elegant">
-          <Heart className="w-6 h-6" fill="currentColor" />
-        </ActionBtn>
-        <ActionBtn label="Boost" onClick={boost} className="bg-background border border-border text-gold" size="sm">
-          <Zap className="w-4 h-4" />
-        </ActionBtn>
+      <div className="flex items-center justify-center gap-4 mt-8 mb-4 max-w-md mx-auto">
+        <button
+          onClick={rewind}
+          aria-label="Annuler"
+          className="w-12 h-12 rounded-full bg-card border border-border/60 shadow-soft flex items-center justify-center text-muted-foreground hover:bg-secondary transition-transform active:scale-95"
+        >
+          <Undo2 className="w-5 h-5" />
+        </button>
+        <button
+          onClick={() => swipe("left")}
+          aria-label="Passer"
+          className="w-16 h-16 rounded-full bg-card border border-border/60 shadow-soft flex items-center justify-center text-foreground hover:bg-secondary transition-transform active:scale-95"
+        >
+          <X className="w-7 h-7" />
+        </button>
+        <button
+          onClick={() => swipe("super")}
+          aria-label="Super Like"
+          className="w-12 h-12 rounded-full bg-primary shadow-elegant flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-transform active:scale-95"
+        >
+          <Star className="w-5 h-5" fill="currentColor" />
+        </button>
+        <button
+          onClick={() => swipe("right")}
+          aria-label="Aimer"
+          className="w-16 h-16 rounded-full bg-card border border-border/60 shadow-soft flex items-center justify-center text-primary hover:bg-secondary transition-transform active:scale-95"
+        >
+          <Heart className="w-7 h-7" fill="currentColor" />
+        </button>
+        <button
+          onClick={boost}
+          aria-label="Boost"
+          className="w-12 h-12 rounded-full bg-card border border-border/60 shadow-soft flex items-center justify-center text-gold hover:bg-secondary transition-transform active:scale-95"
+        >
+          <Zap className="w-5 h-5" fill="currentColor" />
+        </button>
       </div>
 
       <AnimatePresence>
-        {detail && <ProfileSheet profile={detail} onClose={() => setDetail(null)} />}
+        {detail && <ProfileDetailModal profile={detail} onClose={() => setDetail(null)} />}
       </AnimatePresence>
-    </div>
-  );
-}
 
-function ActionBtn({
-  children,
-  onClick,
-  label,
-  className = "",
-  size = "md",
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  label: string;
-  className?: string;
-  size?: "sm" | "md" | "lg";
-}) {
-  const s = size === "sm" ? "w-11 h-11" : size === "lg" ? "w-16 h-16" : "w-14 h-14";
-  return (
-    <button
-      aria-label={label}
-      onClick={onClick}
-      className={`${s} rounded-full flex items-center justify-center shadow-soft hover:scale-105 active:scale-95 transition-transform ${className}`}
-    >
-      {children}
-    </button>
-  );
-}
+      {/* FILTRES DRAWER */}
+      <AnimatePresence>
+        {showFilters && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="fixed inset-0 bg-black/60 z-50 backdrop-blur-sm"
+              onClick={() => setShowFilters(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed inset-x-0 bottom-0 z-50 bg-background rounded-t-[32px] p-6 max-h-[90vh] overflow-y-auto shadow-[0_-10px_40px_rgba(0,0,0,0.1)]"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-serif text-2xl font-semibold">Filtres</h3>
+                <button onClick={() => setShowFilters(false)} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
 
-function CardShell({ profile, scale = 1, y = 0, muted = false }: { profile: Profile; scale?: number; y?: number; muted?: boolean }) {
-  return (
-    <div
-      className="absolute inset-0 rounded-3xl overflow-hidden shadow-elegant"
-      style={{ transform: `scale(${scale}) translateY(${y}px)`, opacity: muted ? 0.7 : 1 }}
-    >
-      <img src={profile.photo} alt={profile.firstName} className="w-full h-full object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="online" className="text-base cursor-pointer">En ligne actuellement</Label>
+                  <Switch 
+                    id="online" 
+                    checked={filters.onlineOnly} 
+                    onCheckedChange={(c) => setFilters(f => ({ ...f, onlineOnly: c }))} 
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="verified" className="text-base flex items-center gap-2 cursor-pointer">
+                    Profils vérifiés <CheckCircle2 className="w-4 h-4 text-blue-500" />
+                  </Label>
+                  <Switch 
+                    id="verified" 
+                    checked={filters.verifiedOnly} 
+                    onCheckedChange={(c) => setFilters(f => ({ ...f, verifiedOnly: c }))} 
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <Label className="text-base">Distance maximale (km)</Label>
+                    <span className="font-bold text-primary">{filters.distance} km</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="1" 
+                    max="100" 
+                    value={filters.distance} 
+                    onChange={(e) => setFilters(f => ({ ...f, distance: parseInt(e.target.value) }))}
+                    className="w-full accent-primary" 
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-base">Ville</Label>
+                  <Input 
+                    placeholder="Ex: Paris" 
+                    value={filters.city} 
+                    onChange={(e) => setFilters(f => ({ ...f, city: e.target.value }))} 
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-base">Confession / Dénomination</Label>
+                  <select 
+                    value={filters.denomination} 
+                    onChange={(e) => setFilters(f => ({ ...f, denomination: e.target.value }))}
+                    className="w-full h-11 px-3 py-2 rounded-xl border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-transparent transition-all"
+                  >
+                    <option value="">Toutes les confessions</option>
+                    <option value="catholique">Catholique</option>
+                    <option value="protestant">Protestant</option>
+                    <option value="evangelique">Évangélique</option>
+                    <option value="orthodoxe">Orthodoxe</option>
+                    <option value="autre">Autre</option>
+                  </select>
+                </div>
+                
+                <button 
+                  onClick={() => setShowFilters(false)}
+                  className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-elegant mt-4 hover:bg-primary/90 transition-colors"
+                >
+                  Appliquer les filtres
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
 function SwipeCard({
   profile,
+  active,
   onSwipe,
   onDetail,
 }: {
   profile: Profile;
-  onSwipe: (a: "left" | "right" | "super") => void;
+  active: boolean;
+  onSwipe: (dir: "left" | "right" | "super") => void;
   onDetail: () => void;
 }) {
   const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const rotate = useTransform(x, [-300, 0, 300], [-18, 0, 18]);
-  const likeOpacity = useTransform(x, [0, 120], [0, 1]);
-  const nopeOpacity = useTransform(x, [-120, 0], [1, 0]);
-  const superOpacity = useTransform(y, [-120, 0], [1, 0]);
+  const rotate = useTransform(x, [-200, 200], [-10, 10]);
+  const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
+
+  const swipeLeftOpacity = useTransform(x, [-50, -150], [0, 1]);
+  const swipeRightOpacity = useTransform(x, [50, 150], [0, 1]);
 
   return (
     <motion.div
-      className="absolute inset-0 rounded-3xl overflow-hidden shadow-elegant bg-card cursor-grab active:cursor-grabbing"
-      style={{ x, y, rotate }}
-      drag
-      dragElastic={0.6}
-      dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
-      onDragEnd={(_, info) => {
-        if (info.offset.x > 130) onSwipe("right");
-        else if (info.offset.x < -130) onSwipe("left");
-        else if (info.offset.y < -130) onSwipe("super");
+      style={active ? { x, rotate, opacity } : {}}
+      drag={active ? "x" : false}
+      dragConstraints={{ left: 0, right: 0 }}
+      onDragEnd={(e, { offset, velocity }) => {
+        const swipeThreshold = 100;
+        if (offset.x > swipeThreshold) onSwipe("right");
+        else if (offset.x < -swipeThreshold) onSwipe("left");
       }}
-      whileTap={{ cursor: "grabbing" }}
+      className={`absolute inset-0 rounded-3xl overflow-hidden bg-card shadow-elegant border border-border/40 ${
+        active ? "z-20 cursor-grab active:cursor-grabbing" : "z-10 scale-[0.98] opacity-80"
+      }`}
     >
-      <img
-        src={profile.photo}
-        alt={profile.firstName}
-        className="w-full h-full object-cover pointer-events-none select-none"
-        draggable={false}
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/20 pointer-events-none" />
+      <img src={profile.photo} alt={profile.firstName} className="absolute inset-0 w-full h-full object-cover" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10" />
 
-      {/* Overlay labels */}
-      <motion.div
-        style={{ opacity: likeOpacity }}
-        className="absolute top-8 left-6 px-4 py-1.5 rounded-lg border-4 border-emerald-500 text-emerald-500 font-bold text-2xl -rotate-12 pointer-events-none"
-      >
-        J'AIME
-      </motion.div>
-      <motion.div
-        style={{ opacity: nopeOpacity }}
-        className="absolute top-8 right-6 px-4 py-1.5 rounded-lg border-4 border-destructive text-destructive font-bold text-2xl rotate-12 pointer-events-none"
-      >
-        NON
-      </motion.div>
-      <motion.div
-        style={{ opacity: superOpacity }}
-        className="absolute top-16 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-lg border-4 border-primary text-primary font-bold text-2xl pointer-events-none"
-      >
-        SUPER
-      </motion.div>
+      {active && (
+        <>
+          <motion.div style={{ opacity: swipeLeftOpacity }} className="absolute top-12 right-8 z-30">
+            <div className="border-4 border-destructive text-destructive font-black text-4xl px-4 py-2 rounded-xl rotate-12 bg-black/40 backdrop-blur-sm">
+              NOPE
+            </div>
+          </motion.div>
+          <motion.div style={{ opacity: swipeRightOpacity }} className="absolute top-12 left-8 z-30">
+            <div className="border-4 border-primary text-primary font-black text-4xl px-4 py-2 rounded-xl -rotate-12 bg-black/40 backdrop-blur-sm">
+              LIKE
+            </div>
+          </motion.div>
+        </>
+      )}
 
-      {/* Top badges */}
-      <div className="absolute top-4 left-4 right-4 flex items-start justify-between gap-2 pointer-events-none">
-        <div className="flex flex-col gap-1.5">
+      <div className="absolute inset-x-0 bottom-0 p-6 text-white pointer-events-none">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold">
+            {profile.compatibility}% Compatible
+          </span>
           {profile.verified && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-background/95 backdrop-blur text-xs font-semibold text-primary shadow-soft">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Vérifié
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-500 text-white shadow-soft">
+              <CheckCircle2 className="w-3.5 h-3.5" />
             </span>
           )}
-          {profile.premium && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gold text-gold-foreground text-xs font-semibold shadow-soft">
-              <Crown className="w-3.5 h-3.5" /> N° 1
+          {(profile as any).online && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/80 backdrop-blur-md text-[10px] font-bold shadow-soft">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> En ligne
             </span>
           )}
         </div>
-        <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-sm font-bold shadow-elegant">
-          {profile.compatibility}%
-        </span>
-      </div>
-
-      {/* Bottom info */}
-      <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-        <div className="flex items-baseline gap-2">
-          <h2 className="font-serif text-3xl font-semibold">{profile.firstName}</h2>
-          <span className="text-xl opacity-90">{profile.age}</span>
+        <h2 className="font-serif text-3xl font-bold flex items-baseline gap-2 text-shadow-sm">
+          {profile.firstName}, {profile.age}
+        </h2>
+        <div className="flex flex-col gap-1 mt-2 text-sm opacity-90 text-shadow-sm">
+          <div className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {profile.city}</div>
+          <div className="flex items-center gap-1.5"><Church className="w-3.5 h-3.5" /> {profile.denomination}</div>
+          <div className="flex items-center gap-1.5 opacity-80"><BookOpen className="w-3.5 h-3.5" /> {profile.bio.substring(0, 50)}...</div>
         </div>
-        <div className="flex items-center gap-3 text-sm opacity-90 mt-1">
-          <span className="inline-flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{profile.city}</span>
-          <span className="inline-flex items-center gap-1"><Church className="w-3.5 h-3.5" />{profile.denomination}</span>
-        </div>
-        <p className="text-sm opacity-90 mt-2 line-clamp-2">{profile.bio}</p>
-        <button
-          onClick={onDetail}
-          className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur text-xs font-medium hover:bg-white/25 transition-colors"
-        >
-          <Info className="w-3.5 h-3.5" /> Voir le profil complet
-        </button>
       </div>
+      <button
+        onClick={(e) => { e.stopPropagation(); onDetail(); }}
+        className="absolute bottom-6 right-6 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors z-40 pointer-events-auto"
+        aria-label="Voir le profil"
+      >
+        <Info className="w-5 h-5" />
+      </button>
     </motion.div>
   );
 }
 
-function EmptyDeck({ onReset }: { onReset: () => void }) {
-  return (
-    <div className="h-full flex flex-col items-center justify-center text-center rounded-3xl border-2 border-dashed border-border p-8">
-      <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
-        <Heart className="w-8 h-8 text-primary" />
-      </div>
-      <h3 className="font-serif text-xl">Plus de profils pour l'instant</h3>
-      <p className="text-sm text-muted-foreground mt-1">Revenez plus tard ou élargissez vos critères.</p>
-      <button
-        onClick={onReset}
-        className="mt-5 px-5 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-elegant"
-      >
-        Recommencer
-      </button>
-    </div>
-  );
-}
-
-function ProfileSheet({ profile, onClose }: { profile: Profile; onClose: () => void }) {
+function ProfileDetailModal({ profile, onClose }: { profile: Profile; onClose: () => void }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center"
-      onClick={onClose}
+      className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm overflow-y-auto"
     >
-      <motion.div
-        initial={{ y: 60, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 60, opacity: 0 }}
-        transition={{ type: "spring", damping: 25 }}
-        className="w-full max-w-lg max-h-[92vh] overflow-y-auto bg-card rounded-t-3xl sm:rounded-3xl shadow-elegant"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Gallery */}
-        <div className="flex gap-1 overflow-x-auto snap-x snap-mandatory">
-          {profile.photos.map((p, i) => (
-            <img key={i} src={p} alt="" className="w-full snap-start shrink-0 aspect-[4/5] object-cover" />
-          ))}
-        </div>
-
-        <div className="p-5 space-y-5">
-          <div>
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="font-serif text-2xl font-semibold">
-                  {profile.firstName}, {profile.age}
-                </h2>
-                <p className="text-sm text-muted-foreground flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" />
-                  {profile.city}, {profile.country}
-                </p>
-              </div>
-              <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                {profile.compatibility}%
-              </span>
-            </div>
-          </div>
-
-          <p className="text-sm leading-relaxed">{profile.bio}</p>
-
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <InfoRow icon={Briefcase} label="Profession" value={profile.profession} />
-            <InfoRow icon={GraduationCap} label="Études" value={profile.education} />
-            <InfoRow icon={Ruler} label="Taille" value={profile.height} />
-            <InfoRow icon={Languages} label="Langues" value={profile.languages.join(", ")} />
-          </div>
-
-          <ChipRow title="Centres d'intérêt" items={profile.interests} />
-          <ChipRow title="Passions" items={profile.passions} />
-
-          <Section title="Vision du mariage">{profile.marriageVision}</Section>
-          <Section title="Verset préféré">
-            <span className="inline-flex items-center gap-2 text-primary font-medium">
-              <BookOpen className="w-4 h-4" />
-              {profile.favoriteVerse}
-            </span>
-          </Section>
-          <Section title="Église fréquentée">{profile.church}</Section>
-          <Section title="Importance de la foi">{profile.faithImportance}</Section>
-
-          <div className="rounded-2xl bg-secondary/50 border border-border/50 p-4">
-            <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-2">
-              Compatibilité détaillée
-            </div>
-            {[
-              { l: "Valeurs spirituelles", v: 92 },
-              { l: "Vision du mariage", v: 85 },
-              { l: "Centres d'intérêt", v: 74 },
-              { l: "Mode de vie", v: 80 },
-            ].map((row) => (
-              <div key={row.l} className="mb-2 last:mb-0">
-                <div className="flex justify-between text-xs mb-1">
-                  <span>{row.l}</span>
-                  <span className="font-semibold">{row.v}%</span>
-                </div>
-                <div className="h-1.5 bg-background rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-primary to-primary/60" style={{ width: `${row.v}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-
+      <div className="min-h-full max-w-md mx-auto bg-background relative pb-24 shadow-2xl">
+        <div className="relative aspect-[3/4] md:aspect-[4/5]">
+          <img src={profile.photo} alt={profile.firstName} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
           <button
             onClick={onClose}
-            className="w-full py-3 rounded-full bg-primary text-primary-foreground font-medium shadow-elegant"
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center text-white"
           >
-            Fermer
+            <X className="w-5 h-5" />
           </button>
+          
+          <div className="absolute bottom-0 inset-x-0 p-6 pb-2">
+            <h2 className="font-serif text-4xl font-bold flex items-center gap-2">
+              {profile.firstName}, {profile.age}
+              {profile.verified && <CheckCircle2 className="w-6 h-6 text-blue-500" />}
+            </h2>
+            <div className="flex items-center gap-2 text-muted-foreground mt-1 text-sm font-medium">
+              <span>{profile.city}</span>
+              <span>•</span>
+              <span className="text-primary">{profile.compatibility}% Compatible</span>
+            </div>
+          </div>
         </div>
-      </motion.div>
+
+        <div className="p-6 space-y-8">
+          <section>
+            <h3 className="font-serif text-lg font-semibold mb-3 flex items-center gap-2">
+              <Church className="w-5 h-5 text-primary" /> Foi & Vision
+            </h3>
+            <div className="space-y-3 bg-secondary/30 p-4 rounded-2xl border border-border/50">
+              <div><span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Dénomination</span><p className="font-medium">{profile.denomination}</p></div>
+              <div><span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Vision du mariage</span><p className="font-medium text-sm leading-relaxed">{profile.marriageVision}</p></div>
+            </div>
+          </section>
+          <section>
+            <h3 className="font-serif text-lg font-semibold mb-2">À propos</h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">{profile.bio}</p>
+          </section>
+          {profile.photos.length > 1 && (
+            <section>
+              <h3 className="font-serif text-lg font-semibold mb-3">Photos</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {profile.photos.slice(1).map((photo, i) => (
+                  <img key={i} src={photo} alt="" className="w-full aspect-[3/4] object-cover rounded-2xl shadow-sm" />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      </div>
     </motion.div>
-  );
-}
-
-function InfoRow({ icon: Icon, label, value }: { icon: typeof MapPin; label: string; value: string }) {
-  return (
-    <div className="flex items-start gap-2 rounded-xl bg-secondary/40 p-3">
-      <Icon className="w-4 h-4 text-primary mt-0.5" />
-      <div>
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-        <div className="font-medium">{value}</div>
-      </div>
-    </div>
-  );
-}
-
-function ChipRow({ title, items }: { title: string; items: string[] }) {
-  return (
-    <div>
-      <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-2">{title}</div>
-      <div className="flex flex-wrap gap-1.5">
-        {items.map((i) => (
-          <span key={i} className="px-3 py-1 rounded-full bg-secondary text-xs font-medium">
-            {i}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-1">{title}</div>
-      <div className="text-sm">{children}</div>
-    </div>
   );
 }
