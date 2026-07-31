@@ -1,7 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Globe, Check } from "lucide-react";
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { ArrowLeft, Globe, Check, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/app/parametres/langue")({
   head: () => ({
@@ -11,25 +9,12 @@ export const Route = createFileRoute("/app/parametres/langue")({
 });
 
 const languages = [
-  { id: "fr", name: "Français", region: "France" },
-  { id: "en", name: "English", region: "United States" },
-  { id: "es", name: "Español", region: "España" },
+  { id: "fr", name: "Français", region: "France", available: true },
+  { id: "en", name: "English", region: "United States", available: false },
+  { id: "es", name: "Español", region: "España", available: false },
 ];
 
 function LanguagePage() {
-  const [lang, setLang] = useState("fr");
-
-  useEffect(() => {
-    const saved = localStorage.getItem("agape_lang");
-    if (saved) setLang(saved);
-  }, []);
-
-  const selectLang = (id: string) => {
-    setLang(id);
-    localStorage.setItem("agape_lang", id);
-    toast.success("Langue mise à jour");
-  };
-
   return (
     <div className="px-4 pt-4 pb-12 max-w-lg mx-auto">
       <div className="flex items-center gap-3 mb-8">
@@ -44,19 +29,18 @@ function LanguagePage() {
           <Globe className="w-8 h-8 text-primary" />
         </div>
         <p className="text-sm text-center text-muted-foreground px-4">
-          L'application est principalement disponible en français pour le moment.
+          AgapeMeet est actuellement disponible en Français. D'autres langues arrivent bientôt !
         </p>
       </div>
 
       <div className="bg-card border border-border/50 rounded-3xl p-3 shadow-soft space-y-1">
         {languages.map((l) => {
-          const isActive = lang === l.id;
+          const isActive = l.id === "fr";
           return (
-            <button
+            <div
               key={l.id}
-              onClick={() => selectLang(l.id)}
               className={`w-full flex items-center justify-between p-4 rounded-2xl transition-colors ${
-                isActive ? "bg-primary/5" : "hover:bg-secondary"
+                l.available ? "bg-primary/5" : "opacity-50"
               }`}
             >
               <div className="flex flex-col items-start">
@@ -65,11 +49,24 @@ function LanguagePage() {
                 </span>
                 <span className="text-xs text-muted-foreground">{l.region}</span>
               </div>
-              {isActive && <Check className="w-5 h-5 text-primary" />}
-            </button>
+              <div className="flex items-center gap-2">
+                {!l.available && (
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-secondary text-muted-foreground border border-border uppercase tracking-wide">
+                    Bientôt
+                  </span>
+                )}
+                {isActive && <Check className="w-5 h-5 text-primary" />}
+                {!l.available && <Lock className="w-4 h-4 text-muted-foreground" />}
+              </div>
+            </div>
           );
         })}
       </div>
+
+      <p className="text-xs text-center text-muted-foreground mt-6 px-4">
+        Vous souhaitez aider à traduire AgapeMeet ? <br />
+        Contactez-nous à <a href="mailto:contact@agapemeet.com" className="text-primary hover:underline">contact@agapemeet.com</a>
+      </p>
     </div>
   );
 }
