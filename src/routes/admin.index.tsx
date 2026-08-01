@@ -322,7 +322,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="font-semibold text-base">Revenus mensuels (FCFA)</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Abonnements Alliance — Cumulatif 2026</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Abonnements Premium — Cumulatif 2026</p>
             </div>
             <div className="bg-primary/10 text-primary text-xs font-bold px-3 py-1.5 rounded-full">
               MRR : 50.7M FCFA
@@ -333,7 +333,7 @@ export default function AdminDashboard() {
 
         {/* Plans donut */}
         <div className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
-          <h3 className="font-semibold text-base mb-1">Formules Alliance</h3>
+          <h3 className="font-semibold text-base mb-1">Formules Premium</h3>
           <p className="text-xs text-muted-foreground mb-4">Répartition par durée d'abonnement</p>
           <div className="flex flex-col items-center gap-4">
             <div className="relative">
@@ -374,11 +374,11 @@ export default function AdminDashboard() {
             {[
               { text: "Nouveau match créé", detail: "Marie & Jean-Baptiste", time: "Il y a 2 min", type: "match", color: "bg-primary/10 text-primary" },
               { text: "Nouveau Super Like", detail: "Esther → Paul", time: "Il y a 5 min", type: "star", color: "bg-gold/10 text-gold" },
-              { text: "Abonnement Alliance (3 mois)", detail: "Lucie A. — 24 990 FCFA", time: "Il y a 9 min", type: "billing", color: "bg-emerald-500/10 text-emerald-600" },
+              { text: "Abonnement Premium (3 mois)", detail: "Lucie A. — 24 990 FCFA", time: "Il y a 9 min", type: "billing", color: "bg-emerald-500/10 text-emerald-600" },
               { text: "Signalement ouvert", detail: "Profil #4892", time: "Il y a 15 min", type: "report", color: "bg-destructive/10 text-destructive" },
               { text: "Profil vérifié", detail: "Sarah M., Douala", time: "Il y a 28 min", type: "verified", color: "bg-emerald-500/10 text-emerald-600" },
               { text: "Nouveau membre inscrit", detail: "Daniel K., Abidjan", time: "Il y a 32 min", type: "user", color: "bg-sky-500/10 text-sky-500" },
-              { text: "Abonnement Alliance (6 mois)", detail: "Rachel B. — 44 990 FCFA", time: "Il y a 1h", type: "billing", color: "bg-emerald-500/10 text-emerald-600" },
+              { text: "Abonnement Premium (6 mois)", detail: "Rachel B. — 44 990 FCFA", time: "Il y a 1h", type: "billing", color: "bg-emerald-500/10 text-emerald-600" },
               { text: "Nouveau match créé", detail: "Noémie & Samuel", time: "Il y a 1h 15", type: "match", color: "bg-primary/10 text-primary" },
             ].map((a, i) => (
               <div key={i} className="flex gap-3 items-start">

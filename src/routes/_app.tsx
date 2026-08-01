@@ -147,7 +147,7 @@ function AppLayout() {
                 aria-label="Abonnement"
                 className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-gold text-gold-foreground text-xs font-semibold shadow-soft"
               >
-                <Crown className="w-3.5 h-3.5" /> Alliance
+                <Crown className="w-3.5 h-3.5" /> Premium
               </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

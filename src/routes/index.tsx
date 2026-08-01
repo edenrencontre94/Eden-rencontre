@@ -73,7 +73,7 @@ function Nav() {
         <a href="#top" className="flex items-center gap-2">
           <img src={logoAsset} alt="AgapeMeet" className="w-10 h-10 object-contain" />
           <span className="font-serif text-xl font-semibold tracking-tight">
-            Agape<span className="text-gold">Meet</span>
+            VIP<span className="text-gold">Meet</span>
           </span>
         </a>
         <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
@@ -436,7 +436,7 @@ function Pricing() {
       highlight: false,
     },
     {
-      name: "Alliance",
+      name: "Premium",
       price: "12,99€",
       period: "par mois",
       desc: "Pour ceux qui visent le mariage",
@@ -653,7 +653,7 @@ function Footer() {
           <div className="flex items-center gap-2">
             <img src={logoAsset} alt="AgapeMeet" className="w-10 h-10 object-contain" />
             <span className="font-serif text-xl font-semibold">
-              Agape<span className="text-gold">Meet</span>
+              VIP<span className="text-gold">Meet</span>
             </span>
           </div>
           <p className="mt-4 text-sm text-muted-foreground max-w-sm leading-relaxed">

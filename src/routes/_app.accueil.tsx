@@ -140,7 +140,7 @@ function HomePage() {
 
   const sections: Section[] = [
     { title: "Recommandés pour vous", icon: Sparkles, data: profiles.slice(0, 8) },
-    { title: "Membres Alliance", icon: Crown, data: profiles.slice(0, 8) },
+    { title: "Membres Premium", icon: Crown, data: profiles.slice(0, 8) },
     { title: "Nouveaux membres", icon: UserPlus, data: profiles.slice(0, 8).reverse() },
   ];
 
@@ -155,7 +155,7 @@ function HomePage() {
           {/* Banners Section */}
           <div className="px-4 space-y-4 mb-8">
             
-            {/* Passe Alliance Banner */}
+            {/* Passe Premium Banner */}
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -169,10 +169,10 @@ function HomePage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-foreground font-bold text-base">Passe Alliance</h3>
+                    <h3 className="text-foreground font-bold text-base">Passe Premium</h3>
                     <span className="bg-gold text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full">-40%</span>
                   </div>
-                  <p className="text-muted-foreground text-xs">Demandes illimitées, profil mis en avant, badge Alliance</p>
+                  <p className="text-muted-foreground text-xs">Demandes illimitées, profil mis en avant, badge Premium</p>
                 </div>
               </div>
               <Link to="/abonnement" className="relative z-10 bg-gold hover:bg-gold/90 text-black text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1 transition-colors whitespace-nowrap">
@@ -418,7 +418,7 @@ function HomePage() {
               </div>
             </motion.div>
 
-            {/* Alliance CTA */}
+            {/* Premium CTA */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -430,7 +430,7 @@ function HomePage() {
               >
                 <div className="flex items-center gap-2">
                   <Crown className="w-5 h-5" />
-                  <span className="text-base font-bold">Alliance</span>
+                  <span className="text-base font-bold">Premium</span>
                 </div>
                 <span className="text-xs font-medium opacity-80">Débloque tout AgapeMeet</span>
               </Link>

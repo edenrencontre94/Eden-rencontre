@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -21,6 +22,12 @@ import { Route as AppDecouvrirRouteImport } from './routes/_app.decouvrir'
 import { Route as AppDemandesRouteImport } from './routes/_app.demandes'
 import { Route as AppMessagesRouteImport } from './routes/_app.messages'
 import { Route as AppProfilRouteImport } from './routes/_app.profil'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminAbonnementsRouteImport } from './routes/admin.abonnements'
+import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
+import { Route as AdminModerationRouteImport } from './routes/admin.moderation'
+import { Route as AdminParametresRouteImport } from './routes/admin.parametres'
+import { Route as AdminUtilisateursRouteImport } from './routes/admin.utilisateurs'
 import { Route as AppParametresBloquesRouteImport } from './routes/_app.parametres.bloques'
 import { Route as AppParametresLangueRouteImport } from './routes/_app.parametres.langue'
 import { Route as AppParametresNotificationsRouteImport } from './routes/_app.parametres.notifications'
@@ -33,6 +40,11 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const AppRoute = AppRouteImport.update({
   id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InscriptionRoute = InscriptionRouteImport.update({
@@ -85,6 +97,36 @@ const AppProfilRoute = AppProfilRouteImport.update({
   path: '/profil',
   getParentRoute: () => AppRoute,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAbonnementsRoute = AdminAbonnementsRouteImport.update({
+  id: '/abonnements',
+  path: '/abonnements',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMarketingRoute = AdminMarketingRouteImport.update({
+  id: '/marketing',
+  path: '/marketing',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminModerationRoute = AdminModerationRouteImport.update({
+  id: '/moderation',
+  path: '/moderation',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminParametresRoute = AdminParametresRouteImport.update({
+  id: '/parametres',
+  path: '/parametres',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminUtilisateursRoute = AdminUtilisateursRouteImport.update({
+  id: '/utilisateurs',
+  path: '/utilisateurs',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AppParametresBloquesRoute = AppParametresBloquesRouteImport.update({
   id: '/parametres/bloques',
   path: '/parametres/bloques',
@@ -109,6 +151,7 @@ const AppParametresSecuriteRoute = AppParametresSecuriteRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -119,6 +162,12 @@ export interface FileRoutesByFullPath {
   '/demandes': typeof AppDemandesRoute
   '/messages': typeof AppMessagesRoute
   '/profil': typeof AppProfilRoute
+  '/admin/abonnements': typeof AdminAbonnementsRoute
+  '/admin/marketing': typeof AdminMarketingRoute
+  '/admin/moderation': typeof AdminModerationRoute
+  '/admin/parametres': typeof AdminParametresRoute
+  '/admin/utilisateurs': typeof AdminUtilisateursRoute
+  '/admin/': typeof AdminIndexRoute
   '/parametres/bloques': typeof AppParametresBloquesRoute
   '/parametres/langue': typeof AppParametresLangueRoute
   '/parametres/notifications': typeof AppParametresNotificationsRoute
@@ -136,6 +185,12 @@ export interface FileRoutesByTo {
   '/demandes': typeof AppDemandesRoute
   '/messages': typeof AppMessagesRoute
   '/profil': typeof AppProfilRoute
+  '/admin/abonnements': typeof AdminAbonnementsRoute
+  '/admin/marketing': typeof AdminMarketingRoute
+  '/admin/moderation': typeof AdminModerationRoute
+  '/admin/parametres': typeof AdminParametresRoute
+  '/admin/utilisateurs': typeof AdminUtilisateursRoute
+  '/admin': typeof AdminIndexRoute
   '/parametres/bloques': typeof AppParametresBloquesRoute
   '/parametres/langue': typeof AppParametresLangueRoute
   '/parametres/notifications': typeof AppParametresNotificationsRoute
@@ -145,6 +200,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
+  '/admin': typeof AdminRouteWithChildren
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -155,6 +211,12 @@ export interface FileRoutesById {
   '/_app/demandes': typeof AppDemandesRoute
   '/_app/messages': typeof AppMessagesRoute
   '/_app/profil': typeof AppProfilRoute
+  '/admin/abonnements': typeof AdminAbonnementsRoute
+  '/admin/marketing': typeof AdminMarketingRoute
+  '/admin/moderation': typeof AdminModerationRoute
+  '/admin/parametres': typeof AdminParametresRoute
+  '/admin/utilisateurs': typeof AdminUtilisateursRoute
+  '/admin/': typeof AdminIndexRoute
   '/_app/parametres/bloques': typeof AppParametresBloquesRoute
   '/_app/parametres/langue': typeof AppParametresLangueRoute
   '/_app/parametres/notifications': typeof AppParametresNotificationsRoute
@@ -164,6 +226,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/inscription'
     | '/login'
     | '/onboarding'
@@ -174,6 +237,12 @@ export interface FileRouteTypes {
     | '/demandes'
     | '/messages'
     | '/profil'
+    | '/admin/abonnements'
+    | '/admin/marketing'
+    | '/admin/moderation'
+    | '/admin/parametres'
+    | '/admin/utilisateurs'
+    | '/admin/'
     | '/parametres/bloques'
     | '/parametres/langue'
     | '/parametres/notifications'
@@ -191,6 +260,12 @@ export interface FileRouteTypes {
     | '/demandes'
     | '/messages'
     | '/profil'
+    | '/admin/abonnements'
+    | '/admin/marketing'
+    | '/admin/moderation'
+    | '/admin/parametres'
+    | '/admin/utilisateurs'
+    | '/admin'
     | '/parametres/bloques'
     | '/parametres/langue'
     | '/parametres/notifications'
@@ -199,6 +274,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_app'
+    | '/admin'
     | '/inscription'
     | '/login'
     | '/onboarding'
@@ -209,6 +285,12 @@ export interface FileRouteTypes {
     | '/_app/demandes'
     | '/_app/messages'
     | '/_app/profil'
+    | '/admin/abonnements'
+    | '/admin/marketing'
+    | '/admin/moderation'
+    | '/admin/parametres'
+    | '/admin/utilisateurs'
+    | '/admin/'
     | '/_app/parametres/bloques'
     | '/_app/parametres/langue'
     | '/_app/parametres/notifications'
@@ -218,6 +300,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  AdminRoute: typeof AdminRouteWithChildren
   InscriptionRoute: typeof InscriptionRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -237,6 +320,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inscription': {
@@ -309,6 +399,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfilRouteImport
       parentRoute: typeof AppRoute
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/abonnements': {
+      id: '/admin/abonnements'
+      path: '/abonnements'
+      fullPath: '/admin/abonnements'
+      preLoaderRoute: typeof AdminAbonnementsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/marketing': {
+      id: '/admin/marketing'
+      path: '/marketing'
+      fullPath: '/admin/marketing'
+      preLoaderRoute: typeof AdminMarketingRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/moderation': {
+      id: '/admin/moderation'
+      path: '/moderation'
+      fullPath: '/admin/moderation'
+      preLoaderRoute: typeof AdminModerationRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/parametres': {
+      id: '/admin/parametres'
+      path: '/parametres'
+      fullPath: '/admin/parametres'
+      preLoaderRoute: typeof AdminParametresRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/utilisateurs': {
+      id: '/admin/utilisateurs'
+      path: '/utilisateurs'
+      fullPath: '/admin/utilisateurs'
+      preLoaderRoute: typeof AdminUtilisateursRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_app/parametres/bloques': {
       id: '/_app/parametres/bloques'
       path: '/parametres/bloques'
@@ -370,9 +502,30 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface AdminRouteChildren {
+  AdminAbonnementsRoute: typeof AdminAbonnementsRoute
+  AdminMarketingRoute: typeof AdminMarketingRoute
+  AdminModerationRoute: typeof AdminModerationRoute
+  AdminParametresRoute: typeof AdminParametresRoute
+  AdminUtilisateursRoute: typeof AdminUtilisateursRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAbonnementsRoute: AdminAbonnementsRoute,
+  AdminMarketingRoute: AdminMarketingRoute,
+  AdminModerationRoute: AdminModerationRoute,
+  AdminParametresRoute: AdminParametresRoute,
+  AdminUtilisateursRoute: AdminUtilisateursRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  AdminRoute: AdminRouteWithChildren,
   InscriptionRoute: InscriptionRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,

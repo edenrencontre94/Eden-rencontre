@@ -232,7 +232,7 @@ function DiscoverPage() {
 
   const boost = () => {
     if (!consumeBoost()) {
-      upsell("Boost réservé aux membres Alliance");
+      upsell("Boost réservé aux membres Premium");
       return;
     }
     toast.success("Boost activé pour 30 minutes ⚡");

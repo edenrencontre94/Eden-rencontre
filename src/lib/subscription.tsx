@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 
-export type PlanId = "gratuit" | "premium" | "alliance";
+export type PlanId = "gratuit" | "premium" | "premium";
 export type BillingCycle = "mensuel" | "annuel";
 
 export type PlanFeatures = {
@@ -59,7 +59,7 @@ export const PLANS: Plan[] = [
   },
   {
     id: "premium",
-    name: "Alliance",
+    name: "Premium",
     tagline: "Pour ceux qui visent le mariage",
     priceMonthly: 6500,
     priceYearly: 54000,
@@ -84,13 +84,13 @@ export const PLANS: Plan[] = [
     },
   },
   {
-    id: "alliance",
-    name: "Agape",
+    id: "premium",
+    name: "VIP",
     tagline: "Il représente l'amour inconditionnel de Dieu.",
     priceMonthly: 12000,
     priceYearly: 98000,
     perks: [
-      "Tout le plan Alliance",
+      "Tout le plan Premium",
       "Super Likes et Boosts illimités",
       "Mode incognito",
       "Vérification identité + foi prioritaire",

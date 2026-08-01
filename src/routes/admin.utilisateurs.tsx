@@ -40,8 +40,8 @@ function AdminUtilisateurs() {
   const [stats, setStats] = useState({
     total: 0,
     verified: 0,
-    alliance: 1840, // Mock for now
-    agape: 350, // Mock for now
+    premium: 1840, // Mock for now
+    vip: 350, // Mock for now
     pending: 0,
   });
 
@@ -151,8 +151,8 @@ function AdminUtilisateurs() {
             <Crown className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-2xl font-bold font-serif">{loading ? "—" : stats.alliance}</div>
-            <div className="text-xs text-muted-foreground">Abonnés Alliance</div>
+            <div className="text-2xl font-bold font-serif">{loading ? "—" : stats.premium}</div>
+            <div className="text-xs text-muted-foreground">Abonnés Premium</div>
           </div>
         </div>
         <div className="bg-card border border-border/50 p-5 rounded-2xl shadow-sm flex items-center gap-4">
@@ -160,8 +160,8 @@ function AdminUtilisateurs() {
             <Crown className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-2xl font-bold font-serif">{loading ? "—" : stats.agape}</div>
-            <div className="text-xs text-muted-foreground">Offres Agape</div>
+            <div className="text-2xl font-bold font-serif">{loading ? "—" : stats.vip}</div>
+            <div className="text-xs text-muted-foreground">Offres VIP</div>
           </div>
         </div>
       </div>
@@ -251,9 +251,9 @@ function AdminUtilisateurs() {
               ) : (
                 filtered.map((user, i) => {
                   // Mocks for display richness
-                  const isAlliance = i % 7 === 0;
-                  const isAgape = !isAlliance && i % 5 === 0;
-                  const isPremium = isAlliance || isAgape;
+                  const isPremiumPlan = i % 7 === 0;
+                  const isAgape = !isPremiumPlan && i % 5 === 0;
+                  const isPremium = isPremiumPlan || isAgape;
                   const matchCount = Math.floor(Math.random() * 50);
                   const reportCount = i % 15 === 0 ? 1 : 0;
 
@@ -316,13 +316,13 @@ function AdminUtilisateurs() {
                             )}
                           </div>
                           <div>
-                            {isAlliance ? (
+                            {isPremium ? (
                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gold/10 text-gold text-[10px] font-bold uppercase tracking-wider">
-                                <Crown className="w-3 h-3" /> Alliance
+                                <Crown className="w-3 h-3" /> Premium
                               </span>
                             ) : isAgape ? (
                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
-                                <Crown className="w-3 h-3" /> Agape
+                                <Crown className="w-3 h-3" /> VIP
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-secondary text-muted-foreground text-[10px] font-bold uppercase tracking-wider">

@@ -6,10 +6,10 @@ export const Route = createFileRoute("/admin/abonnements")({
 });
 
 const mockPlans = [
-  { name: "Alliance — 1 mois", price: "9 990 FCFA", subscribers: 420, revenue: "4 195 800 FCFA", color: "bg-gold/10 text-gold" },
-  { name: "Alliance — 3 mois", price: "24 990 FCFA", subscribers: 870, revenue: "21 741 300 FCFA", color: "bg-gold/10 text-gold" },
-  { name: "Alliance — 6 mois", price: "44 990 FCFA", subscribers: 550, revenue: "24 744 500 FCFA", color: "bg-gold/10 text-gold" },
-  { name: "Agape — Pass journalier", price: "1 500 FCFA", subscribers: 350, revenue: "525 000 FCFA", color: "bg-primary/10 text-primary" },
+  { name: "Premium — 1 mois", price: "9 990 FCFA", subscribers: 420, revenue: "4 195 800 FCFA", color: "bg-gold/10 text-gold" },
+  { name: "Premium — 3 mois", price: "24 990 FCFA", subscribers: 870, revenue: "21 741 300 FCFA", color: "bg-gold/10 text-gold" },
+  { name: "Premium — 6 mois", price: "44 990 FCFA", subscribers: 550, revenue: "24 744 500 FCFA", color: "bg-gold/10 text-gold" },
+  { name: "VIP — Pass journalier", price: "1 500 FCFA", subscribers: 350, revenue: "525 000 FCFA", color: "bg-primary/10 text-primary" },
 ];
 
 const mockTransactions = [
@@ -26,7 +26,7 @@ function AdminAbonnements() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
         <h1 className="text-3xl font-serif font-bold">Abonnements & Finances</h1>
-        <p className="text-muted-foreground mt-1">Suivez les revenus et les abonnés Alliance.</p>
+        <p className="text-muted-foreground mt-1">Suivez les revenus et les abonnés Premium.</p>
       </div>
 
       {/* MRR Banner */}
@@ -40,7 +40,7 @@ function AdminAbonnements() {
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-full text-sm font-semibold">
               <TrendingUp className="w-4 h-4" /> +18.4% ce mois-ci
             </div>
-            <p className="text-xs opacity-70 mt-3">1 840 abonnés Alliance • 350 abonnés Agape</p>
+            <p className="text-xs opacity-70 mt-3">1 840 abonnés Premium • 350 abonnés VIP</p>
           </div>
         </div>
       </div>
@@ -90,7 +90,7 @@ function AdminAbonnements() {
                 {mockTransactions.map((tx, i) => (
                   <tr key={i} className="hover:bg-secondary/30 transition-colors">
                     <td className="px-6 py-4 font-medium">{tx.user}</td>
-                    <td className="px-6 py-4 text-muted-foreground">Alliance {tx.plan}</td>
+                    <td className="px-6 py-4 text-muted-foreground">Premium {tx.plan}</td>
                     <td className="px-6 py-4 font-semibold">{tx.amount}</td>
                     <td className="px-6 py-4 text-muted-foreground">{tx.date}</td>
                     <td className="px-6 py-4">

@@ -73,7 +73,7 @@ function AdminMarketing() {
             <div>
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Message</label>
               <textarea
-                placeholder="Ex : Profitez de -30% sur l'abonnement Alliance aujourd'hui seulement ! ❤️"
+                placeholder="Ex : Profitez de -30% sur l'abonnement Premium aujourd'hui seulement ! ❤️"
                 value={notifBody}
                 onChange={e => setNotifBody(e.target.value)}
                 rows={3}

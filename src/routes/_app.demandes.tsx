@@ -328,15 +328,15 @@ function PremiumGate() {
         <div className="w-14 h-14 rounded-full bg-gold text-gold-foreground mx-auto flex items-center justify-center shadow-elegant">
           <Lock className="w-6 h-6" />
         </div>
-        <h3 className="font-serif text-2xl mt-4">Fonctionnalité Alliance</h3>
+        <h3 className="font-serif text-2xl mt-4">Fonctionnalité Premium</h3>
         <p className="text-sm opacity-90 mt-2 max-w-sm mx-auto">
-          Passez Alliance pour voir qui a visité votre profil et accéder à toutes les fonctionnalités avancées.
+          Passez Premium pour voir qui a visité votre profil et accéder à toutes les fonctionnalités avancées.
         </p>
         <Link
           to="/abonnement"
           className="mt-5 inline-flex px-6 py-2.5 rounded-full bg-gold text-gold-foreground font-semibold shadow-elegant"
         >
-          Devenir Alliance
+          Devenir Premium
         </Link>
       </div>
     </div>

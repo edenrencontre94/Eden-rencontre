@@ -106,7 +106,7 @@ function AdminParametres() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">
-                Boosts par mois (Alliance)
+                Boosts par mois (Premium)
               </label>
               <div className="flex items-center gap-3">
                 <input
