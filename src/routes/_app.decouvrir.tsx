@@ -15,7 +15,9 @@ import {
   BookOpen,
   Info,
   SlidersHorizontal,
-  Sparkles
+  Sparkles,
+  MessageCircle,
+  UserPlus
 } from "lucide-react";
 import { type Profile } from "@/lib/mock-data";
 import { toast } from "sonner";
@@ -307,42 +309,66 @@ function DiscoverPage() {
         )}
       </div>
 
-      <div className="flex items-center justify-center gap-4 mt-8 mb-4 max-w-md mx-auto">
-        <button
-          onClick={rewind}
-          aria-label="Annuler"
-          className="w-12 h-12 rounded-full bg-card border border-border/60 shadow-soft flex items-center justify-center text-muted-foreground hover:bg-secondary transition-transform active:scale-95"
-        >
-          <Undo2 className="w-5 h-5" />
-        </button>
-        <button
-          onClick={() => swipe("left")}
-          aria-label="Passer"
-          className="w-16 h-16 rounded-full bg-card border border-border/60 shadow-soft flex items-center justify-center text-foreground hover:bg-secondary transition-transform active:scale-95"
-        >
-          <X className="w-7 h-7" />
-        </button>
-        <button
-          onClick={() => swipe("super")}
-          aria-label="Super Like"
-          className="w-12 h-12 rounded-full bg-primary shadow-elegant flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-transform active:scale-95"
-        >
-          <Star className="w-5 h-5" fill="currentColor" />
-        </button>
-        <button
-          onClick={() => swipe("right")}
-          aria-label="Aimer"
-          className="w-16 h-16 rounded-full bg-card border border-border/60 shadow-soft flex items-center justify-center text-primary hover:bg-secondary transition-transform active:scale-95"
-        >
-          <Heart className="w-7 h-7" fill="currentColor" />
-        </button>
-        <button
-          onClick={boost}
-          aria-label="Boost"
-          className="w-12 h-12 rounded-full bg-card border border-border/60 shadow-soft flex items-center justify-center text-gold hover:bg-secondary transition-transform active:scale-95"
-        >
-          <Zap className="w-5 h-5" fill="currentColor" />
-        </button>
+      <div className="flex items-center justify-center gap-3 mt-8 mb-4 max-w-[400px] mx-auto">
+        <div className="flex flex-col items-center gap-1">
+          <button
+            onClick={rewind}
+            className="w-12 h-12 rounded-full border-2 border-amber-300 bg-background flex items-center justify-center text-amber-300 hover:bg-amber-300/10 transition-transform active:scale-95 shadow-sm"
+          >
+            <Undo2 className="w-5 h-5" />
+          </button>
+          <span className="text-[10px] text-muted-foreground font-medium">Retour</span>
+        </div>
+        
+        <div className="flex flex-col items-center gap-1">
+          <button
+            onClick={() => swipe("left")}
+            className="w-14 h-14 rounded-full border-2 border-slate-300 bg-background flex items-center justify-center text-slate-400 hover:bg-slate-300/10 transition-transform active:scale-95 shadow-sm"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <span className="text-[10px] text-muted-foreground font-medium">Passer</span>
+        </div>
+
+        <div className="flex flex-col items-center gap-1">
+          <button
+            onClick={() => swipe("super")}
+            className="w-14 h-14 rounded-full border-2 border-primary bg-background flex items-center justify-center text-primary hover:bg-primary/10 transition-transform active:scale-95 shadow-sm"
+          >
+            <Star className="w-6 h-6" fill="currentColor" />
+          </button>
+          <span className="text-[10px] text-primary font-medium">Super</span>
+        </div>
+
+        <div className="flex flex-col items-center gap-1">
+          <button
+            onClick={() => swipe("right")}
+            className="w-[72px] h-[72px] rounded-full bg-[#E40046] shadow-[0_4px_15px_rgba(228,0,70,0.4)] flex items-center justify-center text-white hover:scale-105 transition-transform active:scale-95"
+          >
+            <Heart className="w-9 h-9" fill="currentColor" />
+          </button>
+          <span className="text-[10px] text-[#E40046] font-medium">J'adore</span>
+        </div>
+
+        <div className="flex flex-col items-center gap-1">
+          <button
+            onClick={() => toast.info("Faites un match pour envoyer un message !")}
+            className="w-14 h-14 rounded-full border-2 border-sky-400 bg-background flex items-center justify-center text-sky-400 hover:bg-sky-400/10 transition-transform active:scale-95 shadow-sm"
+          >
+            <MessageCircle className="w-6 h-6" />
+          </button>
+          <span className="text-[10px] text-muted-foreground font-medium">Message</span>
+        </div>
+
+        <div className="flex flex-col items-center gap-1">
+          <button
+            onClick={() => swipe("right")}
+            className="w-12 h-12 rounded-full border-2 border-rose-400 bg-background flex items-center justify-center text-rose-400 hover:bg-rose-400/10 transition-transform active:scale-95 shadow-sm"
+          >
+            <UserPlus className="w-5 h-5" />
+          </button>
+          <span className="text-[10px] text-muted-foreground font-medium">Ajouter</span>
+        </div>
       </div>
 
       <AnimatePresence>
