@@ -278,9 +278,14 @@ function LikeCard({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
         {entry.action === "superlike" && (
-          <span className="absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold shadow-soft">
-            <Star className="w-3 h-3" fill="currentColor" /> Super Like
-          </span>
+          <div className="absolute top-2 inset-x-2 flex flex-col gap-1.5 items-start">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold shadow-soft">
+              <Star className="w-3 h-3" fill="currentColor" /> Super Like
+            </span>
+            <div className="bg-primary/95 text-primary-foreground text-[10px] px-2.5 py-1.5 rounded-xl leading-snug shadow-elegant backdrop-blur-sm border border-primary-foreground/20">
+              Cette personne a eu un énorme coup de cœur pour toi
+            </div>
+          </div>
         )}
         <div className="absolute inset-x-0 bottom-0 p-2.5 text-white">
           <div className="font-serif text-base font-semibold leading-none">
