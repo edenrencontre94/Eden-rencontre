@@ -17,7 +17,8 @@ import {
   SlidersHorizontal,
   Sparkles,
   MessageCircle,
-  UserPlus
+  UserPlus,
+  Heart as HeartIcon
 } from "lucide-react";
 import { type Profile } from "@/lib/mock-data";
 import { toast } from "sonner";
@@ -474,7 +475,7 @@ function DiscoverPage() {
               </div>
             </div>
             <div className="bg-card px-4 py-3 flex items-center gap-2.5">
-              <Info className="w-4 h-4 text-primary shrink-0" />
+              <HeartIcon className="w-4 h-4 text-primary shrink-0" />
               <div>
                 <div className="text-[10px] text-muted-foreground">Foi</div>
                 <div className="text-xs font-medium truncate max-w-[110px]">{currentFiltered.faithImportance || "Importante"}</div>
