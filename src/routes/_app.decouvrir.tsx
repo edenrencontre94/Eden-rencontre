@@ -670,7 +670,7 @@ function DiscoverPage() {
 
 const getCountryCode = (country: string) => {
   const map: Record<string, string> = {
-    'cameroun': 'cm', 'côte d\\'ivoire': 'ci', 'cote d\\'ivoire': 'ci', 'sénégal': 'sn', 'senegal': 'sn',
+    "cameroun": "cm", "côte d'ivoire": "ci", "cote d'ivoire": "ci", "sénégal": "sn", "senegal": "sn",
     'france': 'fr', 'belgique': 'be', 'suisse': 'ch', 'canada': 'ca', 'congo': 'cg',
     'république démocratique du congo': 'cd', 'rdc': 'cd', 'gabon': 'ga', 'mali': 'ml',
     'togo': 'tg', 'bénin': 'bj', 'benin': 'bj', 'burkina faso': 'bf', 'madagascar': 'mg',
