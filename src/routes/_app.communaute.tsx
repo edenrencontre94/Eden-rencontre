@@ -110,10 +110,19 @@ function CommunityPage() {
 
         if (error) throw error;
         if (data) {
+          // Check what the current user liked
+          let userLikes = new Set<string>();
+          if (currentUserId) {
+            const { data: likes } = await supabase.from('community_likes').select('post_id').eq('user_id', currentUserId);
+            if (likes) {
+              likes.forEach(l => userLikes.add(l.post_id));
+            }
+          }
+
           setPosts(data.map((p: any) => ({
             ...p,
             profile: p.profiles,
-            liked: false,
+            liked: userLikes.has(p.id),
             saved: false,
           })));
         }
@@ -125,7 +134,7 @@ function CommunityPage() {
       }
     }
     loadPosts();
-  }, []);
+  }, [currentUserId]);
 
   const visible = useMemo(() => {
     let list = posts;
@@ -135,14 +144,37 @@ function CommunityPage() {
   }, [posts, category, sort]);
 
   const toggleLike = async (id: string) => {
+    if (!currentUserId) { toast.error("Connectez-vous pour aimer une publication"); return; }
+    
+    // Update Optimistically
+    const post = posts.find((p) => p.id === id);
+    if (!post) return;
+    const isLiking = !post.liked;
+    
     setPosts((all) =>
       all.map((p) => {
         if (p.id !== id) return p;
-        const liked = !p.liked;
-        return { ...p, liked, likes_count: liked ? p.likes_count + 1 : p.likes_count - 1 };
+        return { ...p, liked: isLiking, likes_count: isLiking ? p.likes_count + 1 : p.likes_count - 1 };
       })
     );
-    // Note: Real persistence would need a post_likes table
+
+    // Call Supabase
+    try {
+      if (isLiking) {
+        await supabase.from('community_likes').insert({ post_id: id, user_id: currentUserId });
+      } else {
+        await supabase.from('community_likes').delete().eq('post_id', id).eq('user_id', currentUserId);
+      }
+    } catch (e) {
+      console.error(e);
+      // Revert if error
+      setPosts((all) =>
+        all.map((p) => {
+          if (p.id !== id) return p;
+          return { ...p, liked: !isLiking, likes_count: !isLiking ? p.likes_count + 1 : p.likes_count - 1 };
+        })
+      );
+    }
   };
 
   const toggleSave = (id: string) => {
