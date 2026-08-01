@@ -28,7 +28,7 @@ function LoginPage() {
   // Client-side redirect: if user already has a session, go to /app immediately
   useEffect(() => {
     import("@/lib/supabase").then(({ supabase }) => {
-      supabase.auth.getSession().then(({ data: { session } }) => {
+      supabase.auth.getSession().then(({ data: { session } }: any) => {
         if (session) window.location.replace("/accueil");
       });
     });

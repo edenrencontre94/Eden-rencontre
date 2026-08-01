@@ -101,8 +101,8 @@ function RequestsPage() {
             created_at: s.created_at,
             profile: s.profiles,
           }));
-          setLikes(all.filter((s) => s.action === "like"));
-          setSuperlikes(all.filter((s) => s.action === "superlike"));
+          setLikes(all.filter((s: any) => s.action === "like"));
+          setSuperlikes(all.filter((s: any) => s.action === "superlike"));
         }
 
         // Charger les matches

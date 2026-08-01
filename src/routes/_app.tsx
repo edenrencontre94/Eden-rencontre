@@ -87,7 +87,7 @@ function AppLayout() {
             .select("photos")
             .eq("id", session.user.id)
             .single()
-            .then(({ data }) => {
+            .then(({ data }: any) => {
               if (data && data.photos && data.photos.length > 0) {
                 setAvatarUrl(data.photos[0]);
               }
@@ -102,7 +102,7 @@ function AppLayout() {
     // Also listen for auth state changes (logout from another tab, token expiry)
     let unsub: (() => void) | undefined;
     import("@/lib/supabase").then(({ supabase }) => {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
         if (cancelled) return;
         if (!session) {
           navigate({ to: "/login", replace: true });
