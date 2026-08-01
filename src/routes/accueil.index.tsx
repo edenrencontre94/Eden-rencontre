@@ -98,8 +98,8 @@ function HomePage() {
 
   const sections: Section[] = [
     { title: "Recommandés pour vous", icon: Sparkles, data: profiles.slice(0, 8) },
-    { title: "Nouveaux membres", icon: UserPlus, data: profiles.slice(0, 8).reverse() },
     { title: "Membres Alliance", icon: Crown, data: profiles.slice(0, 8) },
+    { title: "Nouveaux membres", icon: UserPlus, data: profiles.slice(0, 8).reverse() },
   ];
 
   return (
