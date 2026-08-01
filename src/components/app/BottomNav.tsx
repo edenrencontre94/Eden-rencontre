@@ -3,7 +3,7 @@ import { Home, Flame, MessageCircle, Heart, Users } from "lucide-react";
 import { motion } from "motion/react";
 
 type NavItem = {
-  to: "/accueil" | "/accueil/decouvrir" | "/accueil/messages" | "/accueil/demandes" | "/accueil/communaute";
+  to: "/accueil" | "/decouvrir" | "/messages" | "/demandes" | "/communaute";
   label: string;
   icon: typeof Home;
   exact?: boolean;
@@ -11,10 +11,10 @@ type NavItem = {
 
 const items: NavItem[] = [
   { to: "/accueil", label: "Accueil", icon: Home, exact: true },
-  { to: "/accueil/decouvrir", label: "Découvrir", icon: Flame },
-  { to: "/accueil/messages", label: "Messages", icon: MessageCircle },
-  { to: "/accueil/demandes", label: "Demandes", icon: Heart },
-  { to: "/accueil/communaute", label: "Communauté", icon: Users },
+  { to: "/decouvrir", label: "Découvrir", icon: Flame },
+  { to: "/messages", label: "Messages", icon: MessageCircle },
+  { to: "/demandes", label: "Demandes", icon: Heart },
+  { to: "/communaute", label: "Communauté", icon: Users },
 ];
 
 export function BottomNav() {

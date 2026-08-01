@@ -58,7 +58,7 @@ function DiscoverPage() {
 
   const upsell = (message: string) => {
     toast.error(message, {
-      action: { label: "Voir les formules", onClick: () => navigate({ to: "/accueil/abonnement" }) },
+      action: { label: "Voir les formules", onClick: () => navigate({ to: "/abonnement" }) },
     });
   };
 

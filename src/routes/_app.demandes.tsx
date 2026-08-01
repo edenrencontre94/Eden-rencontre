@@ -211,7 +211,7 @@ function RequestsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
                 className="rounded-2xl overflow-hidden bg-card border border-border/50 shadow-soft cursor-pointer"
-                onClick={() => navigate({ to: "/accueil/messages" })}
+                onClick={() => navigate({ to: "/messages" })}
               >
                 <div className="relative aspect-[3/4]">
                   <img
