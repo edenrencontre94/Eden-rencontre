@@ -61,6 +61,9 @@ function HomePage() {
           const totalFields = fields.length + 2;
           
           setCompletionScore(Math.round(((filled + photoBonus) / totalFields) * 100));
+          if (currentUserData.visibility) {
+            setVisibility(currentUserData.visibility as any);
+          }
         }
 
         let query = supabase.from('profiles').select('*').neq('id', user.id).limit(50);
@@ -98,7 +101,25 @@ function HomePage() {
             faithImportance: p.practice_level || ""
           }));
           setProfiles(formatted);
-          setVisitors(formatted.slice(0, 3));
+          
+          // Fetch real visitors
+          const { data: visits } = await supabase.from('profile_visits').select('visitor_id, created_at').eq('visited_id', user.id).order('created_at', { ascending: false }).limit(5);
+          if (visits && visits.length > 0) {
+            const visitorIds = visits.map((v: any) => v.visitor_id);
+            const { data: visitorProfiles } = await supabase.from('profiles').select('*').in('id', visitorIds);
+            if (visitorProfiles) {
+              const formattedVisitors = visits.map((v: any) => {
+                const p = visitorProfiles.find((vp: any) => vp.id === v.visitor_id);
+                return p ? {
+                  id: p.id,
+                  firstName: p.first_name || "Membre",
+                  photo: p.photos && p.photos.length > 0 ? p.photos[0] : 'https://placehold.co/400x600/1a1a2e/gold?text=😊',
+                  date: new Date(v.created_at)
+                } : null;
+              }).filter(Boolean);
+              setVisitors(formattedVisitors);
+            }
+          }
         }
       } catch (err) {
         console.error(err);
@@ -108,6 +129,14 @@ function HomePage() {
     }
     loadProfiles();
   }, []);
+
+  const updateVisibility = async (newVis: "tous" | "demande" | "pause") => {
+    setVisibility(newVis);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from('profiles').update({ visibility: newVis }).eq('id', user.id);
+    }
+  };
 
   const sections: Section[] = [
     { title: "Recommandés pour vous", icon: Sparkles, data: profiles.slice(0, 8) },
@@ -345,7 +374,7 @@ function HomePage() {
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <button
-                  onClick={() => setVisibility("tous")}
+                  onClick={() => updateVisibility("tous")}
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-all ${
                     visibility === "tous"
                       ? "bg-primary text-white border-primary shadow-md"
@@ -359,7 +388,7 @@ function HomePage() {
                   </span>
                 </button>
                 <button
-                  onClick={() => setVisibility("demande")}
+                  onClick={() => updateVisibility("demande")}
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-all ${
                     visibility === "demande"
                       ? "bg-primary text-white border-primary shadow-md"
@@ -373,7 +402,7 @@ function HomePage() {
                   </span>
                 </button>
                 <button
-                  onClick={() => setVisibility("pause")}
+                  onClick={() => updateVisibility("pause")}
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-all ${
                     visibility === "pause"
                       ? "bg-primary text-white border-primary shadow-md"

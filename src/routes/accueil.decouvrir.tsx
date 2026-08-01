@@ -159,6 +159,22 @@ function DiscoverPage() {
   const currentFiltered = filteredDeck[index];
   const nextFiltered = filteredDeck[index + 1];
 
+  useEffect(() => {
+    async function logVisit() {
+      if (!currentFiltered) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && user.id !== currentFiltered.id) {
+        await supabase.from('profile_visits').upsert({
+          visitor_id: user.id,
+          visited_id: currentFiltered.id,
+          created_at: new Date().toISOString()
+        }, { onConflict: 'visitor_id,visited_id' });
+      }
+    }
+    const timer = setTimeout(logVisit, 1500); // Only log if they look at it for 1.5s
+    return () => clearTimeout(timer);
+  }, [currentFiltered?.id]);
+
   const swipe = async (action: "left" | "right" | "super") => {
     if (!currentFiltered) return;
     if (action === "super" && !consumeSuperLike()) {
