@@ -389,6 +389,24 @@ function HomePage() {
               </div>
             </motion.div>
 
+            {/* Alliance CTA */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+            >
+              <Link
+                to="/accueil/abonnement"
+                className="w-full flex flex-col items-center gap-1 py-4 rounded-3xl bg-gold hover:bg-gold/90 text-black shadow-lg transition-all hover:shadow-xl active:scale-[0.98]"
+              >
+                <div className="flex items-center gap-2">
+                  <Crown className="w-5 h-5" />
+                  <span className="text-base font-bold">Alliance</span>
+                </div>
+                <span className="text-xs font-medium opacity-80">Débloque tout AgapeMeet</span>
+              </Link>
+            </motion.div>
+
           </div>
         </>
       )}
