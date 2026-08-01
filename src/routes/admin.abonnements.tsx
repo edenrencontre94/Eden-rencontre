@@ -6,9 +6,10 @@ export const Route = createFileRoute("/admin/abonnements")({
 });
 
 const mockPlans = [
-  { name: "Alliance — 1 mois", price: "9 990 FCFA", subscribers: 420, revenue: "4 195 800 FCFA", color: "bg-primary/10 text-primary" },
+  { name: "Alliance — 1 mois", price: "9 990 FCFA", subscribers: 420, revenue: "4 195 800 FCFA", color: "bg-gold/10 text-gold" },
   { name: "Alliance — 3 mois", price: "24 990 FCFA", subscribers: 870, revenue: "21 741 300 FCFA", color: "bg-gold/10 text-gold" },
-  { name: "Alliance — 6 mois", price: "44 990 FCFA", subscribers: 550, revenue: "24 744 500 FCFA", color: "bg-emerald-500/10 text-emerald-600" },
+  { name: "Alliance — 6 mois", price: "44 990 FCFA", subscribers: 550, revenue: "24 744 500 FCFA", color: "bg-gold/10 text-gold" },
+  { name: "Agape — Pass journalier", price: "1 500 FCFA", subscribers: 350, revenue: "525 000 FCFA", color: "bg-primary/10 text-primary" },
 ];
 
 const mockTransactions = [
@@ -39,7 +40,7 @@ function AdminAbonnements() {
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-full text-sm font-semibold">
               <TrendingUp className="w-4 h-4" /> +18.4% ce mois-ci
             </div>
-            <p className="text-xs opacity-70 mt-3">1 840 abonnés Alliance actifs</p>
+            <p className="text-xs opacity-70 mt-3">1 840 abonnés Alliance • 350 abonnés Agape</p>
           </div>
         </div>
       </div>
@@ -47,7 +48,7 @@ function AdminAbonnements() {
       {/* Plans Cards */}
       <div>
         <h2 className="font-semibold text-lg mb-4">Performance par formule</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {mockPlans.map((plan) => (
             <div key={plan.name} className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
               <div className={`w-10 h-10 rounded-xl ${plan.color} flex items-center justify-center mb-4`}>
