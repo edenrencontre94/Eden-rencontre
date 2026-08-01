@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 
-export const Route = createFileRoute("/accueil/parametres/notifications")({
+export const Route = createFileRoute("/_app/parametres/notifications")({
   head: () => ({
     meta: [{ title: "Notifications — AgapeMeet" }],
   }),

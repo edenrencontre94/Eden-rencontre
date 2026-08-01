@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Globe, Check, Lock } from "lucide-react";
 
-export const Route = createFileRoute("/accueil/parametres/langue")({
+export const Route = createFileRoute("/_app/parametres/langue")({
   head: () => ({
     meta: [{ title: "Langue — AgapeMeet" }],
   }),

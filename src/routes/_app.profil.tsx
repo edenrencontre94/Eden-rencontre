@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-export const Route = createFileRoute("/accueil/profil")({
+export const Route = createFileRoute("/_app/profil")({
   head: () => ({
     meta: [{ title: "Mon Profil — AgapeMeet" }],
   }),

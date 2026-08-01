@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 
-export const Route = createFileRoute("/accueil")({
+export const Route = createFileRoute("/_app")({
   // No beforeLoad — auth is checked client-side only to avoid SSR logout on refresh
   component: AppLayout,
 });
@@ -143,7 +143,7 @@ function AppLayout() {
             </Link>
             <div className="flex items-center gap-2">
               <Link
-                to="/accueil/abonnement"
+                to="/abonnement"
                 aria-label="Abonnement"
                 className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-gold text-gold-foreground text-xs font-semibold shadow-soft"
               >
@@ -176,14 +176,14 @@ function AppLayout() {
                   <DropdownMenuSeparator className="bg-border/50" />
                   
                   <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-primary/10">
-                    <Link to="/accueil/profil" className="flex items-center gap-3 py-2.5 px-2">
+                    <Link to="/profil" className="flex items-center gap-3 py-2.5 px-2">
                       <User className="w-4 h-4" />
                       <span className="font-medium">Mon profil</span>
                     </Link>
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
-                    <Link to="/accueil/abonnement" className="flex items-center gap-3 py-2.5 px-2">
+                    <Link to="/abonnement" className="flex items-center gap-3 py-2.5 px-2">
                       <Crown className="w-4 h-4 text-gold" />
                       <span className="font-medium">Abonnement & Facturation</span>
                     </Link>
@@ -195,28 +195,28 @@ function AppLayout() {
                   </DropdownMenuLabel>
                   
                   <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
-                    <Link to="/accueil/parametres/securite" className="flex items-center gap-3 py-2.5 px-2">
+                    <Link to="/parametres/securite" className="flex items-center gap-3 py-2.5 px-2">
                       <Settings className="w-4 h-4 text-muted-foreground" />
                       <span className="font-medium">Sécurité</span>
                     </Link>
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
-                    <Link to="/accueil/parametres/notifications" className="flex items-center gap-3 py-2.5 px-2">
+                    <Link to="/parametres/notifications" className="flex items-center gap-3 py-2.5 px-2">
                       <Bell className="w-4 h-4 text-muted-foreground" />
                       <span className="font-medium">Notifications</span>
                     </Link>
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
-                    <Link to="/accueil/parametres/langue" className="flex items-center gap-3 py-2.5 px-2">
+                    <Link to="/parametres/langue" className="flex items-center gap-3 py-2.5 px-2">
                       <Languages className="w-4 h-4 text-muted-foreground" />
                       <span className="font-medium">Langue</span>
                     </Link>
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
-                    <Link to="/accueil/parametres/bloques" className="flex items-center gap-3 py-2.5 px-2">
+                    <Link to="/parametres/bloques" className="flex items-center gap-3 py-2.5 px-2">
                       <Ban className="w-4 h-4 text-muted-foreground" />
                       <span className="font-medium">Profils bloqués</span>
                     </Link>

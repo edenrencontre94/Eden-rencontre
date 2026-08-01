@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
-export const Route = createFileRoute("/accueil/decouvrir")({
+export const Route = createFileRoute("/_app/decouvrir")({
   head: () => ({
     meta: [
       { title: "Découvrir — AgapeMeet" },

@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 
-export const Route = createFileRoute("/accueil/parametres/securite")({
+export const Route = createFileRoute("/_app/parametres/securite")({
   head: () => ({
     meta: [{ title: "Sécurité — AgapeMeet" }],
   }),

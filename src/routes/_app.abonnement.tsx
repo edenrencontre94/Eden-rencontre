@@ -26,7 +26,7 @@ import {
   type PlanId,
 } from "@/lib/subscription";
 
-export const Route = createFileRoute("/accueil/abonnement")({
+export const Route = createFileRoute("/_app/abonnement")({
   head: () => ({
     meta: [
       { title: "Abonnement — AgapeMeet" },

@@ -17,7 +17,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useSubscription } from "@/lib/subscription";
 
-export const Route = createFileRoute("/accueil/demandes")({
+export const Route = createFileRoute("/_app/demandes")({
   head: () => ({
     meta: [
       { title: "Demandes — AgapeMeet" },
@@ -328,7 +328,7 @@ function PremiumGate() {
           Passez Alliance pour voir qui a visité votre profil et accéder à toutes les fonctionnalités avancées.
         </p>
         <Link
-          to="/accueil/abonnement"
+          to="/abonnement"
           className="mt-5 inline-flex px-6 py-2.5 rounded-full bg-gold text-gold-foreground font-semibold shadow-elegant"
         >
           Devenir Alliance

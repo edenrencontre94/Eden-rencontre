@@ -19,7 +19,7 @@ import { supabase } from "@/lib/supabase";
 import { verseOfTheDay, weeklyChallenge, coupleTestimonials } from "@/lib/mock-data";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/accueil/communaute")({
+export const Route = createFileRoute("/_app/communaute")({
   head: () => ({
     meta: [
       { title: "Communauté — AgapeMeet" },

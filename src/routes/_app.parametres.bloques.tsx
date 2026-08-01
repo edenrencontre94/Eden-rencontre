@@ -3,7 +3,7 @@ import { ArrowLeft, Ban, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/accueil/parametres/bloques")({
+export const Route = createFileRoute("/_app/parametres/bloques")({
   head: () => ({
     meta: [{ title: "Profils bloqués — AgapeMeet" }],
   }),
