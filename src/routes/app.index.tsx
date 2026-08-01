@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { Sparkles, Crown, UserPlus } from "lucide-react";
+import { Sparkles, Crown, UserPlus, ArrowRight } from "lucide-react";
 import { ProfileCard } from "@/components/app/ProfileCard";
 import { supabase } from "@/lib/supabase";
 import { type Profile } from "@/lib/mock-data";
@@ -22,6 +22,8 @@ type Section = { title: string; icon: typeof Sparkles; data: Profile[]; hue?: st
 function HomePage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [completionScore, setCompletionScore] = useState(0);
 
   useEffect(() => {
     async function loadProfiles() {
@@ -29,7 +31,24 @@ function HomePage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
         
-        const { data: currentUserData } = await supabase.from('profiles').select('seeking_gender').eq('id', user.id).single();
+        const { data: currentUserData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        if (currentUserData) {
+          setCurrentUser(currentUserData);
+          
+          // Calculate profile completion
+          const fields = [
+            currentUserData.first_name, currentUserData.last_name, currentUserData.bio,
+            currentUserData.city, currentUserData.country, currentUserData.birth_date,
+            currentUserData.gender, currentUserData.denomination, currentUserData.practice_level,
+            currentUserData.baptized, currentUserData.church_attendance, currentUserData.seeking_gender,
+            currentUserData.marriage_intent, currentUserData.has_children, currentUserData.wants_children
+          ];
+          const filled = fields.filter(f => f && f.toString().trim() !== '' && f !== 'all').length;
+          const photoBonus = (currentUserData.photos && currentUserData.photos.length > 0) ? 2 : 0;
+          const totalFields = fields.length + 2; // +2 for photos
+          
+          setCompletionScore(Math.round(((filled + photoBonus) / totalFields) * 100));
+        }
 
         let query = supabase.from('profiles').select('*').neq('id', user.id).limit(50);
         
@@ -76,8 +95,6 @@ function HomePage() {
     loadProfiles();
   }, []);
 
-  const heroProfile = profiles[0];
-
   const sections: Section[] = [
     { title: "Recommandés pour vous", icon: Sparkles, data: profiles.slice(0, 8) },
     { title: "Nouveaux membres", icon: UserPlus, data: profiles.slice(0, 8).reverse() },
@@ -90,72 +107,113 @@ function HomePage() {
         <div className="flex justify-center p-8">
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : profiles.length === 0 ? (
-        <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-          Aucun profil trouvé.
-        </div>
       ) : (
         <>
-          {/* Hero suggestion */}
-          {heroProfile && (
-            <section className="px-4 mb-6">
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
+          {/* Banners Section */}
+          <div className="px-4 space-y-4 mb-8">
+            
+            {/* Passe Alliance Banner */}
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative overflow-hidden rounded-3xl bg-[#0f5132] p-4 flex items-center justify-between shadow-lg"
+            >
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="w-12 h-12 rounded-2xl bg-gold/20 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-gold flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.5)]">
+                    <Crown className="w-5 h-5 text-black" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-white font-bold text-base">Passe Alliance</h3>
+                    <span className="bg-gold text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full">-40%</span>
+                  </div>
+                  <p className="text-white/80 text-xs">Demandes illimitées, profil mis en avant, badge Alliance</p>
+                </div>
+              </div>
+              <Link to="/app/abonnement" className="relative z-10 bg-gold hover:bg-gold/90 text-black text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1 transition-colors whitespace-nowrap">
+                Découvrir <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </motion.div>
+
+            {/* Profile Completion Banner */}
+            {currentUser && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="relative rounded-3xl overflow-hidden shadow-elegant"
+                transition={{ delay: 0.1 }}
+                className="rounded-3xl bg-primary p-4 shadow-lg flex flex-col gap-4 cursor-pointer hover:bg-primary/95 transition-colors"
+                onClick={() => window.location.href = '/app/profil'}
               >
-                <div className="aspect-[16/10] relative">
-                  <img
-                    src={heroProfile.photo}
-                    alt={heroProfile.firstName}
-                    className="w-full h-full object-cover"
+                <div className="flex items-center gap-3">
+                  <img 
+                    src={currentUser.photos?.[0] || 'https://placehold.co/400x600/1a1a2e/gold?text=😊'} 
+                    alt="Mon profil" 
+                    className="w-14 h-14 rounded-full object-cover border-2 border-white/20"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur text-[11px] font-semibold">
-                      <Sparkles className="w-3.5 h-3.5" /> Suggestion du jour
-                    </span>
-                    <h2 className="font-serif text-3xl mt-2">
-                      {heroProfile.firstName}, {heroProfile.age}
-                    </h2>
-                    <p className="text-sm opacity-90">
-                      {heroProfile.city} · {heroProfile.denomination} · {heroProfile.compatibility}% de compatibilité
+                  <div>
+                    <h3 className="text-white font-bold text-lg">Salut, {currentUser.first_name || "Mister"} !</h3>
+                    <p className="text-white/80 text-xs flex items-center gap-1">
+                      {currentUser.city || "Ville inconnue"}, {currentUser.country || "Pays"}
                     </p>
                   </div>
                 </div>
-              </motion.div>
-            </section>
-          )}
-
-          {/* Sections */}
-          {sections.map((s, i) => {
-            if (s.data.length === 0) return null;
-            const Icon = s.icon;
-            return (
-              <section key={s.title} className="mb-7">
-                <div className="flex items-center justify-between px-4 mb-3">
-                  <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4 text-primary" />
-                    <h3 className="font-serif text-lg font-semibold">{s.title}</h3>
+                
+                <div>
+                  <div className="flex items-center justify-between text-white text-xs font-medium mb-2">
+                    <span>Profil complété</span>
+                    <span className="text-lg font-bold">{completionScore}%</span>
                   </div>
-                  <button className="text-xs font-medium text-primary hover:underline">Tout voir</button>
+                  <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-white rounded-full transition-all duration-1000 ease-out" 
+                      style={{ width: `${completionScore}%` }}
+                    />
+                  </div>
+                  <p className="text-white/60 text-[10px] text-center mt-2 font-medium uppercase tracking-wider">
+                    Cliquez pour compléter
+                  </p>
                 </div>
-                <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-none px-4 pb-2">
-                  {s.data.map((p, k) => (
-                    <motion.div
-                      key={p.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.04 * k + 0.05 * i }}
-                      className="snap-start shrink-0"
-                    >
-                      <ProfileCard profile={p} />
-                    </motion.div>
-                  ))}
-                </div>
-              </section>
-            );
-          })}
+              </motion.div>
+            )}
+          </div>
+
+          {profiles.length === 0 ? (
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+              Aucun profil trouvé.
+            </div>
+          ) : (
+            /* Sections */
+            sections.map((s, i) => {
+              if (s.data.length === 0) return null;
+              const Icon = s.icon;
+              return (
+                <section key={s.title} className="mb-7">
+                  <div className="flex items-center justify-between px-4 mb-3">
+                    <div className="flex items-center gap-2">
+                      <Icon className="w-4 h-4 text-primary" />
+                      <h3 className="font-serif text-lg font-semibold">{s.title}</h3>
+                    </div>
+                    <button className="text-xs font-medium text-primary hover:underline">Tout voir</button>
+                  </div>
+                  <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory scrollbar-none px-4 pb-2">
+                    {s.data.map((p, k) => (
+                      <motion.div
+                        key={p.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.04 * k + 0.05 * i }}
+                        className="snap-start shrink-0"
+                      >
+                        <ProfileCard profile={p} />
+                      </motion.div>
+                    ))}
+                  </div>
+                </section>
+              );
+            })
+          )}
         </>
       )}
     </div>
