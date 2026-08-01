@@ -5,7 +5,7 @@ import { Eye, EyeOff, User, Mail, Lock, CalendarDays, Check } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import logoAsset from "@/assets/logo.jpg";
+import logoAsset from "@/assets/logo.png";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/inscription")({

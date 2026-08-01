@@ -10,26 +10,30 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppRouteImport } from './routes/app'
+import { Route as AccueilRouteImport } from './routes/accueil'
 import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
-import { Route as AppIndexRouteImport } from './routes/app.index'
-import { Route as AppAbonnementRouteImport } from './routes/app.abonnement'
-import { Route as AppCommunauteRouteImport } from './routes/app.communaute'
-import { Route as AppDecouvrirRouteImport } from './routes/app.decouvrir'
-import { Route as AppDemandesRouteImport } from './routes/app.demandes'
-import { Route as AppMessagesRouteImport } from './routes/app.messages'
-import { Route as AppProfilRouteImport } from './routes/app.profil'
+import { Route as AccueilIndexRouteImport } from './routes/accueil.index'
+import { Route as AccueilAbonnementRouteImport } from './routes/accueil.abonnement'
+import { Route as AccueilCommunauteRouteImport } from './routes/accueil.communaute'
+import { Route as AccueilDecouvrirRouteImport } from './routes/accueil.decouvrir'
+import { Route as AccueilDemandesRouteImport } from './routes/accueil.demandes'
+import { Route as AccueilMessagesRouteImport } from './routes/accueil.messages'
+import { Route as AccueilProfilRouteImport } from './routes/accueil.profil'
+import { Route as AccueilParametresBloquesRouteImport } from './routes/accueil.parametres.bloques'
+import { Route as AccueilParametresLangueRouteImport } from './routes/accueil.parametres.langue'
+import { Route as AccueilParametresNotificationsRouteImport } from './routes/accueil.parametres.notifications'
+import { Route as AccueilParametresSecuriteRouteImport } from './routes/accueil.parametres.securite'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppRoute = AppRouteImport.update({
-  id: '/app',
-  path: '/app',
+const AccueilRoute = AccueilRouteImport.update({
+  id: '/accueil',
+  path: '/accueil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InscriptionRoute = InscriptionRouteImport.update({
@@ -47,131 +51,178 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppIndexRoute = AppIndexRouteImport.update({
+const AccueilIndexRoute = AccueilIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AccueilRoute,
 } as any)
-const AppAbonnementRoute = AppAbonnementRouteImport.update({
+const AccueilAbonnementRoute = AccueilAbonnementRouteImport.update({
   id: '/abonnement',
   path: '/abonnement',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AccueilRoute,
 } as any)
-const AppCommunauteRoute = AppCommunauteRouteImport.update({
+const AccueilCommunauteRoute = AccueilCommunauteRouteImport.update({
   id: '/communaute',
   path: '/communaute',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AccueilRoute,
 } as any)
-const AppDecouvrirRoute = AppDecouvrirRouteImport.update({
+const AccueilDecouvrirRoute = AccueilDecouvrirRouteImport.update({
   id: '/decouvrir',
   path: '/decouvrir',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AccueilRoute,
 } as any)
-const AppDemandesRoute = AppDemandesRouteImport.update({
+const AccueilDemandesRoute = AccueilDemandesRouteImport.update({
   id: '/demandes',
   path: '/demandes',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AccueilRoute,
 } as any)
-const AppMessagesRoute = AppMessagesRouteImport.update({
+const AccueilMessagesRoute = AccueilMessagesRouteImport.update({
   id: '/messages',
   path: '/messages',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AccueilRoute,
 } as any)
-const AppProfilRoute = AppProfilRouteImport.update({
+const AccueilProfilRoute = AccueilProfilRouteImport.update({
   id: '/profil',
   path: '/profil',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AccueilRoute,
 } as any)
+const AccueilParametresBloquesRoute =
+  AccueilParametresBloquesRouteImport.update({
+    id: '/parametres/bloques',
+    path: '/parametres/bloques',
+    getParentRoute: () => AccueilRoute,
+  } as any)
+const AccueilParametresLangueRoute = AccueilParametresLangueRouteImport.update({
+  id: '/parametres/langue',
+  path: '/parametres/langue',
+  getParentRoute: () => AccueilRoute,
+} as any)
+const AccueilParametresNotificationsRoute =
+  AccueilParametresNotificationsRouteImport.update({
+    id: '/parametres/notifications',
+    path: '/parametres/notifications',
+    getParentRoute: () => AccueilRoute,
+  } as any)
+const AccueilParametresSecuriteRoute =
+  AccueilParametresSecuriteRouteImport.update({
+    id: '/parametres/securite',
+    path: '/parametres/securite',
+    getParentRoute: () => AccueilRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/app': typeof AppRouteWithChildren
+  '/accueil': typeof AccueilRouteWithChildren
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
-  '/app/abonnement': typeof AppAbonnementRoute
-  '/app/communaute': typeof AppCommunauteRoute
-  '/app/decouvrir': typeof AppDecouvrirRoute
-  '/app/demandes': typeof AppDemandesRoute
-  '/app/messages': typeof AppMessagesRoute
-  '/app/profil': typeof AppProfilRoute
-  '/app/': typeof AppIndexRoute
+  '/accueil/abonnement': typeof AccueilAbonnementRoute
+  '/accueil/communaute': typeof AccueilCommunauteRoute
+  '/accueil/decouvrir': typeof AccueilDecouvrirRoute
+  '/accueil/demandes': typeof AccueilDemandesRoute
+  '/accueil/messages': typeof AccueilMessagesRoute
+  '/accueil/profil': typeof AccueilProfilRoute
+  '/accueil/': typeof AccueilIndexRoute
+  '/accueil/parametres/bloques': typeof AccueilParametresBloquesRoute
+  '/accueil/parametres/langue': typeof AccueilParametresLangueRoute
+  '/accueil/parametres/notifications': typeof AccueilParametresNotificationsRoute
+  '/accueil/parametres/securite': typeof AccueilParametresSecuriteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
-  '/app/abonnement': typeof AppAbonnementRoute
-  '/app/communaute': typeof AppCommunauteRoute
-  '/app/decouvrir': typeof AppDecouvrirRoute
-  '/app/demandes': typeof AppDemandesRoute
-  '/app/messages': typeof AppMessagesRoute
-  '/app/profil': typeof AppProfilRoute
-  '/app': typeof AppIndexRoute
+  '/accueil/abonnement': typeof AccueilAbonnementRoute
+  '/accueil/communaute': typeof AccueilCommunauteRoute
+  '/accueil/decouvrir': typeof AccueilDecouvrirRoute
+  '/accueil/demandes': typeof AccueilDemandesRoute
+  '/accueil/messages': typeof AccueilMessagesRoute
+  '/accueil/profil': typeof AccueilProfilRoute
+  '/accueil': typeof AccueilIndexRoute
+  '/accueil/parametres/bloques': typeof AccueilParametresBloquesRoute
+  '/accueil/parametres/langue': typeof AccueilParametresLangueRoute
+  '/accueil/parametres/notifications': typeof AccueilParametresNotificationsRoute
+  '/accueil/parametres/securite': typeof AccueilParametresSecuriteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/app': typeof AppRouteWithChildren
+  '/accueil': typeof AccueilRouteWithChildren
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
-  '/app/abonnement': typeof AppAbonnementRoute
-  '/app/communaute': typeof AppCommunauteRoute
-  '/app/decouvrir': typeof AppDecouvrirRoute
-  '/app/demandes': typeof AppDemandesRoute
-  '/app/messages': typeof AppMessagesRoute
-  '/app/profil': typeof AppProfilRoute
-  '/app/': typeof AppIndexRoute
+  '/accueil/abonnement': typeof AccueilAbonnementRoute
+  '/accueil/communaute': typeof AccueilCommunauteRoute
+  '/accueil/decouvrir': typeof AccueilDecouvrirRoute
+  '/accueil/demandes': typeof AccueilDemandesRoute
+  '/accueil/messages': typeof AccueilMessagesRoute
+  '/accueil/profil': typeof AccueilProfilRoute
+  '/accueil/': typeof AccueilIndexRoute
+  '/accueil/parametres/bloques': typeof AccueilParametresBloquesRoute
+  '/accueil/parametres/langue': typeof AccueilParametresLangueRoute
+  '/accueil/parametres/notifications': typeof AccueilParametresNotificationsRoute
+  '/accueil/parametres/securite': typeof AccueilParametresSecuriteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/app'
+    | '/accueil'
     | '/inscription'
     | '/login'
     | '/onboarding'
-    | '/app/abonnement'
-    | '/app/communaute'
-    | '/app/decouvrir'
-    | '/app/demandes'
-    | '/app/messages'
-    | '/app/profil'
-    | '/app/'
+    | '/accueil/abonnement'
+    | '/accueil/communaute'
+    | '/accueil/decouvrir'
+    | '/accueil/demandes'
+    | '/accueil/messages'
+    | '/accueil/profil'
+    | '/accueil/'
+    | '/accueil/parametres/bloques'
+    | '/accueil/parametres/langue'
+    | '/accueil/parametres/notifications'
+    | '/accueil/parametres/securite'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/inscription'
     | '/login'
     | '/onboarding'
-    | '/app/abonnement'
-    | '/app/communaute'
-    | '/app/decouvrir'
-    | '/app/demandes'
-    | '/app/messages'
-    | '/app/profil'
-    | '/app'
+    | '/accueil/abonnement'
+    | '/accueil/communaute'
+    | '/accueil/decouvrir'
+    | '/accueil/demandes'
+    | '/accueil/messages'
+    | '/accueil/profil'
+    | '/accueil'
+    | '/accueil/parametres/bloques'
+    | '/accueil/parametres/langue'
+    | '/accueil/parametres/notifications'
+    | '/accueil/parametres/securite'
   id:
     | '__root__'
     | '/'
-    | '/app'
+    | '/accueil'
     | '/inscription'
     | '/login'
     | '/onboarding'
-    | '/app/abonnement'
-    | '/app/communaute'
-    | '/app/decouvrir'
-    | '/app/demandes'
-    | '/app/messages'
-    | '/app/profil'
-    | '/app/'
+    | '/accueil/abonnement'
+    | '/accueil/communaute'
+    | '/accueil/decouvrir'
+    | '/accueil/demandes'
+    | '/accueil/messages'
+    | '/accueil/profil'
+    | '/accueil/'
+    | '/accueil/parametres/bloques'
+    | '/accueil/parametres/langue'
+    | '/accueil/parametres/notifications'
+    | '/accueil/parametres/securite'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppRoute: typeof AppRouteWithChildren
+  AccueilRoute: typeof AccueilRouteWithChildren
   InscriptionRoute: typeof InscriptionRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -186,11 +237,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app': {
-      id: '/app'
-      path: '/app'
-      fullPath: '/app'
-      preLoaderRoute: typeof AppRouteImport
+    '/accueil': {
+      id: '/accueil'
+      path: '/accueil'
+      fullPath: '/accueil'
+      preLoaderRoute: typeof AccueilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inscription': {
@@ -214,83 +265,120 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/': {
-      id: '/app/'
+    '/accueil/': {
+      id: '/accueil/'
       path: '/'
-      fullPath: '/app/'
-      preLoaderRoute: typeof AppIndexRouteImport
-      parentRoute: typeof AppRoute
+      fullPath: '/accueil/'
+      preLoaderRoute: typeof AccueilIndexRouteImport
+      parentRoute: typeof AccueilRoute
     }
-    '/app/abonnement': {
-      id: '/app/abonnement'
+    '/accueil/abonnement': {
+      id: '/accueil/abonnement'
       path: '/abonnement'
-      fullPath: '/app/abonnement'
-      preLoaderRoute: typeof AppAbonnementRouteImport
-      parentRoute: typeof AppRoute
+      fullPath: '/accueil/abonnement'
+      preLoaderRoute: typeof AccueilAbonnementRouteImport
+      parentRoute: typeof AccueilRoute
     }
-    '/app/communaute': {
-      id: '/app/communaute'
+    '/accueil/communaute': {
+      id: '/accueil/communaute'
       path: '/communaute'
-      fullPath: '/app/communaute'
-      preLoaderRoute: typeof AppCommunauteRouteImport
-      parentRoute: typeof AppRoute
+      fullPath: '/accueil/communaute'
+      preLoaderRoute: typeof AccueilCommunauteRouteImport
+      parentRoute: typeof AccueilRoute
     }
-    '/app/decouvrir': {
-      id: '/app/decouvrir'
+    '/accueil/decouvrir': {
+      id: '/accueil/decouvrir'
       path: '/decouvrir'
-      fullPath: '/app/decouvrir'
-      preLoaderRoute: typeof AppDecouvrirRouteImport
-      parentRoute: typeof AppRoute
+      fullPath: '/accueil/decouvrir'
+      preLoaderRoute: typeof AccueilDecouvrirRouteImport
+      parentRoute: typeof AccueilRoute
     }
-    '/app/demandes': {
-      id: '/app/demandes'
+    '/accueil/demandes': {
+      id: '/accueil/demandes'
       path: '/demandes'
-      fullPath: '/app/demandes'
-      preLoaderRoute: typeof AppDemandesRouteImport
-      parentRoute: typeof AppRoute
+      fullPath: '/accueil/demandes'
+      preLoaderRoute: typeof AccueilDemandesRouteImport
+      parentRoute: typeof AccueilRoute
     }
-    '/app/messages': {
-      id: '/app/messages'
+    '/accueil/messages': {
+      id: '/accueil/messages'
       path: '/messages'
-      fullPath: '/app/messages'
-      preLoaderRoute: typeof AppMessagesRouteImport
-      parentRoute: typeof AppRoute
+      fullPath: '/accueil/messages'
+      preLoaderRoute: typeof AccueilMessagesRouteImport
+      parentRoute: typeof AccueilRoute
     }
-    '/app/profil': {
-      id: '/app/profil'
+    '/accueil/profil': {
+      id: '/accueil/profil'
       path: '/profil'
-      fullPath: '/app/profil'
-      preLoaderRoute: typeof AppProfilRouteImport
-      parentRoute: typeof AppRoute
+      fullPath: '/accueil/profil'
+      preLoaderRoute: typeof AccueilProfilRouteImport
+      parentRoute: typeof AccueilRoute
+    }
+    '/accueil/parametres/bloques': {
+      id: '/accueil/parametres/bloques'
+      path: '/parametres/bloques'
+      fullPath: '/accueil/parametres/bloques'
+      preLoaderRoute: typeof AccueilParametresBloquesRouteImport
+      parentRoute: typeof AccueilRoute
+    }
+    '/accueil/parametres/langue': {
+      id: '/accueil/parametres/langue'
+      path: '/parametres/langue'
+      fullPath: '/accueil/parametres/langue'
+      preLoaderRoute: typeof AccueilParametresLangueRouteImport
+      parentRoute: typeof AccueilRoute
+    }
+    '/accueil/parametres/notifications': {
+      id: '/accueil/parametres/notifications'
+      path: '/parametres/notifications'
+      fullPath: '/accueil/parametres/notifications'
+      preLoaderRoute: typeof AccueilParametresNotificationsRouteImport
+      parentRoute: typeof AccueilRoute
+    }
+    '/accueil/parametres/securite': {
+      id: '/accueil/parametres/securite'
+      path: '/parametres/securite'
+      fullPath: '/accueil/parametres/securite'
+      preLoaderRoute: typeof AccueilParametresSecuriteRouteImport
+      parentRoute: typeof AccueilRoute
     }
   }
 }
 
-interface AppRouteChildren {
-  AppAbonnementRoute: typeof AppAbonnementRoute
-  AppCommunauteRoute: typeof AppCommunauteRoute
-  AppDecouvrirRoute: typeof AppDecouvrirRoute
-  AppDemandesRoute: typeof AppDemandesRoute
-  AppMessagesRoute: typeof AppMessagesRoute
-  AppProfilRoute: typeof AppProfilRoute
-  AppIndexRoute: typeof AppIndexRoute
+interface AccueilRouteChildren {
+  AccueilAbonnementRoute: typeof AccueilAbonnementRoute
+  AccueilCommunauteRoute: typeof AccueilCommunauteRoute
+  AccueilDecouvrirRoute: typeof AccueilDecouvrirRoute
+  AccueilDemandesRoute: typeof AccueilDemandesRoute
+  AccueilMessagesRoute: typeof AccueilMessagesRoute
+  AccueilProfilRoute: typeof AccueilProfilRoute
+  AccueilIndexRoute: typeof AccueilIndexRoute
+  AccueilParametresBloquesRoute: typeof AccueilParametresBloquesRoute
+  AccueilParametresLangueRoute: typeof AccueilParametresLangueRoute
+  AccueilParametresNotificationsRoute: typeof AccueilParametresNotificationsRoute
+  AccueilParametresSecuriteRoute: typeof AccueilParametresSecuriteRoute
 }
 
-const AppRouteChildren: AppRouteChildren = {
-  AppAbonnementRoute: AppAbonnementRoute,
-  AppCommunauteRoute: AppCommunauteRoute,
-  AppDecouvrirRoute: AppDecouvrirRoute,
-  AppDemandesRoute: AppDemandesRoute,
-  AppMessagesRoute: AppMessagesRoute,
-  AppProfilRoute: AppProfilRoute,
-  AppIndexRoute: AppIndexRoute,
+const AccueilRouteChildren: AccueilRouteChildren = {
+  AccueilAbonnementRoute: AccueilAbonnementRoute,
+  AccueilCommunauteRoute: AccueilCommunauteRoute,
+  AccueilDecouvrirRoute: AccueilDecouvrirRoute,
+  AccueilDemandesRoute: AccueilDemandesRoute,
+  AccueilMessagesRoute: AccueilMessagesRoute,
+  AccueilProfilRoute: AccueilProfilRoute,
+  AccueilIndexRoute: AccueilIndexRoute,
+  AccueilParametresBloquesRoute: AccueilParametresBloquesRoute,
+  AccueilParametresLangueRoute: AccueilParametresLangueRoute,
+  AccueilParametresNotificationsRoute: AccueilParametresNotificationsRoute,
+  AccueilParametresSecuriteRoute: AccueilParametresSecuriteRoute,
 }
 
-const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+const AccueilRouteWithChildren =
+  AccueilRoute._addFileChildren(AccueilRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppRoute: AppRouteWithChildren,
+  AccueilRoute: AccueilRouteWithChildren,
   InscriptionRoute: InscriptionRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
