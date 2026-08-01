@@ -1,5 +1,6 @@
 import { CheckCircle2, Crown, MapPin, Circle } from "lucide-react";
 import type { Profile } from "@/lib/mock-data";
+import { getCountryCode } from "@/lib/utils";
 
 export function ProfileCard({ profile, size = "md" }: { profile: Profile; size?: "sm" | "md" | "lg" }) {
   return (
@@ -44,7 +45,14 @@ export function ProfileCard({ profile, size = "md" }: { profile: Profile; size?:
           </div>
           <div className="flex items-center gap-1 text-[11px] opacity-90 mt-0.5">
             <MapPin className="w-3 h-3" />
-            {profile.city}, {profile.country}
+            <span>{profile.city}, {profile.country}</span>
+            {profile.country && getCountryCode(profile.country) && (
+              <img 
+                src={`https://flagcdn.com/w40/${getCountryCode(profile.country)}.png`} 
+                alt={profile.country} 
+                className="w-3 h-3 rounded-full object-cover ml-0.5 shadow-sm"
+              />
+            )}
           </div>
           <div className="flex items-center justify-between mt-1">
             <span className="text-[10px] opacity-80">{profile.denomination}</span>
