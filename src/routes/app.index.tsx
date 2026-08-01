@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { Sparkles, Flame, ShieldCheck, Crown, Activity, UserPlus } from "lucide-react";
+import { Sparkles, Crown, UserPlus } from "lucide-react";
 import { ProfileCard } from "@/components/app/ProfileCard";
 import { supabase } from "@/lib/supabase";
 import { type Profile } from "@/lib/mock-data";
@@ -80,11 +80,8 @@ function HomePage() {
 
   const sections: Section[] = [
     { title: "Recommandés pour vous", icon: Sparkles, data: profiles.slice(0, 8) },
-    { title: "Les plus compatibles", icon: Flame, data: profiles.slice().sort((a,b) => b.compatibility - a.compatibility).slice(0, 8) },
     { title: "Nouveaux membres", icon: UserPlus, data: profiles.slice(0, 8).reverse() },
-    { title: "Profils vérifiés", icon: ShieldCheck, data: profiles.slice(0, 8) },
     { title: "Membres Alliance", icon: Crown, data: profiles.slice(0, 8) },
-    { title: "Récemment actifs", icon: Activity, data: profiles.slice(0, 8) },
   ];
 
   return (
