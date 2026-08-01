@@ -19,6 +19,28 @@ export const Route = createFileRoute("/app/")({
 
 type Section = { title: string; icon: typeof Sparkles; data: Profile[]; hue?: string };
 
+const getCountryCode = (countryName: string) => {
+  const map: Record<string, string> = {
+    "côte d'ivoire": "ci",
+    "sénégal": "sn",
+    "cameroun": "cm",
+    "bénin": "bj",
+    "togo": "tg",
+    "mali": "ml",
+    "burkina faso": "bf",
+    "gabon": "ga",
+    "congo": "cg",
+    "rdc": "cd",
+    "guinée": "gn",
+    "madagascar": "mg",
+    "france": "fr",
+    "belgique": "be",
+    "suisse": "ch",
+    "canada": "ca",
+  };
+  return map[countryName?.toLowerCase()] || null;
+};
+
 function HomePage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -154,8 +176,15 @@ function HomePage() {
                   />
                   <div>
                     <h3 className="text-white font-bold text-lg">Salut, {currentUser.first_name || "Mister"} !</h3>
-                    <p className="text-white/80 text-xs flex items-center gap-1">
-                      {currentUser.city || "Ville inconnue"}, {currentUser.country || "Pays"}
+                    <p className="text-white/80 text-xs flex items-center gap-1.5 mt-0.5">
+                      {currentUser.country && getCountryCode(currentUser.country) && (
+                        <img 
+                          src={`https://flagcdn.com/w40/${getCountryCode(currentUser.country)}.png`} 
+                          alt={currentUser.country} 
+                          className="w-3.5 h-3.5 rounded-full object-cover shadow-sm"
+                        />
+                      )}
+                      <span>{currentUser.city || "Ville inconnue"}, {currentUser.country || "Pays"}</span>
                     </p>
                   </div>
                 </div>
