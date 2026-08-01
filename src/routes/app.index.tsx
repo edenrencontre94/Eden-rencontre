@@ -116,7 +116,7 @@ function HomePage() {
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative overflow-hidden rounded-3xl bg-[#0f5132] p-4 flex items-center justify-between shadow-lg"
+              className="relative overflow-hidden rounded-3xl bg-card border border-gold/30 p-4 flex items-center justify-between shadow-lg"
             >
               <div className="flex items-center gap-3 relative z-10">
                 <div className="w-12 h-12 rounded-2xl bg-gold/20 flex items-center justify-center">
@@ -126,10 +126,10 @@ function HomePage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-white font-bold text-base">Passe Alliance</h3>
+                    <h3 className="text-foreground font-bold text-base">Passe Alliance</h3>
                     <span className="bg-gold text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full">-40%</span>
                   </div>
-                  <p className="text-white/80 text-xs">Demandes illimitées, profil mis en avant, badge Alliance</p>
+                  <p className="text-muted-foreground text-xs">Demandes illimitées, profil mis en avant, badge Alliance</p>
                 </div>
               </div>
               <Link to="/app/abonnement" className="relative z-10 bg-gold hover:bg-gold/90 text-black text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1 transition-colors whitespace-nowrap">
