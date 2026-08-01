@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { supabase } from "@/lib/supabase";
 import {
   Search, ArrowLeft, Send, Smile, Mic,
-  Image as ImageIcon, Video as VideoIcon, Phone,
+  Image as ImageIcon, Video as VideoIcon, Phone, Sticker,
   Check, CheckCheck, MoreVertical, Archive, Flag, Ban,
   X, GalleryHorizontal, Loader2, Play, Pause,
 } from "lucide-react";
@@ -49,7 +49,7 @@ type Msg = {
   created_at: string;
   read_at: string | null;
   media_url?: string | null;
-  media_type?: "image" | "video" | "audio" | "gif" | null;
+  media_type?: "image" | "video" | "audio" | "gif" | "sticker" | null;
 };
 
 function getAge(birthDate: string | null) {
@@ -102,10 +102,10 @@ function AudioPlayer({ src, isMe }: { src: string; isMe: boolean }) {
 }
 
 // ─────────────────────────────────────────────────
-// GIF Picker Component (GIPHY API)
+// GIF & Sticker Picker Component (GIPHY API)
 // ─────────────────────────────────────────────────
-function GifPicker({ onSelect }: { onSelect: (url: string) => void }) {
-  const [q, setQ] = useState("love");
+function GifPicker({ onSelect, type = "gif" }: { onSelect: (url: string) => void, type?: "gif" | "sticker" }) {
+  const [q, setQ] = useState(type === "gif" ? "love" : "cute");
   const [gifs, setGifs] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const GIPHY_KEY = import.meta.env.VITE_GIPHY_API_KEY || "OUhPY0c5X5L5M3kNAJjjkQxqC3kXHzfG";
@@ -119,12 +119,14 @@ function GifPicker({ onSelect }: { onSelect: (url: string) => void }) {
   const search = async () => {
     setLoading(true);
     try {
-      const r = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(q)}&limit=12&rating=g`);
+      const endpoint = type === "gif" ? "gifs" : "stickers";
+      const r = await fetch(`https://api.giphy.com/v1/${endpoint}/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(q)}&limit=12&rating=g`);
       const json = await r.json();
       setGifs((json.data || []).map((g: any) => g.images.fixed_height_small.url));
     } catch {
       // fallback: trending
-      const r = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_KEY}&limit=12&rating=g`);
+      const endpoint = type === "gif" ? "gifs" : "stickers";
+      const r = await fetch(`https://api.giphy.com/v1/${endpoint}/trending?api_key=${GIPHY_KEY}&limit=12&rating=g`);
       const json = await r.json();
       setGifs((json.data || []).map((g: any) => g.images.fixed_height_small.url));
     } finally { setLoading(false); }
@@ -316,6 +318,7 @@ function ChatView({ chat, currentUserId, onBack }: { chat: MatchChat; currentUse
   const [menu, setMenu] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   const [showGif, setShowGif] = useState(false);
+  const [showSticker, setShowSticker] = useState(false);
   const [showMedia, setShowMedia] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -424,10 +427,11 @@ function ChatView({ chat, currentUserId, onBack }: { chat: MatchChat; currentUse
     setMediaRecorder(null);
   };
 
-  // ── GIF send ──
+  // ── GIF & Sticker send ──
   const sendGif = async (url: string) => {
     setShowGif(false);
-    await sendMessage({ media_url: url, media_type: "gif" });
+    setShowSticker(false);
+    await sendMessage({ media_url: url, media_type: showSticker ? "sticker" : "gif" });
   };
 
   // ── Emoji ──
@@ -471,10 +475,10 @@ function ChatView({ chat, currentUserId, onBack }: { chat: MatchChat; currentUse
       </div>
     );
 
-    if (m.media_type === "gif") return (
-      <div className={`${base} overflow-hidden p-0`}>
-        <img src={m.media_url!} alt="GIF" className="max-w-[200px] rounded-2xl" />
-        <div className="px-2 pb-1">{ts}</div>
+    if (m.media_type === "gif" || m.media_type === "sticker") return (
+      <div className={`${base} overflow-hidden p-0 bg-transparent shadow-none border-none`}>
+        <img src={m.media_url!} alt={m.media_type} className="max-w-[200px] rounded-2xl" />
+        <div className="px-2 pb-1 bg-card rounded-b-2xl mt-1">{ts}</div>
       </div>
     );
 
@@ -581,7 +585,7 @@ function ChatView({ chat, currentUserId, onBack }: { chat: MatchChat; currentUse
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="border-t border-border/50 bg-background px-4 py-3 grid grid-cols-4 gap-3"
+            className="border-t border-border/50 bg-background px-4 py-3 grid grid-cols-5 gap-3"
           >
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -598,11 +602,18 @@ function ChatView({ chat, currentUserId, onBack }: { chat: MatchChat; currentUse
               <span className="text-[10px] font-medium">Vidéo</span>
             </button>
             <button
-              onClick={() => { setShowGif(true); setShowMedia(false); }}
+              onClick={() => { setShowGif(true); setShowSticker(false); setShowMedia(false); }}
               className="flex flex-col items-center gap-1 p-3 rounded-2xl bg-primary/10 hover:bg-primary/20 transition-colors"
             >
               <GalleryHorizontal className="w-6 h-6 text-primary" />
               <span className="text-[10px] font-medium">GIF</span>
+            </button>
+            <button
+              onClick={() => { setShowSticker(true); setShowGif(false); setShowMedia(false); }}
+              className="flex flex-col items-center gap-1 p-3 rounded-2xl bg-primary/10 hover:bg-primary/20 transition-colors"
+            >
+              <Sticker className="w-6 h-6 text-primary" />
+              <span className="text-[10px] font-medium">Sticker</span>
             </button>
             <button
               onPointerDown={startRecording}
@@ -618,10 +629,10 @@ function ChatView({ chat, currentUserId, onBack }: { chat: MatchChat; currentUse
         )}
       </AnimatePresence>
 
-      {/* GIF Picker */}
+      {/* GIF & Sticker Picker */}
       <div className="relative">
         <AnimatePresence>
-          {showGif && <GifPicker onSelect={sendGif} />}
+          {(showGif || showSticker) && <GifPicker onSelect={sendGif} type={showGif ? "gif" : "sticker"} />}
         </AnimatePresence>
       </div>
 
@@ -649,7 +660,7 @@ function ChatView({ chat, currentUserId, onBack }: { chat: MatchChat; currentUse
       <div className="border-t border-border/50 bg-background p-2 flex items-center gap-1.5">
         {/* + Media button */}
         <button
-          onClick={() => { setShowMedia(!showMedia); setShowEmoji(false); setShowGif(false); }}
+          onClick={() => { setShowMedia(!showMedia); setShowEmoji(false); setShowGif(false); setShowSticker(false); }}
           className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${showMedia ? "bg-primary text-white" : "hover:bg-secondary"}`}
           aria-label="Médias"
         >
@@ -665,7 +676,7 @@ function ChatView({ chat, currentUserId, onBack }: { chat: MatchChat; currentUse
             className="w-full pl-4 pr-9 py-2.5 rounded-full bg-secondary border border-border focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm"
           />
           <button
-            onClick={() => { setShowEmoji(!showEmoji); setShowMedia(false); setShowGif(false); }}
+            onClick={() => { setShowEmoji(!showEmoji); setShowMedia(false); setShowGif(false); setShowSticker(false); }}
             className={`absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center ${showEmoji ? "bg-primary/20" : "hover:bg-secondary/70"}`}
             aria-label="Emoji"
           >
