@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 
-export const Route = createFileRoute("/app/parametres/securite")({
+export const Route = createFileRoute("/accueil/parametres/securite")({
   head: () => ({
     meta: [{ title: "Sécurité — AgapeMeet" }],
   }),
@@ -39,7 +39,7 @@ function SecurityPage() {
   return (
     <div className="px-4 pt-4 pb-12 max-w-lg mx-auto">
       <div className="flex items-center gap-3 mb-8">
-        <Link to="/app" className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors">
+        <Link to="/accueil" className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <h1 className="font-serif text-2xl font-semibold">Sécurité</h1>

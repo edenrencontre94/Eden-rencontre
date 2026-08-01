@@ -18,7 +18,7 @@ import {
   Twitter,
   Mail,
 } from "lucide-react";
-import logoAsset from "@/assets/logo.jpg";
+import logoAsset from "@/assets/logo.png";
 import { useState } from "react";
 import heroCouple from "@/assets/hero-couple.jpg";
 import testimonial1 from "@/assets/testimonial-1.jpg";
@@ -131,7 +131,7 @@ function Hero() {
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              to="/app"
+              to="/accueil"
               className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-7 py-4 text-base font-medium hover:bg-secondary transition"
             >
               Accéder à l'app

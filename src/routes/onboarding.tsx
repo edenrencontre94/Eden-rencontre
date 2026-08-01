@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo, type ReactElement } from "react";
 import { Heart, Search, Camera, Church, ArrowRight, ArrowLeft, Upload, X, Sparkles, Check, Lock, Crown, Video } from "lucide-react";
 import { Music2, Instagram, Facebook, Youtube, Users, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import logoAsset from "@/assets/logo.jpg";
+import logoAsset from "@/assets/logo.png";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -994,7 +994,7 @@ function SuccessScreen({ data }: { data: OnboardingData }) {
               Retour à l'accueil
             </Button>
           </Link>
-          <Link to="/app">
+          <Link to="/accueil">
             <Button
               size="lg"
               className="bg-gradient-to-r from-primary to-primary/80 shadow-elegant w-full sm:w-auto"

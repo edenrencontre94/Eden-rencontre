@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { type Profile } from "@/lib/mock-data";
 import { getCountryCode } from "@/lib/utils";
 
-export const Route = createFileRoute("/app/")({
+export const Route = createFileRoute("/accueil/")({
   head: () => ({
     meta: [
       { title: "Accueil — AgapeMeet" },
@@ -133,7 +133,7 @@ function HomePage() {
                   <p className="text-muted-foreground text-xs">Demandes illimitées, profil mis en avant, badge Alliance</p>
                 </div>
               </div>
-              <Link to="/app/abonnement" className="relative z-10 bg-gold hover:bg-gold/90 text-black text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1 transition-colors whitespace-nowrap">
+              <Link to="/accueil/abonnement" className="relative z-10 bg-gold hover:bg-gold/90 text-black text-xs font-bold px-4 py-2.5 rounded-xl flex items-center gap-1 transition-colors whitespace-nowrap">
                 Découvrir <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </motion.div>
@@ -145,7 +145,7 @@ function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
                 className="rounded-3xl bg-primary p-4 shadow-lg flex flex-col gap-4 cursor-pointer hover:bg-primary/95 transition-colors"
-                onClick={() => window.location.href = '/app/profil'}
+                onClick={() => window.location.href = '/accueil/profil'}
               >
                 <div className="flex items-center gap-3">
                   <img 

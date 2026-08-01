@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
-export const Route = createFileRoute("/app/decouvrir")({
+export const Route = createFileRoute("/accueil/decouvrir")({
   head: () => ({
     meta: [
       { title: "Découvrir — AgapeMeet" },
@@ -58,7 +58,7 @@ function DiscoverPage() {
 
   const upsell = (message: string) => {
     toast.error(message, {
-      action: { label: "Voir les formules", onClick: () => navigate({ to: "/app/abonnement" }) },
+      action: { label: "Voir les formules", onClick: () => navigate({ to: "/accueil/abonnement" }) },
     });
   };
 

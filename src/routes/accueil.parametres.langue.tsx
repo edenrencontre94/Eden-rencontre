@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Globe, Check, Lock } from "lucide-react";
 
-export const Route = createFileRoute("/app/parametres/langue")({
+export const Route = createFileRoute("/accueil/parametres/langue")({
   head: () => ({
     meta: [{ title: "Langue — AgapeMeet" }],
   }),
@@ -18,7 +18,7 @@ function LanguagePage() {
   return (
     <div className="px-4 pt-4 pb-12 max-w-lg mx-auto">
       <div className="flex items-center gap-3 mb-8">
-        <Link to="/app" className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors">
+        <Link to="/accueil" className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <h1 className="font-serif text-2xl font-semibold">Langue</h1>

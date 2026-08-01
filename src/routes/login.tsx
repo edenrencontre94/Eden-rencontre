@@ -5,7 +5,7 @@ import { Eye, EyeOff, ArrowRight, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import logoAsset from "@/assets/logo.jpg";
+import logoAsset from "@/assets/logo.png";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -29,7 +29,7 @@ function LoginPage() {
   useEffect(() => {
     import("@/lib/supabase").then(({ supabase }) => {
       supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) window.location.replace("/app");
+        if (session) window.location.replace("/accueil");
       });
     });
   }, []);
@@ -47,7 +47,7 @@ function LoginPage() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       toast.success("Connexion reussie ! Bienvenue");
-      window.location.href = "/app";
+      window.location.href = "/accueil";
     } catch (err: any) {
       toast.error("Identifiants incorrects. Veuillez reessayer.");
     } finally {

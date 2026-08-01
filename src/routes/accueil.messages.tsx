@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/app/messages")({
+export const Route = createFileRoute("/accueil/messages")({
   head: () => ({
     meta: [
       { title: "Messages — AgapeMeet" },

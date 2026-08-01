@@ -17,7 +17,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useSubscription } from "@/lib/subscription";
 
-export const Route = createFileRoute("/app/demandes")({
+export const Route = createFileRoute("/accueil/demandes")({
   head: () => ({
     meta: [
       { title: "Demandes — AgapeMeet" },
@@ -211,7 +211,7 @@ function RequestsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
                 className="rounded-2xl overflow-hidden bg-card border border-border/50 shadow-soft cursor-pointer"
-                onClick={() => navigate({ to: "/app/messages" })}
+                onClick={() => navigate({ to: "/accueil/messages" })}
               >
                 <div className="relative aspect-[3/4]">
                   <img
@@ -328,7 +328,7 @@ function PremiumGate() {
           Passez Alliance pour voir qui a visité votre profil et accéder à toutes les fonctionnalités avancées.
         </p>
         <Link
-          to="/app/abonnement"
+          to="/accueil/abonnement"
           className="mt-5 inline-flex px-6 py-2.5 rounded-full bg-gold text-gold-foreground font-semibold shadow-elegant"
         >
           Devenir Alliance
