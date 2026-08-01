@@ -1,12 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import AgoraRTC, {
-  IAgoraRTCClient,
-  ICameraVideoTrack,
-  IMicrophoneAudioTrack,
-  IRemoteVideoTrack,
-  IRemoteAudioTrack,
-} from "agora-rtc-sdk-ng";
 import {
   Mic, MicOff, Video, VideoOff, PhoneOff, Phone,
   RotateCcw, Volume2, VolumeX,
@@ -16,7 +9,7 @@ import { toast } from "sonner";
 const AGORA_APP_ID = import.meta.env.VITE_AGORA_APP_ID as string;
 
 interface CallViewProps {
-  channelName: string; // Use match ID as channel
+  channelName: string;
   callType: "audio" | "video";
   peerName: string;
   peerPhoto: string;
@@ -24,9 +17,9 @@ interface CallViewProps {
 }
 
 export function CallView({ channelName, callType, peerName, peerPhoto, onEnd }: CallViewProps) {
-  const clientRef = useRef<IAgoraRTCClient | null>(null);
-  const localAudioRef = useRef<IMicrophoneAudioTrack | null>(null);
-  const localVideoRef = useRef<ICameraVideoTrack | null>(null);
+  const clientRef = useRef<any | null>(null);
+  const localAudioRef = useRef<any | null>(null);
+  const localVideoRef = useRef<any | null>(null);
   const localVideoElRef = useRef<HTMLDivElement>(null);
   const remoteVideoElRef = useRef<HTMLDivElement>(null);
 
@@ -54,24 +47,21 @@ export function CallView({ channelName, callType, peerName, peerPhoto, onEnd }: 
 
   const startCall = async () => {
     try {
+      // Dynamic import so Agora is excluded from the SSR/server bundle
+      const AgoraRTC = (await import("agora-rtc-sdk-ng")).default;
       const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
       clientRef.current = client;
 
-      // Listen for remote user joining
-      client.on("user-published", async (user, mediaType) => {
+      client.on("user-published", async (user: any, mediaType: any) => {
         await client.subscribe(user, mediaType);
         setRemoteJoined(true);
         setStatus("connected");
 
-        if (mediaType === "video") {
-          const remoteVideo = user.videoTrack as IRemoteVideoTrack;
-          if (remoteVideoElRef.current) {
-            remoteVideo.play(remoteVideoElRef.current);
-          }
+        if (mediaType === "video" && remoteVideoElRef.current) {
+          user.videoTrack?.play(remoteVideoElRef.current);
         }
         if (mediaType === "audio") {
-          const remoteAudio = user.audioTrack as IRemoteAudioTrack;
-          remoteAudio.play();
+          user.audioTrack?.play();
         }
       });
 
@@ -85,10 +75,8 @@ export function CallView({ channelName, callType, peerName, peerPhoto, onEnd }: 
         setTimeout(onEnd, 2000);
       });
 
-      // Join channel (using null token for testing - use server token in production)
       await client.join(AGORA_APP_ID, channelName, null, null);
 
-      // Create local tracks
       const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
       localAudioRef.current = audioTrack;
 
