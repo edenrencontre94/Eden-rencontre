@@ -298,8 +298,8 @@ function CommunityPage() {
               supabase.from("community_likes").select("post_id").eq("user_id", currentUserId),
               supabase.from("community_saves").select("post_id").eq("user_id", currentUserId),
             ]);
-            likes?.forEach(l => userLikes.add(l.post_id));
-            saves?.forEach(s => userSaves.add(s.post_id));
+            likes?.forEach((l: any) => userLikes.add(l.post_id));
+            saves?.forEach((s: any) => userSaves.add(s.post_id));
           }
 
           setPosts(data.map((p: any) => ({

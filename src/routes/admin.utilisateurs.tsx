@@ -66,6 +66,7 @@ function AdminUtilisateurs() {
           total: count || loadedUsers.length,
           verified: verifiedCount,
           premium: Math.floor((count || loadedUsers.length) * 0.15), // Mock 15% premium
+          vip: Math.floor((count || loadedUsers.length) * 0.05), // Mock 5% VIP
           pending: unverifiedCount,
         });
 
