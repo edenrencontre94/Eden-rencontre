@@ -343,7 +343,7 @@ function DiscoverPage() {
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={() => swipe("right")}
-            className="w-[72px] h-[72px] rounded-full bg-gradient-gold shadow-[0_4px_15px_var(--color-gold)]/40 flex items-center justify-center text-gold-foreground hover:scale-105 transition-transform active:scale-95"
+            className="w-[72px] h-[72px] rounded-full border-2 border-gold bg-background shadow-[0_4px_15px_var(--color-gold)]/30 flex items-center justify-center text-gold hover:scale-105 hover:bg-gold/10 transition-all active:scale-95"
           >
             <Heart className="w-9 h-9" fill="currentColor" />
           </button>
