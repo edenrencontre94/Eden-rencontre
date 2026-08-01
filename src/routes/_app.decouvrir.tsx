@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "motion/react";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   X,
@@ -57,6 +57,8 @@ function DiscoverPage() {
 
   const navigate = useNavigate();
   const { superLikesLeft, boostsLeft, consumeSuperLike, consumeBoost } = useSubscription();
+  const [showMessageModal, setShowMessageModal] = useState<Profile | null>(null);
+  const [messageText, setMessageText] = useState("");
 
   const upsell = (message: string) => {
     toast.error(message, {
@@ -235,6 +237,50 @@ function DiscoverPage() {
     toast.success("Boost activé pour 30 minutes ⚡");
   };
 
+  // ── Message pré-match ──
+  const sendPreMatchMessage = async () => {
+    if (!showMessageModal || !messageText.trim()) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      // Enregistrer le like + message dans la table swipes
+      await supabase.from('swipes').insert({
+        swiper_id: user.id,
+        target_id: showMessageModal.id,
+        action: 'like',
+        message: messageText.trim()
+      }).select();
+      toast.success(`Message envoyé à ${showMessageModal.firstName} ! 💌`);
+      setHistory(h => [...h, { id: showMessageModal.id, action: 'right' }]);
+      setIndex(i => i + 1);
+    } catch (e) {
+      console.error(e);
+      toast.error("Erreur lors de l'envoi");
+    } finally {
+      setShowMessageModal(null);
+      setMessageText("");
+    }
+  };
+
+  // ── Ajouter aux contacts ──
+  const addContact = async () => {
+    if (!currentFiltered) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await supabase.from('swipes').insert({
+        swiper_id: user.id,
+        target_id: currentFiltered.id,
+        action: 'like'
+      });
+      setHistory(h => [...h, { id: currentFiltered.id, action: 'right' }]);
+      setIndex(i => i + 1);
+      toast.success(`${currentFiltered.firstName} ajouté(e) à vos contacts ! 👤`);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <div className="px-4 pt-4 relative">
       <div className="flex items-center justify-between mb-4">
@@ -337,7 +383,7 @@ function DiscoverPage() {
           >
             <Star className="w-6 h-6" fill="currentColor" />
           </button>
-          <span className="text-[10px] text-primary font-medium">Super</span>
+          <span className="text-[10px] text-primary font-medium">Super like</span>
         </div>
 
         <div className="flex flex-col items-center gap-1">
@@ -352,7 +398,7 @@ function DiscoverPage() {
 
         <div className="flex flex-col items-center gap-1">
           <button
-            onClick={() => toast.info("Faites un match pour envoyer un message !")}
+            onClick={() => currentFiltered ? setShowMessageModal(currentFiltered) : toast.info("Chargement…")}
             className="w-14 h-14 rounded-full border-2 border-primary/60 bg-background flex items-center justify-center text-primary/80 hover:bg-primary/10 transition-transform active:scale-95 shadow-sm"
           >
             <MessageCircle className="w-6 h-6" />
@@ -362,7 +408,7 @@ function DiscoverPage() {
 
         <div className="flex flex-col items-center gap-1">
           <button
-            onClick={() => swipe("right")}
+            onClick={addContact}
             className="w-12 h-12 rounded-full border-2 border-primary/80 bg-background flex items-center justify-center text-primary hover:bg-primary/10 transition-transform active:scale-95 shadow-sm"
           >
             <UserPlus className="w-5 h-5" />
@@ -370,6 +416,55 @@ function DiscoverPage() {
           <span className="text-[10px] text-muted-foreground font-medium">Ajouter</span>
         </div>
       </div>
+
+      {/* Modal message pré-match */}
+      <AnimatePresence>
+        {showMessageModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 z-50 backdrop-blur-sm"
+              onClick={() => { setShowMessageModal(null); setMessageText(""); }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="fixed inset-x-4 bottom-24 z-50 bg-card border border-border rounded-3xl p-5 shadow-elegant"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <img src={showMessageModal.photo} className="w-12 h-12 rounded-full object-cover" alt="" />
+                <div>
+                  <div className="font-semibold">{showMessageModal.firstName}, {showMessageModal.age}</div>
+                  <div className="text-xs text-muted-foreground">Envoyer un message pour briser la glace ✨</div>
+                </div>
+              </div>
+              <textarea
+                value={messageText}
+                onChange={e => setMessageText(e.target.value)}
+                placeholder={`Dites bonjour à ${showMessageModal.firstName}…`}
+                rows={3}
+                className="w-full px-4 py-3 rounded-2xl bg-secondary border border-border resize-none text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={() => { setShowMessageModal(null); setMessageText(""); }}
+                  className="flex-1 py-2.5 rounded-full border border-border text-sm font-medium hover:bg-secondary"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={sendPreMatchMessage}
+                  disabled={!messageText.trim()}
+                  className="flex-1 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold shadow-elegant disabled:opacity-40"
+                >
+                  Envoyer 💌
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {detail && <ProfileDetailModal profile={detail} onClose={() => setDetail(null)} />}
