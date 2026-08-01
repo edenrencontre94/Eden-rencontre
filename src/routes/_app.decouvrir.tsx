@@ -313,7 +313,7 @@ function DiscoverPage() {
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={rewind}
-            className="w-12 h-12 rounded-full border-2 border-amber-300 bg-background flex items-center justify-center text-amber-300 hover:bg-amber-300/10 transition-transform active:scale-95 shadow-sm"
+            className="w-12 h-12 rounded-full border-2 border-gold bg-background flex items-center justify-center text-gold hover:bg-gold/10 transition-transform active:scale-95 shadow-sm"
           >
             <Undo2 className="w-5 h-5" />
           </button>
@@ -323,7 +323,7 @@ function DiscoverPage() {
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={() => swipe("left")}
-            className="w-14 h-14 rounded-full border-2 border-slate-300 bg-background flex items-center justify-center text-slate-400 hover:bg-slate-300/10 transition-transform active:scale-95 shadow-sm"
+            className="w-14 h-14 rounded-full border-2 border-muted-foreground/50 bg-background flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-transform active:scale-95 shadow-sm"
           >
             <X className="w-6 h-6" />
           </button>
@@ -343,17 +343,17 @@ function DiscoverPage() {
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={() => swipe("right")}
-            className="w-[72px] h-[72px] rounded-full bg-[#E40046] shadow-[0_4px_15px_rgba(228,0,70,0.4)] flex items-center justify-center text-white hover:scale-105 transition-transform active:scale-95"
+            className="w-[72px] h-[72px] rounded-full bg-gradient-hero shadow-elegant flex items-center justify-center text-primary-foreground hover:scale-105 transition-transform active:scale-95"
           >
             <Heart className="w-9 h-9" fill="currentColor" />
           </button>
-          <span className="text-[10px] text-[#E40046] font-medium">J'adore</span>
+          <span className="text-[10px] text-primary font-medium">J'adore</span>
         </div>
 
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={() => toast.info("Faites un match pour envoyer un message !")}
-            className="w-14 h-14 rounded-full border-2 border-sky-400 bg-background flex items-center justify-center text-sky-400 hover:bg-sky-400/10 transition-transform active:scale-95 shadow-sm"
+            className="w-14 h-14 rounded-full border-2 border-primary/60 bg-background flex items-center justify-center text-primary/80 hover:bg-primary/10 transition-transform active:scale-95 shadow-sm"
           >
             <MessageCircle className="w-6 h-6" />
           </button>
@@ -363,7 +363,7 @@ function DiscoverPage() {
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={() => swipe("right")}
-            className="w-12 h-12 rounded-full border-2 border-rose-400 bg-background flex items-center justify-center text-rose-400 hover:bg-rose-400/10 transition-transform active:scale-95 shadow-sm"
+            className="w-12 h-12 rounded-full border-2 border-primary/80 bg-background flex items-center justify-center text-primary hover:bg-primary/10 transition-transform active:scale-95 shadow-sm"
           >
             <UserPlus className="w-5 h-5" />
           </button>
