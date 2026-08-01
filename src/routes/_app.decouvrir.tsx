@@ -668,6 +668,18 @@ function DiscoverPage() {
   );
 }
 
+const getCountryCode = (country: string) => {
+  const map: Record<string, string> = {
+    'cameroun': 'cm', 'côte d\\'ivoire': 'ci', 'cote d\\'ivoire': 'ci', 'sénégal': 'sn', 'senegal': 'sn',
+    'france': 'fr', 'belgique': 'be', 'suisse': 'ch', 'canada': 'ca', 'congo': 'cg',
+    'république démocratique du congo': 'cd', 'rdc': 'cd', 'gabon': 'ga', 'mali': 'ml',
+    'togo': 'tg', 'bénin': 'bj', 'benin': 'bj', 'burkina faso': 'bf', 'madagascar': 'mg',
+    'guinée': 'gn', 'guinee': 'gn', 'rwanda': 'rw', 'burundi': 'bi', 'tchad': 'td',
+    'centrafrique': 'cf', 'maroc': 'ma', 'algérie': 'dz', 'algerie': 'dz', 'tunisie': 'tn'
+  };
+  return map[country?.toLowerCase()?.trim()] || null;
+};
+
 function SwipeCard({
   profile,
   active,
@@ -738,18 +750,24 @@ function SwipeCard({
           {profile.firstName}, {profile.age}
         </h2>
         <div className="flex flex-col gap-1 mt-2 text-sm opacity-90 text-shadow-sm">
-          <div className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {profile.city}</div>
+          <div className="flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 shrink-0" /> 
+            <span className="truncate max-w-[200px]">
+              {profile.city}{profile.country ? `, ${profile.country}` : ""}
+            </span>
+            {getCountryCode(profile.country) && (
+              <img 
+                src={`https://flagcdn.com/w40/${getCountryCode(profile.country)}.png`}
+                alt={profile.country}
+                className="w-4 h-4 rounded-full object-cover ml-0.5 shadow-sm border border-white/20 shrink-0"
+              />
+            )}
+          </div>
           <div className="flex items-center gap-1.5"><Church className="w-3.5 h-3.5" /> {profile.denomination}</div>
           <div className="flex items-center gap-1.5 opacity-80"><BookOpen className="w-3.5 h-3.5" /> {profile.bio.substring(0, 50)}...</div>
         </div>
       </div>
-      <button
-        onClick={(e) => { e.stopPropagation(); onDetail(); }}
-        className="absolute bottom-6 right-6 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors z-40 pointer-events-auto"
-        aria-label="Voir le profil"
-      >
-        <Info className="w-5 h-5" />
-      </button>
+
     </motion.div>
   );
 }
