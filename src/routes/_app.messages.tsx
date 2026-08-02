@@ -9,7 +9,6 @@ import {
   X, GalleryHorizontal, Loader2, Play, Pause,
 } from "lucide-react";
 import { toast } from "sonner";
-import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
 import { CallView } from "@/components/app/CallView";
 
 export const Route = createFileRoute("/_app/messages")({
@@ -435,9 +434,7 @@ function ChatView({ chat, currentUserId, onBack }: { chat: MatchChat; currentUse
   };
 
   // ── Emoji ──
-  const onEmojiClick = (data: EmojiClickData) => {
-    setText(t => t + data.emoji);
-  };
+  const COMMON_EMOJIS = ["😀", "😂", "🥰", "😍", "🙏", "😭", "🥺", "😊", "🔥", "✨", "❤️", "💯", "👍", "🙌", "👀", "😘", "😎", "💪", "😉", "🎉", "💖", "🥲"];
 
   // ── Message bubble renderer ──
   const renderBubble = (m: Msg) => {
@@ -643,15 +640,19 @@ function ChatView({ chat, currentUserId, onBack }: { chat: MatchChat; currentUse
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="border-t border-border/50"
+            className="border-t border-border/50 bg-card p-3 max-h-48 overflow-y-auto"
           >
-            <EmojiPicker
-              onEmojiClick={onEmojiClick}
-              theme={Theme.DARK}
-              width="100%"
-              height={300}
-              searchPlaceholder="Rechercher un emoji…"
-            />
+            <div className="grid grid-cols-7 gap-2">
+              {COMMON_EMOJIS.map(e => (
+                <button
+                  key={e}
+                  onClick={() => setText(t => t + e)}
+                  className="w-10 h-10 rounded-full hover:bg-secondary text-2xl flex items-center justify-center transition-colors"
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
