@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { CallView } from "@/components/app/CallView";
+import { createCall } from "@/lib/calls";
 
 export const Route = createFileRoute("/_app/messages")({
   head: () => ({
@@ -686,7 +687,27 @@ function ChatView({
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [callState, setCallState] = useState<{ type: "audio" | "video" } | null>(null);
+  const [callState, setCallState] = useState<{ type: "audio" | "video"; callId: string } | null>(null);
+  const [startingCall, setStartingCall] = useState(false);
+
+  // Crée la ligne `calls` : c'est cet INSERT qui fait sonner chez l'autre.
+  const startCall = async (type: "audio" | "video") => {
+    if (startingCall) return;
+    setStartingCall(true);
+    const call = await createCall({
+      matchId: chat.id,
+      callerId: currentUserId,
+      calleeId: chat.profile.id,
+      callType: type,
+    });
+    setStartingCall(false);
+
+    if (!call) {
+      toast.error("Impossible de lancer l'appel");
+      return;
+    }
+    setCallState({ type, callId: call.id });
+  };
 
   const presence = useMemo(() => formatLastSeen(chat.profile.lastSeen, now), [chat.profile.lastSeen, now]);
 
@@ -895,6 +916,8 @@ function ChatView({
       callType={callState.type}
       peerName={chat.profile.firstName}
       peerPhoto={chat.profile.photo ?? ""}
+      callId={callState.callId}
+      role="caller"
       onEnd={() => setCallState(null)}
     />
   );
@@ -934,15 +957,17 @@ function ChatView({
         </div>
         {/* Call buttons */}
         <button
-          onClick={() => setCallState({ type: "audio" })}
-          className="w-9 h-9 rounded-full hover:bg-secondary flex items-center justify-center"
+          onClick={() => startCall("audio")}
+          disabled={startingCall}
+          className="w-9 h-9 rounded-full hover:bg-secondary flex items-center justify-center disabled:opacity-50"
           aria-label="Appel audio"
         >
           <Phone className="w-4 h-4 text-primary" />
         </button>
         <button
-          onClick={() => setCallState({ type: "video" })}
-          className="w-9 h-9 rounded-full hover:bg-secondary flex items-center justify-center"
+          onClick={() => startCall("video")}
+          disabled={startingCall}
+          className="w-9 h-9 rounded-full hover:bg-secondary flex items-center justify-center disabled:opacity-50"
           aria-label="Appel vidéo"
         >
           <VideoIcon className="w-4 h-4 text-primary" />

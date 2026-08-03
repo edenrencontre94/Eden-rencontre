@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { usePresence } from "@/hooks/usePresence";
+import { IncomingCallListener } from "@/components/app/IncomingCallListener";
 
 export const Route = createFileRoute("/_app")({
   // No beforeLoad — auth is checked client-side only to avoid SSR logout on refresh
@@ -137,6 +138,8 @@ function AppLayout() {
 
   return (
     <SubscriptionProvider>
+      {/* Sonne depuis n'importe quelle page de l'app */}
+      <IncomingCallListener />
       <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30">
         <header className="sticky top-0 z-30 bg-background/85 backdrop-blur-xl border-b border-border/50">
           <div className="max-w-2xl mx-auto flex items-center justify-between px-4 py-3">

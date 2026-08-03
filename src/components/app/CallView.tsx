@@ -12,6 +12,8 @@ import {
   RotateCcw, Volume2, VolumeX,
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
+import { setCallStatus, CALL_TIMEOUT_MS } from "@/lib/calls";
 
 const AGORA_APP_ID = import.meta.env.VITE_AGORA_APP_ID as string;
 
@@ -20,10 +22,14 @@ interface CallViewProps {
   callType: "audio" | "video";
   peerName: string;
   peerPhoto: string;
+  /** Ligne `calls` associée — sert à la signalisation (refus, raccroché, non-réponse) */
+  callId?: string;
+  /** L'appelant attend une réponse ; le destinataire a déjà décroché */
+  role?: "caller" | "callee";
   onEnd: () => void;
 }
 
-export function CallView({ channelName, callType, peerName, peerPhoto, onEnd }: CallViewProps) {
+export function CallView({ channelName, callType, peerName, peerPhoto, callId, role = "caller", onEnd }: CallViewProps) {
   const clientRef = useRef<IAgoraRTCClient | null>(null);
   const localAudioRef = useRef<IMicrophoneAudioTrack | null>(null);
   const localVideoRef = useRef<ICameraVideoTrack | null>(null);
@@ -51,6 +57,48 @@ export function CallView({ channelName, callType, peerName, peerPhoto, onEnd }: 
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [status]);
+
+  // Le pair a-t-il rejoint ? (lu dans des closures asynchrones, d'où la ref)
+  const remoteJoinedRef = useRef(false);
+  useEffect(() => { remoteJoinedRef.current = remoteJoined; }, [remoteJoined]);
+
+  // ── Signalisation : refus, raccroché d'en face, absence de réponse ──
+  useEffect(() => {
+    if (!callId) return;
+
+    const channel = supabase
+      .channel(`call-status:${callId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "calls", filter: `id=eq.${callId}` },
+        (payload: any) => {
+          const newStatus = payload.new.status as string;
+          if (newStatus === "declined") {
+            toast.info(`${peerName} a refusé l'appel`);
+            onEnd();
+          } else if (newStatus === "ended" || newStatus === "cancelled") {
+            onEnd();
+          }
+        },
+      )
+      .subscribe();
+
+    // Sans réponse au bout du délai imparti, l'appelant abandonne
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    if (role === "caller") {
+      timeout = setTimeout(async () => {
+        if (remoteJoinedRef.current) return;
+        await setCallStatus(callId, "missed");
+        toast.info(`${peerName} n'a pas répondu`);
+        onEnd();
+      }, CALL_TIMEOUT_MS);
+    }
+
+    return () => {
+      supabase.removeChannel(channel);
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [callId, role, peerName]);
 
   const startCall = async () => {
     try {
@@ -167,6 +215,10 @@ export function CallView({ channelName, callType, peerName, peerPhoto, onEnd }: 
   };
 
   const handleEnd = async () => {
+    // Raccrocher avant que l'autre décroche = annulation, sinon fin d'appel
+    if (callId) {
+      await setCallStatus(callId, remoteJoinedRef.current ? "ended" : "cancelled");
+    }
     await cleanup();
     onEnd();
   };
