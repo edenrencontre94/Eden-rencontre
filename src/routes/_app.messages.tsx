@@ -6,7 +6,7 @@ import {
   Search, ArrowLeft, Send, Smile, Mic,
   Image as ImageIcon, Video as VideoIcon, Phone, Sticker,
   Check, CheckCheck, MoreVertical, Archive, Flag, Ban,
-  X, GalleryHorizontal, Loader2, Play, Pause,
+  X, GalleryHorizontal, Loader2, Play, Pause, BadgeCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { CallView } from "@/components/app/CallView";
@@ -26,17 +26,21 @@ type ChatProfile = {
   id: string;
   firstName: string;
   age: number;
-  photo: string;
-  lastActive: string;
+  photo: string | null;
+  city: string | null;
+  verified: boolean;
+  lastSeen: string | null;
 };
 
 type MatchChat = {
   id: string;
   profile: ChatProfile;
   lastMessage: string;
-  time: string;
+  lastMessageMine: boolean;
+  lastMessageRead: boolean;
+  hasMessages: boolean;
+  timestamp: number;
   unread: number;
-  online: boolean;
   typing: boolean;
 };
 
@@ -52,26 +56,91 @@ type Msg = {
 };
 
 function getAge(birthDate: string | null) {
-  if (!birthDate) return 25;
-  return new Date().getFullYear() - new Date(birthDate).getFullYear();
+  if (!birthDate) return 0;
+  const b = new Date(birthDate);
+  if (Number.isNaN(b.getTime())) return 0;
+  const now = new Date();
+  let age = now.getFullYear() - b.getFullYear();
+  const m = now.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+  return age > 0 && age < 120 ? age : 0;
 }
 
 function formatTime(isoString: string) {
   const date = new Date(isoString);
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 }
 
-function formatLastSeen(isoString: string | null): { text: string; online: boolean } {
-  if (!isoString) return { text: "Récemment", online: false };
-  const diffMs = Date.now() - new Date(isoString).getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  
+/** Horodatage façon messagerie : aujourd'hui → 14:32, hier → Hier, cette semaine → Mar., au-delà → 12/03 */
+function formatListTime(isoString: string, now = Date.now()) {
+  const date = new Date(isoString);
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+  const dayDiff = Math.floor((startOfToday.getTime() - date.getTime()) / 86400000);
+
+  if (dayDiff < 0) return formatTime(isoString);
+  if (dayDiff === 0) return formatTime(isoString);
+  if (dayDiff === 1) return "Hier";
+  if (dayDiff < 7) {
+    const d = date.toLocaleDateString("fr-FR", { weekday: "short" });
+    return d.charAt(0).toUpperCase() + d.slice(1).replace(".", "");
+  }
+  return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+}
+
+function formatLastSeen(isoString: string | null, now = Date.now()): { text: string; online: boolean } {
+  if (!isoString) return { text: "Hors ligne", online: false };
+  const diffMins = Math.floor((now - new Date(isoString).getTime()) / 60000);
+
+  if (diffMins < 0) return { text: "En ligne", online: true };
   if (diffMins < 5) return { text: "En ligne", online: true };
-  if (diffMins < 60) return { text: `Actif il y a ${diffMins} min`, online: false };
+  if (diffMins < 60) return { text: `Vu il y a ${diffMins} min`, online: false };
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return { text: `Actif il y a ${diffHours} h`, online: false };
+  if (diffHours < 24) return { text: `Vu il y a ${diffHours} h`, online: false };
   const diffDays = Math.floor(diffHours / 24);
-  return { text: `Actif il y a ${diffDays} j`, online: false };
+  if (diffDays < 7) return { text: `Vu il y a ${diffDays} j`, online: false };
+  return { text: `Vu le ${new Date(isoString).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}`, online: false };
+}
+
+/** Recherche insensible à la casse ET aux accents (José ↔ jose) */
+function normalize(s: string) {
+  return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
+const MEDIA_LABELS: Record<string, string> = {
+  image: "📷 Photo",
+  video: "🎥 Vidéo",
+  audio: "🎤 Message vocal",
+  gif: "🎬 GIF",
+  sticker: "✨ Sticker",
+};
+
+/** Avatar avec repli sur les initiales si la photo manque ou ne charge pas */
+function ChatAvatar({
+  src,
+  name,
+  className = "",
+  textClassName = "text-sm",
+}: {
+  src: string | null;
+  name: string;
+  className?: string;
+  textClassName?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (!src || failed) {
+    return (
+      <div
+        className={`${className} bg-gradient-to-br from-primary/25 to-gold/25 flex items-center justify-center font-serif font-semibold text-primary ${textClassName}`}
+        aria-label={name}
+      >
+        {name.charAt(0).toUpperCase()}
+      </div>
+    );
+  }
+
+  return <img src={src} alt={name} className={className} onError={() => setFailed(true)} />;
 }
 
 // ─────────────────────────────────────────────────
@@ -175,204 +244,400 @@ function GifPicker({ onSelect, type = "gif" }: { onSelect: (url: string) => void
   );
 }
 
+/**
+ * Récupère les profils des interlocuteurs.
+ * PostgREST rejette toute la requête si une seule colonne demandée n'existe pas,
+ * ce qui ferait basculer tous les profils sur « Membre ». On retente donc avec
+ * le jeu de colonnes minimal garanti.
+ */
+async function fetchChatProfiles(ids: string[]) {
+  const full = await supabase
+    .from("profiles")
+    .select("id, first_name, birth_date, photos, city, is_verified, last_seen")
+    .in("id", ids);
+
+  if (!full.error) return full;
+
+  console.warn("[messages] colonnes optionnelles absentes de `profiles`, repli minimal:", full.error.message);
+  return supabase
+    .from("profiles")
+    .select("id, first_name, birth_date, photos")
+    .in("id", ids);
+}
+
 // ─────────────────────────────────────────────────
 // Messages Page
 // ─────────────────────────────────────────────────
 function MessagesPage() {
   const [query, setQuery] = useState("");
+  const [tab, setTab] = useState<"all" | "unread">("all");
   const [active, setActive] = useState<MatchChat | null>(null);
   const [chats, setChats] = useState<MatchChat[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  // Tick horaire : force le recalcul de « En ligne » / « il y a X min » sans refetch
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        if (!user || cancelled) return;
         setUserId(user.id);
 
-        const { data: matchesData } = await supabase
+        const { data: matchesData, error: matchesError } = await supabase
           .from("matches")
           .select("id, created_at, user1_id, user2_id")
           .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
 
-        if (matchesData && matchesData.length > 0) {
-          const otherIds = matchesData.map((m: any) => m.user1_id === user.id ? m.user2_id : m.user1_id);
-          const { data: profiles } = await supabase
-            .from("profiles")
-            .select("id, first_name, birth_date, photos, last_seen")
-            .in("id", otherIds);
-
-          const profileMap = new Map(profiles?.map((p: any) => [p.id, p]));
-
-          // Fetch last message for each match
-          const lastMsgPromises = matchesData.map(m =>
-            supabase
-              .from("messages")
-              .select("content, created_at, sender_id, media_type")
-              .eq("match_id", m.id)
-              .order("created_at", { ascending: false })
-              .limit(1)
-          );
-          const lastMsgResults = await Promise.all(lastMsgPromises);
-
-          // Fetch unread count for each match (messages from other user not read)
-          const unreadPromises = matchesData.map(m =>
-            supabase
-              .from("messages")
-              .select("id", { count: "exact", head: true })
-              .eq("match_id", m.id)
-              .neq("sender_id", user.id)
-              .is("read_at", null)
-          );
-          const unreadResults = await Promise.all(unreadPromises);
-
-          const formatted: (MatchChat & { _timestamp: number })[] = matchesData.map((m: any, i) => {
-            const otherId = m.user1_id === user.id ? m.user2_id : m.user1_id;
-            const p = profileMap.get(otherId) as any;
-
-            const lastMsgData = lastMsgResults[i].data;
-            const lastMsg = lastMsgData && lastMsgData.length > 0 ? lastMsgData[0] : null;
-            const unreadCount = unreadResults[i].count || 0;
-
-            let displayMessage = "Cliquez pour commencer à discuter";
-            let displayTime = formatTime(m.created_at);
-            let timestamp = new Date(m.created_at).getTime();
-
-            if (lastMsg) {
-              if (lastMsg.media_type) {
-                const typeMap: Record<string, string> = {
-                  image: "📷 Image",
-                  video: "🎥 Vidéo",
-                  audio: "🎤 Message vocal",
-                  gif: "GIF",
-                  sticker: "Sticker"
-                };
-                displayMessage = typeMap[lastMsg.media_type] || "Média";
-              } else {
-                displayMessage = lastMsg.content || "";
-              }
-              displayTime = formatTime(lastMsg.created_at);
-              timestamp = new Date(lastMsg.created_at).getTime();
-              
-              // Prefix "Vous: " if I sent the last message
-              if (lastMsg.sender_id === user.id && !lastMsg.media_type) {
-                displayMessage = `Vous: ${displayMessage}`;
-              }
-            }
-
-            const { text: lastActiveText, online: isOnline } = formatLastSeen(p?.last_seen);
-
-            return {
-              id: m.id,
-              profile: {
-                id: p?.id,
-                firstName: p?.first_name || "Membre",
-                age: getAge(p?.birth_date),
-                photo: p?.photos?.[0] || "https://placehold.co/400x600/1a1a2e/gold?text=😊",
-                lastActive: lastActiveText,
-              },
-              lastMessage: displayMessage,
-              time: displayTime,
-              unread: unreadCount,
-              online: isOnline,
-              typing: false,
-              _timestamp: timestamp,
-            };
-          });
-
-          // Sort by most recent activity
-          formatted.sort((a, b) => b._timestamp - a._timestamp);
-          setChats(formatted);
+        if (matchesError) console.error("[messages] matches:", matchesError);
+        if (cancelled) return;
+        if (!matchesData || matchesData.length === 0) {
+          setChats([]);
+          return;
         }
+
+        const otherIds = matchesData.map((m: any) => (m.user1_id === user.id ? m.user2_id : m.user1_id));
+
+        const [
+          { data: profiles, error: profilesError },
+          { data: unreadRows, error: unreadError },
+          lastMsgResults,
+        ] = await Promise.all([
+          fetchChatProfiles(otherIds),
+          // Une seule requête pour tous les non-lus (au lieu d'une par match)
+          supabase
+            .from("messages")
+            .select("match_id")
+            .in("match_id", matchesData.map((m: any) => m.id))
+            .neq("sender_id", user.id)
+            .is("read_at", null),
+          Promise.all(
+            matchesData.map((m: any) =>
+              supabase
+                .from("messages")
+                .select("content, created_at, sender_id, media_type, read_at")
+                .eq("match_id", m.id)
+                .order("created_at", { ascending: false })
+                .limit(1),
+            ),
+          ),
+        ]);
+
+        if (cancelled) return;
+
+        if (profilesError) console.error("[messages] profiles:", profilesError);
+        if (unreadError) console.error("[messages] unread:", unreadError);
+        const lastMsgError = lastMsgResults.find(r => r.error)?.error;
+        if (lastMsgError) console.error("[messages] last message:", lastMsgError);
+
+        // Diagnostic : des matches existent mais aucun profil n'est lisible
+        // → presque toujours une policy RLS SELECT trop restrictive sur `profiles`.
+        if (!profilesError && (profiles?.length ?? 0) < otherIds.length) {
+          console.warn(
+            `[messages] ${otherIds.length} interlocuteur(s) attendu(s), ${profiles?.length ?? 0} profil(s) lisible(s).`,
+            "Vérifiez la policy RLS SELECT de la table `profiles`.",
+          );
+        }
+
+        const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+
+        const unreadMap = new Map<string, number>();
+        for (const row of unreadRows ?? []) {
+          unreadMap.set((row as any).match_id, (unreadMap.get((row as any).match_id) ?? 0) + 1);
+        }
+
+        const formatted: MatchChat[] = matchesData.map((m: any, i: number) => {
+          const otherId = m.user1_id === user.id ? m.user2_id : m.user1_id;
+          const p = profileMap.get(otherId) as any;
+
+          const lastMsg = lastMsgResults[i].data?.[0] ?? null;
+          const mine = lastMsg ? lastMsg.sender_id === user.id : false;
+
+          let preview = "Nouveau match — dites bonjour 👋";
+          if (lastMsg) {
+            preview = lastMsg.media_type
+              ? MEDIA_LABELS[lastMsg.media_type] || "Média"
+              : lastMsg.content || "";
+            // « Vous : » aussi sur les médias, pour rester cohérent
+            if (mine) preview = `Vous : ${preview}`;
+          }
+
+          return {
+            id: m.id,
+            profile: {
+              id: otherId,
+              firstName: p?.first_name || "Membre",
+              age: getAge(p?.birth_date ?? null),
+              photo: p?.photos?.[0] ?? null,
+              city: p?.city ?? null,
+              verified: Boolean(p?.is_verified),
+              lastSeen: p?.last_seen ?? null,
+            },
+            lastMessage: preview,
+            lastMessageMine: mine,
+            lastMessageRead: Boolean(lastMsg?.read_at),
+            hasMessages: Boolean(lastMsg),
+            timestamp: new Date(lastMsg?.created_at ?? m.created_at).getTime(),
+            unread: unreadMap.get(m.id) ?? 0,
+            typing: false,
+          };
+        });
+
+        formatted.sort((a, b) => b.timestamp - a.timestamp);
+        setChats(formatted);
       } catch (err) {
         console.error(err);
+        toast.error("Impossible de charger vos conversations");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
+
     load();
+    return () => { cancelled = true; };
   }, []);
 
-  const filtered = useMemo(
-    () => chats.filter(c =>
-      c.profile.firstName.toLowerCase().includes(query.toLowerCase()) ||
-      c.lastMessage.toLowerCase().includes(query.toLowerCase()),
-    ),
-    [query, chats],
-  );
+  // Temps réel : un nouveau message remonte la conversation et incrémente le badge
+  useEffect(() => {
+    if (!userId || chats.length === 0) return;
 
-  if (active && userId) return <ChatView chat={active} currentUserId={userId} onBack={() => setActive(null)} />;
+    const knownIds = new Set(chats.map(c => c.id));
+    const channel = supabase
+      .channel("messages-overview")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload: any) => {
+        const msg = payload.new as Msg;
+        if (!knownIds.has(msg.match_id)) return;
+
+        const mine = msg.sender_id === userId;
+        const body = msg.media_type ? MEDIA_LABELS[msg.media_type] || "Média" : msg.content || "";
+
+        setChats(prev =>
+          prev
+            .map(c =>
+              c.id === msg.match_id
+                ? {
+                    ...c,
+                    lastMessage: mine ? `Vous : ${body}` : body,
+                    lastMessageMine: mine,
+                    lastMessageRead: false,
+                    hasMessages: true,
+                    timestamp: new Date(msg.created_at).getTime(),
+                    // Pas de badge si la conversation est ouverte à l'écran
+                    unread: mine || active?.id === msg.match_id ? c.unread : c.unread + 1,
+                  }
+                : c,
+            )
+            .sort((a, b) => b.timestamp - a.timestamp),
+        );
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [userId, chats.length, active?.id]);
+
+  const openChat = (c: MatchChat) => {
+    // Optimiste : le badge disparaît tout de suite, ChatView écrit read_at côté serveur
+    setChats(prev => prev.map(x => (x.id === c.id ? { ...x, unread: 0 } : x)));
+    setActive(c);
+  };
+
+  const newMatches = useMemo(() => chats.filter(c => !c.hasMessages), [chats]);
+  const conversations = useMemo(() => chats.filter(c => c.hasMessages), [chats]);
+  const totalUnread = useMemo(() => chats.reduce((n, c) => n + c.unread, 0), [chats]);
+
+  const filtered = useMemo(() => {
+    const q = normalize(query.trim());
+    return conversations
+      .filter(c => (tab === "unread" ? c.unread > 0 : true))
+      .filter(c =>
+        !q ||
+        normalize(c.profile.firstName).includes(q) ||
+        normalize(c.lastMessage).includes(q),
+      );
+  }, [query, tab, conversations]);
+
+  if (active && userId) {
+    return (
+      <ChatView
+        chat={active}
+        currentUserId={userId}
+        onBack={() => setActive(null)}
+        onRead={id => setChats(prev => prev.map(c => (c.id === id ? { ...c, unread: 0 } : c)))}
+      />
+    );
+  }
 
   return (
     <div className="px-4 pt-4">
-      <h1 className="font-serif text-2xl font-semibold mb-3">Messages</h1>
+      <div className="flex items-baseline gap-2 mb-3">
+        <h1 className="font-serif text-2xl font-semibold">Messages</h1>
+        {totalUnread > 0 && (
+          <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-xs font-semibold">
+            {totalUnread} non lu{totalUnread > 1 ? "s" : ""}
+          </span>
+        )}
+      </div>
 
-      <div className="relative mb-4">
+      <div className="relative mb-3">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Rechercher une conversation…"
-          className="w-full pl-10 pr-4 py-2.5 rounded-full bg-secondary border border-border focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm"
+          className="w-full pl-10 pr-9 py-2.5 rounded-full bg-secondary border border-border focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm"
         />
+        {query && (
+          <button
+            onClick={() => setQuery("")}
+            aria-label="Effacer la recherche"
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-muted-foreground/20 flex items-center justify-center hover:bg-muted-foreground/30"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+
+      {/* Filtres */}
+      <div className="flex gap-2 mb-4">
+        {([["all", "Toutes"], ["unread", "Non lues"]] as const).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              tab === key
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-muted-foreground hover:bg-secondary/70"
+            }`}
+          >
+            {label}
+            {key === "unread" && totalUnread > 0 && ` · ${totalUnread}`}
+          </button>
+        ))}
       </div>
 
       {loading ? (
-        <div className="flex justify-center p-8">
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
+        <ConversationSkeleton />
       ) : (
         <>
-          {/* Nouveaux matches */}
-          <div className="mb-6">
-            <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-2">Nouveaux matches</div>
-            <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
-              {chats.slice(0, 6).map(c => (
-                <button key={c.id} onClick={() => setActive(c)} className="shrink-0 flex flex-col items-center gap-1">
-                  <div className="relative">
-                    <div className="p-0.5 rounded-full bg-gradient-to-tr from-primary to-gold">
-                      <img src={c.profile.photo} alt={c.profile.firstName} className="w-14 h-14 rounded-full object-cover border-2 border-background" />
-                    </div>
-                    {c.online && <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-background" />}
-                  </div>
-                  <span className="text-[11px] font-medium max-w-[64px] truncate">{c.profile.firstName}</span>
-                </button>
-              ))}
-              {chats.length === 0 && <span className="text-sm text-muted-foreground">Pas encore de matches</span>}
+          {/* Nouveaux matches : uniquement ceux sans aucun message */}
+          {newMatches.length > 0 && (
+            <div className="mb-6">
+              <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-2">
+                Nouveaux matches · {newMatches.length}
+              </div>
+              <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
+                {newMatches.map(c => {
+                  const { online } = formatLastSeen(c.profile.lastSeen, now);
+                  return (
+                    <button key={c.id} onClick={() => openChat(c)} className="shrink-0 flex flex-col items-center gap-1">
+                      <div className="relative">
+                        <div className="p-0.5 rounded-full bg-gradient-to-tr from-primary to-gold">
+                          <ChatAvatar
+                            src={c.profile.photo}
+                            name={c.profile.firstName}
+                            className="w-14 h-14 rounded-full object-cover border-2 border-background"
+                            textClassName="text-lg"
+                          />
+                        </div>
+                        {online && <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-background" />}
+                      </div>
+                      <span className="text-[11px] font-medium max-w-[64px] truncate">{c.profile.firstName}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Conversations */}
           <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-2">Conversations</div>
           <div className="divide-y divide-border rounded-2xl overflow-hidden bg-card border border-border/50">
-            {filtered.map(c => (
-              <button key={c.id} onClick={() => setActive(c)} className="w-full flex items-center gap-3 px-3 py-3 hover:bg-secondary/40 transition-colors text-left">
-                <div className="relative">
-                  <img src={c.profile.photo} alt={c.profile.firstName} className="w-12 h-12 rounded-full object-cover" />
-                  {c.online && <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-background" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="font-semibold truncate">{c.profile.firstName}</span>
-                    <span className="text-[11px] text-muted-foreground shrink-0">{c.time}</span>
+            {filtered.map(c => {
+              const { text: lastSeenText, online } = formatLastSeen(c.profile.lastSeen, now);
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => openChat(c)}
+                  className="w-full flex items-center gap-3 px-3 py-3 hover:bg-secondary/40 transition-colors text-left"
+                >
+                  <div className="relative shrink-0">
+                    <div className={c.unread > 0 ? "p-0.5 rounded-full bg-gradient-to-tr from-primary to-gold" : ""}>
+                      <ChatAvatar
+                        src={c.profile.photo}
+                        name={c.profile.firstName}
+                        className={`w-12 h-12 rounded-full object-cover ${c.unread > 0 ? "border-2 border-background" : ""}`}
+                        textClassName="text-base"
+                      />
+                    </div>
+                    {online && <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-background" />}
                   </div>
-                  <div className="flex items-center justify-between gap-2 mt-0.5">
-                    <span className={`text-sm truncate ${c.unread ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                      {c.typing ? <em className="text-primary">en train d'écrire…</em> : c.lastMessage}
-                    </span>
-                    {c.unread > 0 && (
-                      <span className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center">
-                        {c.unread}
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="font-semibold truncate flex items-center gap-1">
+                        {c.profile.firstName}
+                        {c.profile.verified && <BadgeCheck className="w-3.5 h-3.5 text-primary shrink-0" aria-label="Profil certifié" />}
                       </span>
-                    )}
+                      <span className={`text-[11px] shrink-0 ${c.unread > 0 ? "text-primary font-semibold" : "text-muted-foreground"}`}>
+                        {formatListTime(new Date(c.timestamp).toISOString(), now)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 mt-0.5">
+                      <span className={`text-sm truncate flex items-center gap-1 ${c.unread > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                        {c.typing ? (
+                          <em className="text-primary">en train d'écrire…</em>
+                        ) : (
+                          <>
+                            {c.lastMessageMine &&
+                              (c.lastMessageRead ? (
+                                <CheckCheck className="w-3.5 h-3.5 shrink-0 text-primary" />
+                              ) : (
+                                <Check className="w-3.5 h-3.5 shrink-0" />
+                              ))}
+                            <span className="truncate">{c.lastMessage}</span>
+                          </>
+                        )}
+                      </span>
+                      {c.unread > 0 && (
+                        <span className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center">
+                          {c.unread > 99 ? "99+" : c.unread}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                      {[c.profile.city, online ? "En ligne" : lastSeenText].filter(Boolean).join(" · ")}
+                    </div>
                   </div>
-                </div>
-              </button>
-            ))}
-            {filtered.length === 0 && chats.length > 0 && <div className="p-6 text-center text-sm text-muted-foreground">Aucune conversation trouvée.</div>}
-            {chats.length === 0 && <div className="p-6 text-center text-sm text-muted-foreground">Allez swiper pour faire des rencontres !</div>}
+                </button>
+              );
+            })}
+
+            {filtered.length === 0 && (
+              <div className="p-8 text-center">
+                <p className="text-sm text-muted-foreground">
+                  {query
+                    ? "Aucune conversation ne correspond à votre recherche."
+                    : tab === "unread"
+                      ? "Vous êtes à jour, aucun message non lu 🙌"
+                      : newMatches.length > 0
+                        ? "Lancez la conversation avec l'un de vos nouveaux matches ✨"
+                        : "Aucune conversation pour l'instant."}
+                </p>
+                {!query && tab === "all" && newMatches.length === 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">Allez swiper pour faire de belles rencontres !</p>
+                )}
+              </div>
+            )}
           </div>
         </>
       )}
@@ -380,11 +645,38 @@ function MessagesPage() {
   );
 }
 
+function ConversationSkeleton() {
+  return (
+    <div className="divide-y divide-border rounded-2xl overflow-hidden bg-card border border-border/50">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3 px-3 py-3 animate-pulse">
+          <div className="w-12 h-12 rounded-full bg-secondary shrink-0" />
+          <div className="flex-1 space-y-2">
+            <div className="h-3 w-1/3 rounded bg-secondary" />
+            <div className="h-3 w-2/3 rounded bg-secondary/70" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────
 // Chat View
 // ─────────────────────────────────────────────────
-function ChatView({ chat, currentUserId, onBack }: { chat: MatchChat; currentUserId: string; onBack: () => void }) {
+function ChatView({
+  chat,
+  currentUserId,
+  onBack,
+  onRead,
+}: {
+  chat: MatchChat;
+  currentUserId: string;
+  onBack: () => void;
+  onRead: (matchId: string) => void;
+}) {
   const [messages, setMessages] = useState<Msg[]>([]);
+  const [now, setNow] = useState(() => Date.now());
   const [text, setText] = useState("");
   const [menu, setMenu] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
@@ -396,10 +688,34 @@ function ChatView({ chat, currentUserId, onBack }: { chat: MatchChat; currentUse
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [callState, setCallState] = useState<{ type: "audio" | "video" } | null>(null);
 
+  const presence = useMemo(() => formatLastSeen(chat.profile.lastSeen, now), [chat.profile.lastSeen, now]);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const audioChunks = useRef<Blob[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+
+  // Rafraîchit « En ligne / Vu il y a X » dans l'en-tête
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  /** Marque comme lus les messages reçus non lus de cette conversation */
+  const markAsRead = async () => {
+    const { error } = await supabase
+      .from("messages")
+      .update({ read_at: new Date().toISOString() })
+      .eq("match_id", chat.id)
+      .neq("sender_id", currentUserId)
+      .is("read_at", null);
+
+    if (error) {
+      console.error("markAsRead", error);
+      return;
+    }
+    onRead(chat.id);
+  };
 
   useEffect(() => {
     async function loadMessages() {
@@ -409,6 +725,8 @@ function ChatView({ chat, currentUserId, onBack }: { chat: MatchChat; currentUse
         .eq("match_id", chat.id)
         .order("created_at", { ascending: true });
       if (data) setMessages(data as Msg[]);
+      // À l'ouverture, tout ce qui a été reçu est considéré lu
+      markAsRead();
     }
     loadMessages();
 
@@ -417,12 +735,23 @@ function ChatView({ chat, currentUserId, onBack }: { chat: MatchChat; currentUse
         event: "INSERT", schema: "public", table: "messages",
         filter: `match_id=eq.${chat.id}`,
       }, (payload: any) => {
-        setMessages(prev => [...prev, payload.new as Msg]);
+        const msg = payload.new as Msg;
+        setMessages(prev => (prev.some(m => m.id === msg.id) ? prev : [...prev, msg]));
+        // Conversation ouverte → le message entrant est lu immédiatement
+        if (msg.sender_id !== currentUserId) markAsRead();
+      })
+      .on("postgres_changes", {
+        event: "UPDATE", schema: "public", table: "messages",
+        filter: `match_id=eq.${chat.id}`,
+      }, (payload: any) => {
+        // Accusés de lecture : passe ✓ en ✓✓ en direct
+        const msg = payload.new as Msg;
+        setMessages(prev => prev.map(m => (m.id === msg.id ? { ...m, ...msg } : m)));
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [chat.id]);
+  }, [chat.id, currentUserId]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -565,7 +894,7 @@ function ChatView({ chat, currentUserId, onBack }: { chat: MatchChat; currentUse
       channelName={chat.id}
       callType={callState.type}
       peerName={chat.profile.firstName}
-      peerPhoto={chat.profile.photo}
+      peerPhoto={chat.profile.photo ?? ""}
       onEnd={() => setCallState(null)}
     />
   );
@@ -577,11 +906,30 @@ function ChatView({ chat, currentUserId, onBack }: { chat: MatchChat; currentUse
         <button onClick={onBack} aria-label="Retour" className="w-9 h-9 rounded-full hover:bg-secondary flex items-center justify-center">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <img src={chat.profile.photo} className="w-10 h-10 rounded-full object-cover" alt="" />
+        <div className="relative shrink-0">
+          <ChatAvatar
+            src={chat.profile.photo}
+            name={chat.profile.firstName}
+            className="w-10 h-10 rounded-full object-cover"
+          />
+          {presence.online && (
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-background" />
+          )}
+        </div>
         <div className="flex-1 min-w-0">
-          <div className="font-semibold truncate">{chat.profile.firstName}, {chat.profile.age}</div>
-          <div className="text-[11px] text-muted-foreground">
-            {chat.typing ? <span className="text-primary">en train d'écrire…</span> : chat.online ? "En ligne" : chat.profile.lastActive}
+          <div className="font-semibold truncate flex items-center gap-1">
+            <span className="truncate">
+              {chat.profile.firstName}
+              {chat.profile.age > 0 && `, ${chat.profile.age}`}
+            </span>
+            {chat.profile.verified && <BadgeCheck className="w-4 h-4 text-primary shrink-0" aria-label="Profil certifié" />}
+          </div>
+          <div className="text-[11px] text-muted-foreground truncate">
+            {chat.typing ? (
+              <span className="text-primary">en train d'écrire…</span>
+            ) : (
+              <span className={presence.online ? "text-emerald-500" : ""}>{presence.text}</span>
+            )}
           </div>
         </div>
         {/* Call buttons */}

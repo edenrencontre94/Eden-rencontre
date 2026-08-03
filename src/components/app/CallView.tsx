@@ -81,7 +81,18 @@ export function CallView({ channelName, callType, peerName, peerPhoto, onEnd }: 
         throw new Error(err.error || "Token generation failed");
       }
 
-      const { token } = await tokenRes.json();
+      // L'App ID renvoyé par le serveur fait foi : c'est celui dont le
+      // certificat a signé le token. Utiliser une autre valeur côté client
+      // provoque « invalid vendor key, can not find appid ».
+      const { token, appId: serverAppId } = await tokenRes.json();
+      const appId = serverAppId || AGORA_APP_ID;
+
+      if (serverAppId && serverAppId !== AGORA_APP_ID) {
+        console.warn(
+          "[agora] VITE_AGORA_APP_ID diffère de l'App ID du serveur ; celui du serveur est utilisé.",
+          { client: AGORA_APP_ID, serveur: serverAppId },
+        );
+      }
 
       // ── 2. Créer le client Agora et rejoindre ──
       const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
@@ -115,7 +126,7 @@ export function CallView({ channelName, callType, peerName, peerPhoto, onEnd }: 
       });
 
       // Rejoindre avec le token sécurisé
-      await client.join(AGORA_APP_ID, channelName, token, null);
+      await client.join(appId, channelName, token, null);
 
       // ── 3. Créer les tracks locaux ──
       const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
@@ -135,6 +146,10 @@ export function CallView({ channelName, callType, peerName, peerPhoto, onEnd }: 
       console.error("Agora error:", err);
       if (err?.name === "NotAllowedError" || err?.code === "PERMISSION_DENIED") {
         toast.error("Autorisations micro/caméra refusées. Vérifiez les paramètres de votre navigateur.");
+      } else if (err?.message?.includes("can not find appid") || err?.message?.includes("invalid vendor key")) {
+        toast.error("App ID Agora inconnu. Vérifiez le projet dans la console Agora et AGORA_APP_ID côté Supabase.");
+      } else if (err?.message?.includes("dynamic key") || err?.message?.includes("invalid token")) {
+        toast.error("Token Agora refusé. Le certificat du serveur ne correspond pas à l'App ID.");
       } else if (err?.message?.includes("Token")) {
         toast.error("Erreur de token Agora. Vérifiez la configuration serveur.");
       } else {
