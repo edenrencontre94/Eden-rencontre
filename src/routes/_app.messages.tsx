@@ -61,6 +61,19 @@ function formatTime(isoString: string) {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+function formatLastSeen(isoString: string | null): { text: string; online: boolean } {
+  if (!isoString) return { text: "Récemment", online: false };
+  const diffMs = Date.now() - new Date(isoString).getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  
+  if (diffMins < 5) return { text: "En ligne", online: true };
+  if (diffMins < 60) return { text: `Actif il y a ${diffMins} min`, online: false };
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return { text: `Actif il y a ${diffHours} h`, online: false };
+  const diffDays = Math.floor(diffHours / 24);
+  return { text: `Actif il y a ${diffDays} j`, online: false };
+}
+
 // ─────────────────────────────────────────────────
 // Audio Player Component
 // ─────────────────────────────────────────────────
@@ -188,14 +201,69 @@ function MessagesPage() {
           const otherIds = matchesData.map((m: any) => m.user1_id === user.id ? m.user2_id : m.user1_id);
           const { data: profiles } = await supabase
             .from("profiles")
-            .select("id, first_name, birth_date, photos")
+            .select("id, first_name, birth_date, photos, last_seen")
             .in("id", otherIds);
 
           const profileMap = new Map(profiles?.map((p: any) => [p.id, p]));
 
-          const formatted: MatchChat[] = matchesData.map((m: any) => {
+          // Fetch last message for each match
+          const lastMsgPromises = matchesData.map(m =>
+            supabase
+              .from("messages")
+              .select("content, created_at, sender_id, media_type")
+              .eq("match_id", m.id)
+              .order("created_at", { ascending: false })
+              .limit(1)
+          );
+          const lastMsgResults = await Promise.all(lastMsgPromises);
+
+          // Fetch unread count for each match (messages from other user not read)
+          const unreadPromises = matchesData.map(m =>
+            supabase
+              .from("messages")
+              .select("id", { count: "exact", head: true })
+              .eq("match_id", m.id)
+              .neq("sender_id", user.id)
+              .is("read_at", null)
+          );
+          const unreadResults = await Promise.all(unreadPromises);
+
+          const formatted: (MatchChat & { _timestamp: number })[] = matchesData.map((m: any, i) => {
             const otherId = m.user1_id === user.id ? m.user2_id : m.user1_id;
             const p = profileMap.get(otherId) as any;
+
+            const lastMsgData = lastMsgResults[i].data;
+            const lastMsg = lastMsgData && lastMsgData.length > 0 ? lastMsgData[0] : null;
+            const unreadCount = unreadResults[i].count || 0;
+
+            let displayMessage = "Cliquez pour commencer à discuter";
+            let displayTime = formatTime(m.created_at);
+            let timestamp = new Date(m.created_at).getTime();
+
+            if (lastMsg) {
+              if (lastMsg.media_type) {
+                const typeMap: Record<string, string> = {
+                  image: "📷 Image",
+                  video: "🎥 Vidéo",
+                  audio: "🎤 Message vocal",
+                  gif: "GIF",
+                  sticker: "Sticker"
+                };
+                displayMessage = typeMap[lastMsg.media_type] || "Média";
+              } else {
+                displayMessage = lastMsg.content || "";
+              }
+              displayTime = formatTime(lastMsg.created_at);
+              timestamp = new Date(lastMsg.created_at).getTime();
+              
+              // Prefix "Vous: " if I sent the last message
+              if (lastMsg.sender_id === user.id && !lastMsg.media_type) {
+                displayMessage = `Vous: ${displayMessage}`;
+              }
+            }
+
+            const { text: lastActiveText, online: isOnline } = formatLastSeen(p?.last_seen);
+
             return {
               id: m.id,
               profile: {
@@ -203,15 +271,19 @@ function MessagesPage() {
                 firstName: p?.first_name || "Membre",
                 age: getAge(p?.birth_date),
                 photo: p?.photos?.[0] || "https://placehold.co/400x600/1a1a2e/gold?text=😊",
-                lastActive: "Récemment",
+                lastActive: lastActiveText,
               },
-              lastMessage: "Cliquez pour commencer à discuter",
-              time: formatTime(m.created_at),
-              unread: 0,
-              online: false,
+              lastMessage: displayMessage,
+              time: displayTime,
+              unread: unreadCount,
+              online: isOnline,
               typing: false,
+              _timestamp: timestamp,
             };
           });
+
+          // Sort by most recent activity
+          formatted.sort((a, b) => b._timestamp - a._timestamp);
           setChats(formatted);
         }
       } catch (err) {

@@ -28,6 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
+import { usePresence } from "@/hooks/usePresence";
 
 export const Route = createFileRoute("/_app")({
   // No beforeLoad — auth is checked client-side only to avoid SSR logout on refresh
@@ -35,6 +36,8 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppLayout() {
+  usePresence();
+  
   const [authChecked, setAuthChecked] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);

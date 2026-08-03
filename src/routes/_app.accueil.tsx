@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
-import { Sparkles, Crown, UserPlus, ArrowRight, Eye, BookOpen, Compass, Pause, Users, HeartHandshake } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { Sparkles, Crown, UserPlus, ArrowRight, Eye, BookOpen, Compass, Pause, Users, HeartHandshake, X, CheckCircle2, Church } from "lucide-react";
 import { ProfileCard } from "@/components/app/ProfileCard";
 import { supabase } from "@/lib/supabase";
 import { type Profile } from "@/lib/mock-data";
 import { getCountryCode } from "@/lib/utils";
+import { useDailyContent } from "@/hooks/useDailyContent";
 
 export const Route = createFileRoute("/_app/accueil")({
   head: () => ({
@@ -20,14 +21,6 @@ export const Route = createFileRoute("/_app/accueil")({
 
 type Section = { title: string; icon: typeof Sparkles; data: Profile[]; hue?: string };
 
-const dailyVerses = [
-  { text: "On épouse une personne pour quatre choses : sa richesse, son lignage, sa beauté et sa foi. Choisis celle qui a la foi, et tu seras comblé.", source: "Adapté de la sagesse biblique", ref: "CHOISIS D'ABORD LA FOI" },
-  { text: "Celui qui trouve une femme trouve le bonheur ; c'est une grâce qu'il obtient de l'Éternel.", source: "Proverbes 18:22", ref: "LE MARIAGE EST UNE GRÂCE" },
-  { text: "L'amour est patient, l'amour est plein de bonté ; il n'est point envieux, ne se vante point, ne s'enfle point d'orgueil.", source: "1 Corinthiens 13:4", ref: "L'AMOUR VÉRITABLE" },
-  { text: "Il n'est pas bon que l'homme soit seul ; je lui ferai une aide semblable à lui.", source: "Genèse 2:18", ref: "UNE AIDE SEMBLABLE" },
-  { text: "Que tout ce que vous faites soit fait avec amour.", source: "1 Corinthiens 16:14", ref: "TOUT AVEC AMOUR" },
-];
-
 function HomePage() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,8 +28,9 @@ function HomePage() {
   const [completionScore, setCompletionScore] = useState(0);
   const [visibility, setVisibility] = useState<"tous" | "demande" | "pause">("tous");
   const [visitors, setVisitors] = useState<any[]>([]);
+  const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
 
-  const todayVerse = dailyVerses[new Date().getDay() % dailyVerses.length];
+  const { content: dailyContent, loading: dailyLoading } = useDailyContent();
 
   useEffect(() => {
     async function loadProfiles() {
@@ -253,7 +247,8 @@ function HomePage() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.04 * k + 0.05 * i }}
-                        className="snap-start shrink-0"
+                        className="snap-start shrink-0 cursor-pointer"
+                        onClick={() => setSelectedProfile(p)}
                       >
                         <ProfileCard profile={p} />
                       </motion.div>
@@ -321,20 +316,30 @@ function HomePage() {
                 <p className="text-xs text-primary font-bold uppercase tracking-wider mt-1">Conseil du jour</p>
               </div>
               <div className="px-5 py-5 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-t border-b border-border/30">
-                <p className="text-sm text-foreground leading-relaxed italic text-center">
-                  « {todayVerse.text} »
-                </p>
-                <div className="flex items-center justify-center gap-2 mt-3">
-                  <span className="text-primary">✦</span>
-                  <span className="text-primary">✦</span>
-                  <span className="text-primary">✦</span>
-                </div>
-                <p className="text-center text-xs font-bold text-primary mt-2 uppercase tracking-wider">
-                  {todayVerse.ref}
-                </p>
-                <p className="text-center text-[10px] text-muted-foreground mt-1 italic">
-                  {todayVerse.source}
-                </p>
+                {dailyLoading || !dailyContent ? (
+                  <div className="animate-pulse flex flex-col items-center space-y-3">
+                    <div className="h-4 bg-primary/20 rounded w-full"></div>
+                    <div className="h-4 bg-primary/20 rounded w-5/6"></div>
+                    <div className="h-4 bg-primary/20 rounded w-4/6 mt-2"></div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-foreground leading-relaxed italic text-center">
+                      « {dailyContent.advice_text} »
+                    </p>
+                    <div className="flex items-center justify-center gap-2 mt-3">
+                      <span className="text-primary">✦</span>
+                      <span className="text-primary">✦</span>
+                      <span className="text-primary">✦</span>
+                    </div>
+                    <p className="text-center text-xs font-bold text-primary mt-2 uppercase tracking-wider">
+                      {dailyContent.advice_ref}
+                    </p>
+                    <p className="text-center text-[10px] text-muted-foreground mt-1 italic">
+                      {dailyContent.advice_source}
+                    </p>
+                  </>
+                )}
               </div>
             </motion.div>
 
@@ -439,6 +444,125 @@ function HomePage() {
           </div>
         </>
       )}
+
+      {/* Profile detail modal */}
+      <AnimatePresence>
+        {selectedProfile && (
+          <ProfileDetailModal profile={selectedProfile} onClose={() => setSelectedProfile(null)} />
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+// ─── Profile Detail Modal ─────────────────────────────────────────────────────
+function ProfileDetailModal({ profile, onClose }: { profile: Profile; onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 40 }}
+      transition={{ type: "spring", damping: 28, stiffness: 320 }}
+      className="fixed inset-0 z-50 bg-background overflow-y-auto"
+    >
+      <div className="min-h-full max-w-md mx-auto bg-background relative pb-24 shadow-2xl">
+        {/* Hero photo */}
+        <div className="relative aspect-[3/4]">
+          <img src={profile.photo} alt={profile.firstName} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/40 backdrop-blur flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div className="absolute bottom-0 inset-x-0 p-6 pb-2">
+            <h2 className="font-serif text-4xl font-bold flex items-center gap-2">
+              {profile.firstName}, {profile.age}
+              {profile.verified && <CheckCircle2 className="w-6 h-6 text-blue-500" />}
+            </h2>
+            <div className="flex items-center gap-2 text-muted-foreground mt-1 text-sm font-medium">
+              <span>{profile.city}{profile.country ? `, ${profile.country}` : ""}</span>
+              {profile.country && getCountryCode(profile.country) && (
+                <img
+                  src={`https://flagcdn.com/w40/${getCountryCode(profile.country)}.png`}
+                  alt={profile.country}
+                  className="w-4 h-4 rounded-full object-cover shadow-sm"
+                />
+              )}
+              <span>•</span>
+              <span className="text-primary">{profile.compatibility}% Compatible</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Other photos */}
+        {profile.photos.length > 1 && (
+          <div className="px-4 pt-4">
+            <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
+              {profile.photos.slice(1).map((photo, i) => (
+                <img key={i} src={photo} alt="" className="w-24 h-32 object-cover rounded-xl shrink-0 shadow-sm" />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="p-6 space-y-6">
+          {/* Bio */}
+          {profile.bio && profile.bio !== "Pas de bio." && (
+            <section>
+              <h3 className="font-serif text-lg font-semibold mb-2">À propos</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">{profile.bio}</p>
+            </section>
+          )}
+
+          {/* Faith */}
+          <section>
+            <h3 className="font-serif text-lg font-semibold mb-3 flex items-center gap-2">
+              <Church className="w-5 h-5 text-primary" /> Foi &amp; Vision
+            </h3>
+            <div className="space-y-3 bg-secondary/30 p-4 rounded-2xl border border-border/50">
+              <div>
+                <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Dénomination</span>
+                <p className="font-medium">{profile.denomination || "Non précisé"}</p>
+              </div>
+              {profile.marriageVision && (
+                <div>
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Vision du mariage</span>
+                  <p className="font-medium text-sm leading-relaxed">{profile.marriageVision}</p>
+                </div>
+              )}
+              {profile.church && (
+                <div>
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Église</span>
+                  <p className="font-medium text-sm">{profile.church}</p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Interests */}
+          {profile.interests && profile.interests.length > 0 && (
+            <section>
+              <h3 className="font-serif text-lg font-semibold mb-3">Intérêts</h3>
+              <div className="flex flex-wrap gap-2">
+                {profile.interests.map((tag) => (
+                  <span key={tag} className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">{tag}</span>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* CTA */}
+          <Link
+            to="/decouvrir"
+            className="flex items-center justify-center gap-2 w-full py-3.5 rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold shadow-elegant hover:opacity-90 transition-opacity"
+          >
+            <BookOpen className="w-4 h-4" />
+            Découvrir ce profil dans l'appli
+          </Link>
+        </div>
+      </div>
+    </motion.div>
   );
 }

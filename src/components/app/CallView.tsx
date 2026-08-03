@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import AgoraRTC, {
+  IAgoraRTCClient,
+  ICameraVideoTrack,
+  IMicrophoneAudioTrack,
+  IRemoteVideoTrack,
+  IRemoteAudioTrack,
+} from "agora-rtc-sdk-ng";
 import {
   Mic, MicOff, Video, VideoOff, PhoneOff, Phone,
   RotateCcw, Volume2, VolumeX,
@@ -9,7 +16,7 @@ import { toast } from "sonner";
 const AGORA_APP_ID = import.meta.env.VITE_AGORA_APP_ID as string;
 
 interface CallViewProps {
-  channelName: string;
+  channelName: string; // Use match ID as channel
   callType: "audio" | "video";
   peerName: string;
   peerPhoto: string;
@@ -17,9 +24,9 @@ interface CallViewProps {
 }
 
 export function CallView({ channelName, callType, peerName, peerPhoto, onEnd }: CallViewProps) {
-  const clientRef = useRef<any | null>(null);
-  const localAudioRef = useRef<any | null>(null);
-  const localVideoRef = useRef<any | null>(null);
+  const clientRef = useRef<IAgoraRTCClient | null>(null);
+  const localAudioRef = useRef<IMicrophoneAudioTrack | null>(null);
+  const localVideoRef = useRef<ICameraVideoTrack | null>(null);
   const localVideoElRef = useRef<HTMLDivElement>(null);
   const remoteVideoElRef = useRef<HTMLDivElement>(null);
 
@@ -47,21 +54,53 @@ export function CallView({ channelName, callType, peerName, peerPhoto, onEnd }: 
 
   const startCall = async () => {
     try {
-      // Dynamic import so Agora is excluded from the SSR/server bundle
-      const AgoraRTC = (await import("agora-rtc-sdk-ng")).default;
+      if (!AGORA_APP_ID) {
+        toast.error("Appels non configurés : VITE_AGORA_APP_ID manquant dans le .env");
+        onEnd();
+        return;
+      }
+
+      // ── 1. Récupérer le token Agora depuis la Supabase Edge Function ──
+      const { data: { session } } = await (await import("@/lib/supabase")).supabase.auth.getSession();
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+
+      const tokenRes = await fetch(
+        `${supabaseUrl}/functions/v1/agora-token`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.access_token ?? ""}`,
+          },
+          body: JSON.stringify({ channelName, uid: "0", expireSecs: 3600 }),
+        }
+      );
+
+      if (!tokenRes.ok) {
+        const err = await tokenRes.json();
+        throw new Error(err.error || "Token generation failed");
+      }
+
+      const { token } = await tokenRes.json();
+
+      // ── 2. Créer le client Agora et rejoindre ──
       const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
       clientRef.current = client;
 
-      client.on("user-published", async (user: any, mediaType: any) => {
+      client.on("user-published", async (user, mediaType) => {
         await client.subscribe(user, mediaType);
         setRemoteJoined(true);
         setStatus("connected");
 
-        if (mediaType === "video" && remoteVideoElRef.current) {
-          user.videoTrack?.play(remoteVideoElRef.current);
+        if (mediaType === "video") {
+          const remoteVideo = user.videoTrack as IRemoteVideoTrack;
+          if (remoteVideoElRef.current) {
+            remoteVideo.play(remoteVideoElRef.current);
+          }
         }
         if (mediaType === "audio") {
-          user.audioTrack?.play();
+          const remoteAudio = user.audioTrack as IRemoteAudioTrack;
+          remoteAudio.play();
         }
       });
 
@@ -75,8 +114,10 @@ export function CallView({ channelName, callType, peerName, peerPhoto, onEnd }: 
         setTimeout(onEnd, 2000);
       });
 
-      await client.join(AGORA_APP_ID, channelName, null, null);
+      // Rejoindre avec le token sécurisé
+      await client.join(AGORA_APP_ID, channelName, token, null);
 
+      // ── 3. Créer les tracks locaux ──
       const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
       localAudioRef.current = audioTrack;
 
@@ -90,9 +131,15 @@ export function CallView({ channelName, callType, peerName, peerPhoto, onEnd }: 
       } else {
         await client.publish([audioTrack]);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Agora error:", err);
-      toast.error("Impossible d'initier l'appel. Vérifiez les autorisations micro/caméra.");
+      if (err?.name === "NotAllowedError" || err?.code === "PERMISSION_DENIED") {
+        toast.error("Autorisations micro/caméra refusées. Vérifiez les paramètres de votre navigateur.");
+      } else if (err?.message?.includes("Token")) {
+        toast.error("Erreur de token Agora. Vérifiez la configuration serveur.");
+      } else {
+        toast.error(`Impossible d'initier l'appel : ${err?.message || "erreur inconnue"}`);
+      }
       onEnd();
     }
   };
