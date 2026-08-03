@@ -23,6 +23,7 @@ import {
 import { type Profile } from "@/lib/mock-data";
 import { toast } from "sonner";
 import { useSubscription } from "@/lib/subscription";
+import { fetchBlockedIds } from "@/lib/moderation";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -92,14 +93,18 @@ function DiscoverPage() {
         
         const swipedIds = swipesData?.map((s: any) => s.target_id) || [];
 
+        // Les personnes bloquées ne doivent plus jamais réapparaître dans le deck
+        const blockedIds = await fetchBlockedIds();
+        const excludedIds = [...new Set([...swipedIds, ...blockedIds])];
+
         let query = supabase
           .from('profiles')
           .select('*')
           .neq('id', user.id)
           .limit(100); // Fetch more so we can filter locally
 
-        if (swipedIds.length > 0) {
-          query = query.not('id', 'in', `(${swipedIds.join(',')})`);
+        if (excludedIds.length > 0) {
+          query = query.not('id', 'in', `(${excludedIds.join(',')})`);
         }
         
         // Sexe recherché de base

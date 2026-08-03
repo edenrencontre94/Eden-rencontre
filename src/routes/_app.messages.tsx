@@ -11,6 +11,7 @@ import {
 import { toast } from "sonner";
 import { CallView } from "@/components/app/CallView";
 import { createCall } from "@/lib/calls";
+import { blockUser, fetchBlockedIds, reportUser } from "@/lib/moderation";
 
 export const Route = createFileRoute("/_app/messages")({
   head: () => ({
@@ -305,7 +306,20 @@ function MessagesPage() {
           return;
         }
 
-        const otherIds = matchesData.map((m: any) => (m.user1_id === user.id ? m.user2_id : m.user1_id));
+        // Les conversations avec des personnes bloquées ne s'affichent plus
+        const blockedIds = new Set(await fetchBlockedIds());
+        const visibleMatches = matchesData.filter((m: any) => {
+          const otherId = m.user1_id === user.id ? m.user2_id : m.user1_id;
+          return !blockedIds.has(otherId);
+        });
+
+        if (cancelled) return;
+        if (visibleMatches.length === 0) {
+          setChats([]);
+          return;
+        }
+
+        const otherIds = visibleMatches.map((m: any) => (m.user1_id === user.id ? m.user2_id : m.user1_id));
 
         const [
           { data: profiles, error: profilesError },
@@ -317,11 +331,11 @@ function MessagesPage() {
           supabase
             .from("messages")
             .select("match_id")
-            .in("match_id", matchesData.map((m: any) => m.id))
+            .in("match_id", visibleMatches.map((m: any) => m.id))
             .neq("sender_id", user.id)
             .is("read_at", null),
           Promise.all(
-            matchesData.map((m: any) =>
+            visibleMatches.map((m: any) =>
               supabase
                 .from("messages")
                 .select("content, created_at, sender_id, media_type, read_at")
@@ -355,7 +369,7 @@ function MessagesPage() {
           unreadMap.set((row as any).match_id, (unreadMap.get((row as any).match_id) ?? 0) + 1);
         }
 
-        const formatted: MatchChat[] = matchesData.map((m: any, i: number) => {
+        const formatted: MatchChat[] = visibleMatches.map((m: any, i: number) => {
           const otherId = m.user1_id === user.id ? m.user2_id : m.user1_id;
           const p = profileMap.get(otherId) as any;
 
@@ -449,6 +463,19 @@ function MessagesPage() {
     setChats(prev => prev.map(x => (x.id === c.id ? { ...x, unread: 0 } : x)));
     setActive(c);
   };
+
+  // Ouvre directement la bonne conversation depuis /messages?conversation=<matchId>
+  const openedFromUrl = useRef(false);
+  useEffect(() => {
+    if (openedFromUrl.current || chats.length === 0) return;
+    const target = new URLSearchParams(window.location.search).get("conversation");
+    if (!target) return;
+    const chat = chats.find(c => c.id === target);
+    if (chat) {
+      openedFromUrl.current = true;
+      openChat(chat);
+    }
+  }, [chats]);
 
   const newMatches = useMemo(() => chats.filter(c => !c.hasMessages), [chats]);
   const conversations = useMemo(() => chats.filter(c => c.hasMessages), [chats]);
@@ -983,8 +1010,28 @@ function ChatView({
                 className="absolute right-0 top-11 w-48 bg-card border border-border rounded-xl shadow-elegant py-1 z-30">
                 {[
                   { l: "Archiver", i: Archive, action: () => toast.success("Conversation archivée") },
-                  { l: "Signaler", i: Flag, action: () => toast.info("Signalement envoyé") },
-                  { l: "Bloquer", i: Ban, action: () => toast.info("Utilisateur bloqué") },
+                  {
+                    l: "Signaler",
+                    i: Flag,
+                    action: async () => {
+                      const ok = await reportUser(chat.profile.id, "message");
+                      if (ok) toast.success("Signalement envoyé à notre équipe");
+                      else toast.error("Le signalement n'a pas pu être envoyé");
+                    },
+                  },
+                  {
+                    l: "Bloquer",
+                    i: Ban,
+                    action: async () => {
+                      const ok = await blockUser(chat.profile.id);
+                      if (ok) {
+                        toast.success(`${chat.profile.firstName} a été bloqué`);
+                        onBack();
+                      } else {
+                        toast.error("Le blocage n'a pas pu être enregistré");
+                      }
+                    },
+                  },
                 ].map(it => (
                   <button key={it.l} onClick={() => { setMenu(false); it.action(); }}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-secondary text-left">
