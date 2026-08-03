@@ -615,7 +615,7 @@ function MessagesPage() {
                     </div>
 
                     <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
-                      {[c.profile.city, online ? "En ligne" : lastSeenText].filter(Boolean).join(" · ")}
+                      {online ? "En ligne" : lastSeenText}
                     </div>
                   </div>
                 </button>

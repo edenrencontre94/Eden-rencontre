@@ -356,23 +356,23 @@ function DiscoverPage() {
         )}
       </div>
 
-      <div className="flex items-center justify-center gap-3 mt-8 mb-4 max-w-[400px] mx-auto">
+      <div className="flex items-center justify-center gap-2 mt-8 mb-4 max-w-[400px] mx-auto">
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={rewind}
-            className="w-12 h-12 rounded-full border-2 border-gold bg-background flex items-center justify-center text-gold hover:bg-gold/10 transition-transform active:scale-95 shadow-sm"
+            className="w-10 h-10 rounded-full border-2 border-gold bg-background flex items-center justify-center text-gold hover:bg-gold/10 transition-transform active:scale-95 shadow-sm"
           >
-            <Undo2 className="w-5 h-5" />
+            <Undo2 className="w-4 h-4" />
           </button>
           <span className="text-[10px] text-muted-foreground font-medium">Retour</span>
         </div>
-        
+
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={() => swipe("left")}
-            className="w-14 h-14 rounded-full border-2 border-muted-foreground/50 bg-background flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-transform active:scale-95 shadow-sm"
+            className="w-12 h-12 rounded-full border-2 border-muted-foreground/50 bg-background flex items-center justify-center text-muted-foreground hover:bg-muted/50 transition-transform active:scale-95 shadow-sm"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5" />
           </button>
           <span className="text-[10px] text-muted-foreground font-medium">Passer</span>
         </div>
@@ -380,9 +380,9 @@ function DiscoverPage() {
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={() => swipe("super")}
-            className="w-14 h-14 rounded-full border-2 border-primary bg-background flex items-center justify-center text-primary hover:bg-primary/10 transition-transform active:scale-95 shadow-sm"
+            className="w-12 h-12 rounded-full border-2 border-primary bg-background flex items-center justify-center text-primary hover:bg-primary/10 transition-transform active:scale-95 shadow-sm"
           >
-            <Star className="w-6 h-6" fill="currentColor" />
+            <Star className="w-5 h-5" fill="currentColor" />
           </button>
           <span className="text-[10px] text-primary font-medium">Super like</span>
         </div>
@@ -390,9 +390,9 @@ function DiscoverPage() {
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={() => swipe("right")}
-            className="w-[72px] h-[72px] rounded-full border-2 border-gold bg-background shadow-[0_4px_15px_var(--color-gold)]/30 flex items-center justify-center text-gold hover:scale-105 hover:bg-gold/10 transition-all active:scale-95"
+            className="w-16 h-16 rounded-full border-2 border-gold bg-background shadow-[0_4px_15px_var(--color-gold)]/30 flex items-center justify-center text-gold hover:scale-105 hover:bg-gold/10 transition-all active:scale-95"
           >
-            <Heart className="w-9 h-9" fill="currentColor" />
+            <Heart className="w-7 h-7" fill="currentColor" />
           </button>
           <span className="text-[10px] text-gold font-medium">J'adore</span>
         </div>
@@ -400,9 +400,9 @@ function DiscoverPage() {
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={() => currentFiltered ? setShowMessageModal(currentFiltered) : toast.info("Chargement…")}
-            className="w-14 h-14 rounded-full border-2 border-primary/60 bg-background flex items-center justify-center text-primary/80 hover:bg-primary/10 transition-transform active:scale-95 shadow-sm"
+            className="w-12 h-12 rounded-full border-2 border-primary/60 bg-background flex items-center justify-center text-primary/80 hover:bg-primary/10 transition-transform active:scale-95 shadow-sm"
           >
-            <MessageCircle className="w-6 h-6" />
+            <MessageCircle className="w-5 h-5" />
           </button>
           <span className="text-[10px] text-muted-foreground font-medium">Message</span>
         </div>
@@ -410,9 +410,9 @@ function DiscoverPage() {
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={addContact}
-            className="w-12 h-12 rounded-full border-2 border-primary/80 bg-background flex items-center justify-center text-primary hover:bg-primary/10 transition-transform active:scale-95 shadow-sm"
+            className="w-10 h-10 rounded-full border-2 border-primary/80 bg-background flex items-center justify-center text-primary hover:bg-primary/10 transition-transform active:scale-95 shadow-sm"
           >
-            <UserPlus className="w-5 h-5" />
+            <UserPlus className="w-4 h-4" />
           </button>
           <span className="text-[10px] text-muted-foreground font-medium">Ajouter</span>
         </div>
