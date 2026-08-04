@@ -7,247 +7,274 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { supabase } from "@/lib/supabase";
+import { getCurrentUserId } from "@/lib/auth";
+import {
+  FREE_FEATURES,
+  getPlan,
+  OFFERS,
+  PLANS,
+  type Offer,
+  type PlanFeatures,
+  type PlanId,
+} from "@/lib/plans";
 
-export type PlanId = "gratuit" | "premium" | "premium";
-export type BillingCycle = "mensuel" | "annuel";
+export { PLANS, OFFERS, getPlan, formatPrice, offersFor, getOffer, pricePerDay, savingsVsMonthly } from "@/lib/plans";
+export type { Plan, PlanId, PlanFeatures, Offer, DurationId } from "@/lib/plans";
 
-export type PlanFeatures = {
-  visitors: boolean;
-  superLikesPerDay: number; // -1 = illimité
-  boostsPerMonth: number; // -1 = illimité
-  unlimitedLikes: boolean;
-  advancedFilters: boolean;
-  readReceipts: boolean;
-  incognito: boolean;
-  priorityVerification: boolean;
-};
+/**
+ * L'abonnement fait désormais autorité côté serveur.
+ *
+ * Auparavant l'état vivait dans le localStorage : trois lignes dans la console
+ * du navigateur suffisaient à s'octroyer VIP. Seul le webhook Chariow, qui
+ * passe par la service key, peut créditer la table `subscriptions` — la RLS
+ * n'accorde à l'utilisateur qu'un droit de lecture.
+ *
+ * Les compteurs d'usage quotidien (Super Likes, Boosts) restent en local :
+ * ce sont des garde-fous de confort, pas des droits d'accès.
+ */
 
-export type Plan = {
-  id: PlanId;
-  name: string;
-  tagline: string;
-  priceMonthly: number; // FCFA
-  priceYearly: number; // FCFA
-  highlight?: boolean;
-  perks: string[];
-  features: PlanFeatures;
-};
+type Usage = { day: string; superLikes: number; month: string; boosts: number };
 
-export const PLANS: Plan[] = [
-  {
-    id: "gratuit",
-    name: "Gratuit",
-    tagline: "Pour découvrir la communauté",
-    priceMonthly: 0,
-    priceYearly: 0,
-    perks: [
-      "Profil complet et vérification de base",
-      "20 likes par jour",
-      "1 Super Like par jour",
-      "Accès à la communauté spirituelle",
-    ],
-    features: {
-      visitors: false,
-      superLikesPerDay: 1,
-      boostsPerMonth: 0,
-      unlimitedLikes: false,
-      advancedFilters: false,
-      readReceipts: false,
-      incognito: false,
-      priorityVerification: false,
-    },
-  },
-  {
-    id: "premium",
-    name: "Premium",
-    tagline: "Pour ceux qui visent le mariage",
-    priceMonthly: 6500,
-    priceYearly: 54000,
-    highlight: true,
-    perks: [
-      "Voir qui a visité votre profil",
-      "Likes illimités",
-      "5 Super Likes par jour",
-      "1 Boost offert chaque mois",
-      "Filtres avancés (confession, pratique, distance)",
-      "Accusés de lecture en messagerie",
-    ],
-    features: {
-      visitors: true,
-      superLikesPerDay: 5,
-      boostsPerMonth: 1,
-      unlimitedLikes: true,
-      advancedFilters: true,
-      readReceipts: true,
-      incognito: false,
-      priorityVerification: false,
-    },
-  },
-  {
-    id: "premium",
-    name: "VIP",
-    tagline: "Il représente l'amour inconditionnel de Dieu.",
-    priceMonthly: 12000,
-    priceYearly: 98000,
-    perks: [
-      "Tout le plan Premium",
-      "Super Likes et Boosts illimités",
-      "Mode incognito",
-      "Vérification identité + foi prioritaire",
-      "Mise en avant auprès des profils compatibles",
-      "Accompagnement par un conseiller",
-    ],
-    features: {
-      visitors: true,
-      superLikesPerDay: -1,
-      boostsPerMonth: -1,
-      unlimitedLikes: true,
-      advancedFilters: true,
-      readReceipts: true,
-      incognito: true,
-      priorityVerification: true,
-    },
-  },
-];
-
-export function getPlan(id: PlanId): Plan {
-  return PLANS.find((p) => p.id === id) ?? PLANS[0];
-}
-
-export function formatPrice(amount: number) {
-  return new Intl.NumberFormat("fr-FR").format(amount) + " FCFA";
-}
-
-type Usage = {
-  day: string;
-  superLikes: number;
-  month: string;
-  boosts: number;
-};
-
-type SubscriptionState = {
-  planId: PlanId;
-  cycle: BillingCycle;
-  since: string | null;
-  renewsOn: string | null;
-  usage: Usage;
-};
-
-const STORAGE_KEY = "agapemeet.subscription";
-
+const USAGE_KEY = "agapemeet.usage";
 const todayKey = () => new Date().toISOString().slice(0, 10);
 const monthKey = () => new Date().toISOString().slice(0, 7);
 
-const initialState: SubscriptionState = {
-  planId: "gratuit",
-  cycle: "mensuel",
-  since: null,
-  renewsOn: null,
-  usage: { day: todayKey(), superLikes: 0, month: monthKey(), boosts: 0 },
-};
+const initialUsage: Usage = { day: todayKey(), superLikes: 0, month: monthKey(), boosts: 0 };
 
 type SubscriptionContextValue = {
   planId: PlanId;
-  plan: Plan;
-  cycle: BillingCycle;
-  since: string | null;
-  renewsOn: string | null;
+  plan: ReturnType<typeof getPlan>;
+  expiresAt: string | null;
+  daysLeft: number | null;
   isPaid: boolean;
+  loading: boolean;
   features: PlanFeatures;
   superLikesLeft: number; // -1 = illimité
   boostsLeft: number; // -1 = illimité
   consumeSuperLike: () => boolean;
   consumeBoost: () => boolean;
-  subscribe: (planId: PlanId, cycle: BillingCycle) => void;
-  cancel: () => void;
+  /** Ouvre le paiement Chariow pour l'offre choisie. */
+  startCheckout: (offer: Offer, phone: string, countryCode: string) => Promise<{ ok: boolean; error?: string }>;
+  refresh: () => Promise<void>;
+  /** Nombre de paiements encore en attente de confirmation. */
+  pendingPayments: number;
+  /** Interroge Chariow sur les paiements en attente et crédite ce qui est dû. */
+  reconcile: () => Promise<{ recovered: number; pending: number }>;
 };
 
 const SubscriptionContext = createContext<SubscriptionContextValue | null>(null);
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<SubscriptionState>(initialState);
+  const [planId, setPlanId] = useState<PlanId>("gratuit");
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [usage, setUsage] = useState<Usage>(initialUsage);
+  const [pendingPayments, setPendingPayments] = useState(0);
 
-  // hydrate côté client uniquement
+  // ── Compteurs d'usage (locaux) ──
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(USAGE_KEY);
       if (!raw) return;
-      const parsed = JSON.parse(raw) as SubscriptionState;
-      setState({
-        ...initialState,
-        ...parsed,
-        usage: {
-          day: todayKey(),
-          month: monthKey(),
-          superLikes: parsed.usage?.day === todayKey() ? parsed.usage.superLikes : 0,
-          boosts: parsed.usage?.month === monthKey() ? parsed.usage.boosts : 0,
-        },
+      const parsed = JSON.parse(raw) as Usage;
+      setUsage({
+        day: todayKey(),
+        month: monthKey(),
+        superLikes: parsed.day === todayKey() ? parsed.superLikes : 0,
+        boosts: parsed.month === monthKey() ? parsed.boosts : 0,
       });
     } catch {
       /* ignore */
     }
   }, []);
 
-  const persist = useCallback((next: SubscriptionState) => {
-    setState(next);
+  const persistUsage = useCallback((next: Usage) => {
+    setUsage(next);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(USAGE_KEY, JSON.stringify(next));
     } catch {
       /* ignore */
     }
   }, []);
 
+  // ── Abonnement (serveur) ──
+  const load = useCallback(async () => {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      setPlanId("gratuit");
+      setExpiresAt(null);
+      setLoading(false);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("subscriptions")
+      .select("plan_id, expires_at")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) console.error("[subscription] chargement:", error);
+
+    // Une période échue ramène automatiquement à la formule gratuite
+    const expired = data?.expires_at ? new Date(data.expires_at).getTime() < Date.now() : true;
+    setPlanId(!data || expired ? "gratuit" : (data.plan_id as PlanId));
+    setExpiresAt(data?.expires_at ?? null);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  /** Interroge Chariow sur les paiements en attente et crédite ce qui est dû. */
+  const reconcile = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return { recovered: 0, pending: 0 };
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chariow-reconcile`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        },
+      );
+
+      if (!res.ok) return { recovered: 0, pending: 0 };
+
+      const json = await res.json();
+      setPendingPayments(json.pending ?? 0);
+      if (json.recovered > 0) await load();
+      return { recovered: json.recovered ?? 0, pending: json.pending ?? 0 };
+    } catch {
+      return { recovered: 0, pending: 0 };
+    }
+  }, [load]);
+
+  // Rattrapage au démarrage : un paiement encaissé dont la notification
+  // n'est jamais arrivée serait sinon perdu sans que personne ne le sache.
+  useEffect(() => {
+    const t = setTimeout(() => { reconcile(); }, 1500);
+    return () => clearTimeout(t);
+  }, [reconcile]);
+
+  // ── Temps réel : le webhook crédite, l'écran se met à jour tout seul ──
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    (async () => {
+      const userId = await getCurrentUserId();
+      if (!userId) return;
+
+      channel = supabase
+        .channel(`subscription:${userId}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "subscriptions", filter: `user_id=eq.${userId}` },
+          (payload: any) => {
+            const row = payload.new;
+            if (!row) return;
+            const expired = row.expires_at ? new Date(row.expires_at).getTime() < Date.now() : true;
+            setPlanId(expired ? "gratuit" : (row.plan_id as PlanId));
+            setExpiresAt(row.expires_at ?? null);
+          },
+        )
+        .subscribe();
+    })();
+
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, []);
+
+  // Repasse au gratuit sans rechargement quand la période expire pendant la session
+  useEffect(() => {
+    if (!expiresAt) return;
+    const ms = new Date(expiresAt).getTime() - Date.now();
+    if (ms <= 0 || ms > 2 ** 31 - 1) return;
+    const t = setTimeout(() => setPlanId("gratuit"), ms);
+    return () => clearTimeout(t);
+  }, [expiresAt]);
+
   const value = useMemo<SubscriptionContextValue>(() => {
-    const plan = getPlan(state.planId);
-    const f = plan.features;
+    const plan = getPlan(planId);
+    const f = planId === "gratuit" ? FREE_FEATURES : plan.features;
+
     const superLikesLeft =
-      f.superLikesPerDay === -1 ? -1 : Math.max(0, f.superLikesPerDay - state.usage.superLikes);
+      f.superLikesPerDay === -1 ? -1 : Math.max(0, f.superLikesPerDay - usage.superLikes);
     const boostsLeft =
-      f.boostsPerMonth === -1 ? -1 : Math.max(0, f.boostsPerMonth - state.usage.boosts);
+      f.boostsPerMonth === -1 ? -1 : Math.max(0, f.boostsPerMonth - usage.boosts);
+
+    const daysLeft = expiresAt
+      ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000))
+      : null;
 
     return {
-      planId: state.planId,
+      planId,
       plan,
-      cycle: state.cycle,
-      since: state.since,
-      renewsOn: state.renewsOn,
-      isPaid: state.planId !== "gratuit",
+      expiresAt,
+      daysLeft,
+      isPaid: planId !== "gratuit",
+      loading,
       features: f,
       superLikesLeft,
       boostsLeft,
+
       consumeSuperLike: () => {
         if (superLikesLeft === 0) return false;
         if (superLikesLeft === -1) return true;
-        persist({
-          ...state,
-          usage: { ...state.usage, day: todayKey(), superLikes: state.usage.superLikes + 1 },
-        });
+        persistUsage({ ...usage, day: todayKey(), superLikes: usage.superLikes + 1 });
         return true;
       },
+
       consumeBoost: () => {
         if (boostsLeft === 0) return false;
         if (boostsLeft === -1) return true;
-        persist({
-          ...state,
-          usage: { ...state.usage, month: monthKey(), boosts: state.usage.boosts + 1 },
-        });
+        persistUsage({ ...usage, month: monthKey(), boosts: usage.boosts + 1 });
         return true;
       },
-      subscribe: (planId, cycle) => {
-        const renew = new Date();
-        if (cycle === "annuel") renew.setFullYear(renew.getFullYear() + 1);
-        else renew.setMonth(renew.getMonth() + 1);
-        persist({
-          planId,
-          cycle,
-          since: new Date().toISOString(),
-          renewsOn: renew.toISOString(),
-          usage: { day: todayKey(), month: monthKey(), superLikes: 0, boosts: 0 },
-        });
+
+      startCheckout: async (offer, phone, countryCode) => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) return { ok: false, error: "Vous devez être connecté" };
+
+          const res = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chariow-checkout`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${session.access_token}`,
+              },
+              body: JSON.stringify({ offerId: offer.id, phone, countryCode }),
+            },
+          );
+
+          const json = await res.json();
+          if (!res.ok) return { ok: false, error: json?.error ?? "Le paiement n'a pas pu être lancé" };
+
+          // Chariow affiche ses propres moyens de paiement selon l'indicatif
+          if (json.checkoutUrl) {
+            window.location.href = json.checkoutUrl;
+            return { ok: true };
+          }
+          if (json.step === "completed") {
+            await load();
+            return { ok: true };
+          }
+          return { ok: false, error: "Réponse inattendue du serveur de paiement" };
+        } catch (e) {
+          console.error("[subscription] checkout:", e);
+          return { ok: false, error: "Erreur réseau" };
+        }
       },
-      cancel: () => persist({ ...initialState, usage: state.usage }),
+
+      refresh: load,
+      pendingPayments,
+      reconcile,
     };
-  }, [state, persist]);
+  }, [planId, expiresAt, loading, usage, persistUsage, load, pendingPayments, reconcile]);
 
   return <SubscriptionContext.Provider value={value}>{children}</SubscriptionContext.Provider>;
 }

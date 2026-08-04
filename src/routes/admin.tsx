@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tan
 import { LayoutDashboard, Users, ShieldAlert, CreditCard, Megaphone, Settings, LogOut } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/lib/supabase";
+import { getCurrentUser } from "@/lib/auth";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/admin")({
@@ -24,7 +25,7 @@ function AdminLayout() {
 
   useEffect(() => {
     async function checkAdmin() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) {
         navigate({ to: "/login" });
         return;

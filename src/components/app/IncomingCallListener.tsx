@@ -1,11 +1,28 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Phone, PhoneOff, Video as VideoIcon } from "lucide-react";
+import { Loader2, Phone, PhoneOff, Video as VideoIcon } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { CallView } from "@/components/app/CallView";
+import { getCurrentUser } from "@/lib/auth";
 import { createRingtone, setCallStatus, type CallRow } from "@/lib/calls";
+import { useCurrentUserId } from "@/lib/auth";
+
+// Chargé à la demande : le SDK Agora pèse ~1,5 Mo et ce composant est monté
+// dans le layout, donc un import statique le ferait télécharger sur CHAQUE page.
+const CallView = lazy(() =>
+  import("@/components/app/CallView").then(m => ({ default: m.CallView })),
+);
 
 type Caller = { first_name: string | null; photos: string[] | null };
+
+/** Affiché le temps que le SDK d'appel se télécharge */
+function CallLoading() {
+  return (
+    <div className="fixed inset-0 z-[60] bg-[#0d0d1a] flex flex-col items-center justify-center gap-3">
+      <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <p className="text-white/60 text-sm">Connexion…</p>
+    </div>
+  );
+}
 
 /**
  * Écoute les appels entrants pour l'utilisateur connecté et affiche l'écran
@@ -13,16 +30,12 @@ type Caller = { first_name: string | null; photos: string[] | null };
  * n'importe quelle page, pas seulement la messagerie.
  */
 export function IncomingCallListener() {
-  const [userId, setUserId] = useState<string | null>(null);
+  const userId = useCurrentUserId() ?? null;
   const [incoming, setIncoming] = useState<CallRow | null>(null);
   const [caller, setCaller] = useState<Caller | null>(null);
   const [accepted, setAccepted] = useState(false);
 
   const ringtone = useRef<ReturnType<typeof createRingtone> | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }: any) => setUserId(data.user?.id ?? null));
-  }, []);
 
   // ── Écoute des appels qui me sont destinés ──
   useEffect(() => {
@@ -119,14 +132,17 @@ export function IncomingCallListener() {
   // Appel décroché → on bascule sur la vue d'appel, même canal Agora que l'appelant
   if (incoming && accepted) {
     return (
-      <CallView
-        channelName={incoming.match_id}
-        callType={incoming.call_type}
-        peerName={caller?.first_name || "Membre"}
-        peerPhoto={caller?.photos?.[0] ?? ""}
-        callId={incoming.id}
-        onEnd={hangUp}
-      />
+      <Suspense fallback={<CallLoading />}>
+        <CallView
+          channelName={incoming.match_id}
+          callType={incoming.call_type}
+          peerName={caller?.first_name || "Membre"}
+          peerPhoto={caller?.photos?.[0] ?? ""}
+          callId={incoming.id}
+          role="callee"
+          onEnd={hangUp}
+        />
+      </Suspense>
     );
   }
 

@@ -1,6 +1,14 @@
 import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-router";
 import { BottomNav } from "@/components/app/BottomNav";
-import { Bell, Crown, User } from "lucide-react";
+import { Bell, Crown, Rocket, User } from "lucide-react";
+import {
+  BOOST_DURATION_MIN,
+  boostErrorMessage,
+  fetchBoostStatus,
+  minutesLeft,
+  startBoost,
+  type BoostStatus,
+} from "@/lib/boost";
 import { SubscriptionProvider } from "@/lib/subscription";
 import logo from "@/assets/logo.png";
 import { useEffect, useState } from "react";
@@ -30,11 +38,103 @@ import {
 import { Input } from "@/components/ui/input";
 import { usePresence } from "@/hooks/usePresence";
 import { IncomingCallListener } from "@/components/app/IncomingCallListener";
+import { BoostPicker } from "@/components/app/BoostPicker";
+import { getCurrentUser } from "@/lib/auth";
 
 export const Route = createFileRoute("/_app")({
   // No beforeLoad — auth is checked client-side only to avoid SSR logout on refresh
   component: AppLayout,
 });
+
+/**
+ * Bouton Boost de l'en-tête.
+ * Pendant un boost actif, l'icône reste allumée avec le décompte —
+ * sinon l'utilisateur ne saurait pas que son boost tourne.
+ */
+function BoostButton() {
+  const [status, setStatus] = useState<BoostStatus | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [, forceTick] = useState(0);
+  const [pickerReason, setPickerReason] = useState<"plan" | "quota" | null>(null);
+
+  const refresh = async () => setStatus(await fetchBoostStatus());
+
+  useEffect(() => { refresh(); }, []);
+
+  // Rafraîchit le décompte chaque minute tant qu'un boost tourne
+  useEffect(() => {
+    if (!status?.activeUntil) return;
+    const t = setInterval(() => {
+      if (minutesLeft(status.activeUntil) <= 0) refresh();
+      else forceTick(n => n + 1);
+    }, 60000);
+    return () => clearInterval(t);
+  }, [status?.activeUntil]);
+
+  const active = minutesLeft(status?.activeUntil ?? null) > 0;
+
+  const handleClick = async () => {
+    if (busy) return;
+
+    if (active) {
+      toast.info(`Boost actif encore ${minutesLeft(status!.activeUntil)} min`, {
+        description: "Votre profil est mis en avant dans les découvertes.",
+      });
+      return;
+    }
+
+    setBusy(true);
+    const res = await startBoost();
+    setBusy(false);
+
+    if (res.ok) {
+      toast.success(`Boost activé pour ${BOOST_DURATION_MIN} minutes 🚀`, {
+        description: "Votre profil passe en tête des découvertes.",
+      });
+      refresh();
+      return;
+    }
+
+    // Pas de Boost disponible → on propose l'achat plutôt qu'un simple refus
+    if (res.reason === "plan" || res.reason === "quota") {
+      setPickerReason(res.reason);
+      return;
+    }
+
+    toast.error(boostErrorMessage(res.reason, res.expiresAt));
+    refresh();
+  };
+
+  return (
+    <>
+      <button
+        onClick={handleClick}
+        disabled={busy}
+        aria-label="Boost"
+        title={active ? `Boost actif — ${minutesLeft(status!.activeUntil)} min` : "Booster mon profil"}
+        className={`relative w-9 h-9 rounded-full flex items-center justify-center transition-transform hover:scale-105 disabled:opacity-60 ${
+          active
+            ? "bg-primary text-primary-foreground shadow-elegant"
+            : "border border-border bg-background hover:bg-secondary"
+        }`}
+      >
+        <Rocket className={`w-4 h-4 ${active ? "animate-pulse" : ""}`} />
+        {active && (
+          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 rounded-full bg-primary text-primary-foreground text-[8px] font-bold leading-tight">
+            {minutesLeft(status!.activeUntil)}
+          </span>
+        )}
+        {!active && status && status.left !== 0 && (
+          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-gold border border-background" />
+        )}
+      </button>
+
+      {pickerReason && (
+        <BoostPicker reason={pickerReason} onClose={() => { setPickerReason(null); refresh(); }} />
+      )}
+    </>
+  );
+}
 
 function AppLayout() {
   usePresence();
@@ -54,7 +154,7 @@ function AppLayout() {
     }
     setIsDeleting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (user) {
         // Optionnel : Vous pouvez appeler une fonction RPC Supabase ici 
         // pour supprimer les données associées ou le compte auth.
@@ -151,10 +251,12 @@ function AppLayout() {
               <Link
                 to="/abonnement"
                 aria-label="Abonnement"
-                className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-gold text-gold-foreground text-xs font-semibold shadow-soft"
+                title="Abonnement"
+                className="w-9 h-9 rounded-full bg-gold text-gold-foreground flex items-center justify-center shadow-soft transition-transform hover:scale-105"
               >
-                <Crown className="w-3.5 h-3.5" /> Premium
+                <Crown className="w-4 h-4" />
               </Link>
+              <BoostButton />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button

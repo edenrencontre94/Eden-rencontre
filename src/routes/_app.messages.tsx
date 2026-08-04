@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, useRef } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { supabase } from "@/lib/supabase";
+import { useCurrentUserId } from "@/lib/auth";
+import { useQuery } from "@tanstack/react-query";
 import {
   Search, ArrowLeft, Send, Smile, Mic,
   Image as ImageIcon, Video as VideoIcon, Phone, Sticker,
@@ -9,7 +11,10 @@ import {
   X, GalleryHorizontal, Loader2, Play, Pause, BadgeCheck,
 } from "lucide-react";
 import { toast } from "sonner";
-import { CallView } from "@/components/app/CallView";
+// Le SDK Agora (~1,5 Mo) n'est téléchargé qu'au lancement d'un appel
+const CallView = lazy(() =>
+  import("@/components/app/CallView").then(m => ({ default: m.CallView })),
+);
 import { createCall } from "@/lib/calls";
 import { blockUser, fetchBlockedIds, reportUser } from "@/lib/moderation";
 
@@ -270,55 +275,33 @@ async function fetchChatProfiles(ids: string[]) {
 // ─────────────────────────────────────────────────
 // Messages Page
 // ─────────────────────────────────────────────────
-function MessagesPage() {
-  const [query, setQuery] = useState("");
-  const [tab, setTab] = useState<"all" | "unread">("all");
-  const [active, setActive] = useState<MatchChat | null>(null);
-  const [chats, setChats] = useState<MatchChat[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
-  // Tick horaire : force le recalcul de « En ligne » / « il y a X min » sans refetch
-  const [now, setNow] = useState(() => Date.now());
+/** Chargement complet des conversations. Mis en cache par React Query. */
+async function loadConversations(userId: string): Promise<MatchChat[]> {
+  const user = { id: userId };
 
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 60000);
-    return () => clearInterval(t);
-  }, []);
+  // matches et blocages en parallèle : 2 rondes réseau au lieu de 3
+  const [{ data: matchesData, error: matchesError }, blockedList] = await Promise.all([
+    supabase
+      .from("matches")
+      .select("id, created_at, user1_id, user2_id")
+      .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`),
+    fetchBlockedIds(),
+  ]);
 
-  useEffect(() => {
-    let cancelled = false;
+  if (matchesError) console.error("[messages] matches:", matchesError);
+  if (!matchesData || matchesData.length === 0) return [];
 
-    async function load() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user || cancelled) return;
-        setUserId(user.id);
+  // Les conversations avec des personnes bloquées ne s'affichent plus
+  const blockedIds = new Set(blockedList);
+  const visibleMatches = matchesData.filter((m: any) => {
+    const otherId = m.user1_id === user.id ? m.user2_id : m.user1_id;
+    return !blockedIds.has(otherId);
+  });
 
-        const { data: matchesData, error: matchesError } = await supabase
-          .from("matches")
-          .select("id, created_at, user1_id, user2_id")
-          .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
+  if (visibleMatches.length === 0) return [];
 
-        if (matchesError) console.error("[messages] matches:", matchesError);
-        if (cancelled) return;
-        if (!matchesData || matchesData.length === 0) {
-          setChats([]);
-          return;
-        }
-
-        // Les conversations avec des personnes bloquées ne s'affichent plus
-        const blockedIds = new Set(await fetchBlockedIds());
-        const visibleMatches = matchesData.filter((m: any) => {
-          const otherId = m.user1_id === user.id ? m.user2_id : m.user1_id;
-          return !blockedIds.has(otherId);
-        });
-
-        if (cancelled) return;
-        if (visibleMatches.length === 0) {
-          setChats([]);
-          return;
-        }
-
+  {
+    {
         const otherIds = visibleMatches.map((m: any) => (m.user1_id === user.id ? m.user2_id : m.user1_id));
 
         const [
@@ -345,8 +328,6 @@ function MessagesPage() {
             ),
           ),
         ]);
-
-        if (cancelled) return;
 
         if (profilesError) console.error("[messages] profiles:", profilesError);
         if (unreadError) console.error("[messages] unread:", unreadError);
@@ -407,18 +388,44 @@ function MessagesPage() {
         });
 
         formatted.sort((a, b) => b.timestamp - a.timestamp);
-        setChats(formatted);
-      } catch (err) {
-        console.error(err);
-        toast.error("Impossible de charger vos conversations");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+        return formatted;
     }
+  }
+}
 
-    load();
-    return () => { cancelled = true; };
+// ─────────────────────────────────────────────────
+// Messages Page
+// ─────────────────────────────────────────────────
+function MessagesPage() {
+  const [query, setQuery] = useState("");
+  const [tab, setTab] = useState<"all" | "unread">("all");
+  const [active, setActive] = useState<MatchChat | null>(null);
+  const [chats, setChats] = useState<MatchChat[]>([]);
+  const userId = useCurrentUserId() ?? null;
+  // Tick horaire : force le recalcul de « En ligne » / « il y a X min » sans refetch
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(t);
   }, []);
+
+  // Le cache rend le retour sur la page instantané ; la revalidation est silencieuse
+  const { data: loadedChats, isPending, isError } = useQuery({
+    queryKey: ["conversations", userId],
+    queryFn: () => loadConversations(userId!),
+    enabled: Boolean(userId),
+  });
+
+  useEffect(() => {
+    if (loadedChats) setChats(loadedChats);
+  }, [loadedChats]);
+
+  useEffect(() => {
+    if (isError) toast.error("Impossible de charger vos conversations");
+  }, [isError]);
+
+  const loading = isPending && chats.length === 0;
 
   // Temps réel : un nouveau message remonte la conversation et incrémente le badge
   useEffect(() => {
@@ -938,15 +945,24 @@ function ChatView({
 
   // ── Call active ──
   if (callState) return (
-    <CallView
-      channelName={chat.id}
-      callType={callState.type}
-      peerName={chat.profile.firstName}
-      peerPhoto={chat.profile.photo ?? ""}
-      callId={callState.callId}
-      role="caller"
-      onEnd={() => setCallState(null)}
-    />
+    <Suspense
+      fallback={
+        <div className="fixed inset-0 z-50 bg-[#0d0d1a] flex flex-col items-center justify-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-white/60 text-sm">Appel de {chat.profile.firstName}…</p>
+        </div>
+      }
+    >
+      <CallView
+        channelName={chat.id}
+        callType={callState.type}
+        peerName={chat.profile.firstName}
+        peerPhoto={chat.profile.photo ?? ""}
+        callId={callState.callId}
+        role="caller"
+        onEnd={() => setCallState(null)}
+      />
+    </Suspense>
   );
 
   return (

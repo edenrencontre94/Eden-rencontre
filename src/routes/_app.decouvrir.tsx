@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "motion/react";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { getCurrentUser } from "@/lib/auth";
 import {
   X,
   Heart,
@@ -24,6 +25,9 @@ import { type Profile } from "@/lib/mock-data";
 import { toast } from "sonner";
 import { useSubscription } from "@/lib/subscription";
 import { fetchBlockedIds } from "@/lib/moderation";
+import { boostedFirst, excludePaused, fetchAdmirerIds, filterByVisibility } from "@/lib/visibility";
+import { BOOST_DURATION_MIN, boostErrorMessage, fetchBoostStatus, startBoost, type BoostStatus } from "@/lib/boost";
+import { BoostPicker } from "@/components/app/BoostPicker";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -58,7 +62,11 @@ function DiscoverPage() {
   const [userProfile, setUserProfile] = useState<any>(null);
 
   const navigate = useNavigate();
-  const { superLikesLeft, boostsLeft, consumeSuperLike, consumeBoost } = useSubscription();
+  const { superLikesLeft, consumeSuperLike } = useSubscription();
+  const [boostStatus, setBoostStatus] = useState<BoostStatus | null>(null);
+  const [boostPicker, setBoostPicker] = useState<"plan" | "quota" | null>(null);
+  useEffect(() => { fetchBoostStatus().then(setBoostStatus); }, []);
+  const boostsLeft = boostStatus?.left ?? 0;
   const [showMessageModal, setShowMessageModal] = useState<Profile | null>(null);
   const [messageText, setMessageText] = useState("");
 
@@ -74,27 +82,31 @@ function DiscoverPage() {
   useEffect(() => {
     async function loadProfiles() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = await getCurrentUser();
         if (!user) {
           setLoading(false);
           return;
         }
 
-        // Get user profile for seeking_gender
-        const { data: currentUserData } = await supabase.from('profiles').select('seeking_gender').eq('id', user.id).single();
+        // Profil, swipes, blocages et admirateurs sont indépendants :
+        // une seule ronde réseau
+        const [{ data: currentUserData }, { data: swipesData }, blockedIds, admirerIds] =
+          await Promise.all([
+            supabase.from('profiles').select('seeking_gender, visibility').eq('id', user.id).single(),
+            supabase.from('swipes').select('target_id').eq('swiper_id', user.id),
+            fetchBlockedIds(),
+            fetchAdmirerIds(user.id),
+          ]);
+
+        const admirers = new Set(admirerIds);
+
         if (currentUserData) {
           setUserProfile(currentUserData);
         }
 
-        const { data: swipesData } = await supabase
-          .from('swipes')
-          .select('target_id')
-          .eq('swiper_id', user.id);
-        
         const swipedIds = swipesData?.map((s: any) => s.target_id) || [];
 
         // Les personnes bloquées ne doivent plus jamais réapparaître dans le deck
-        const blockedIds = await fetchBlockedIds();
         const excludedIds = [...new Set([...swipedIds, ...blockedIds])];
 
         let query = supabase
@@ -102,6 +114,9 @@ function DiscoverPage() {
           .select('*')
           .neq('id', user.id)
           .limit(100); // Fetch more so we can filter locally
+
+        // Les profils « En pause » sont écartés dès la requête
+        query = excludePaused(query);
 
         if (excludedIds.length > 0) {
           query = query.not('id', 'in', `(${excludedIds.join(',')})`);
@@ -116,7 +131,13 @@ function DiscoverPage() {
         if (error) throw error;
 
         if (data) {
-          const formatted: Profile[] = data.map((p: any) => ({
+          // « Sur demande » : ces profils ne s'affichent que pour les
+          // personnes qu'ils ont eux-mêmes choisies.
+          // Puis les profils boostés passent devant — c'est ce qui donne
+          // sa valeur au Boost.
+          const visible = boostedFirst(filterByVisibility(data as any[], admirers));
+
+          const formatted: Profile[] = visible.map((p: any) => ({
             id: p.id,
             firstName: p.first_name || "Membre",
             age: p.birth_date ? new Date().getFullYear() - new Date(p.birth_date).getFullYear() : 25,
@@ -172,7 +193,7 @@ function DiscoverPage() {
   useEffect(() => {
     async function logVisit() {
       if (!currentFiltered) return;
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (user && user.id !== currentFiltered.id) {
         await supabase.from('profile_visits').upsert({
           visitor_id: user.id,
@@ -197,7 +218,7 @@ function DiscoverPage() {
     setIndex((i) => i + 1);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (user) {
         const dbAction = action === "left" ? "pass" : action === "right" ? "like" : "superlike";
         await supabase.from('swipes').insert({
@@ -235,19 +256,31 @@ function DiscoverPage() {
     toast.info("Action annulée");
   };
 
-  const boost = () => {
-    if (!consumeBoost()) {
-      upsell("Boost réservé aux membres Premium");
+  // Le quota et la mise en avant sont décidés en base : rien n'est
+  // contournable depuis le navigateur.
+  const boost = async () => {
+    const res = await startBoost();
+
+    if (res.ok) {
+      toast.success(`Boost activé pour ${BOOST_DURATION_MIN} minutes 🚀`, {
+        description: "Votre profil passe en tête des découvertes.",
+      });
+      setBoostStatus(await fetchBoostStatus());
       return;
     }
-    toast.success("Boost activé pour 30 minutes ⚡");
+
+    if (res.reason === "plan" || res.reason === "quota") {
+      upsell(boostErrorMessage(res.reason, res.expiresAt));
+    } else {
+      toast.info(boostErrorMessage(res.reason, res.expiresAt));
+    }
   };
 
   // ── Message pré-match ──
   const sendPreMatchMessage = async () => {
     if (!showMessageModal || !messageText.trim()) return;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) return;
       // Enregistrer le like + message dans la table swipes
       await supabase.from('swipes').insert({
@@ -272,7 +305,7 @@ function DiscoverPage() {
   const addContact = async () => {
     if (!currentFiltered) return;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (!user) return;
       await supabase.from('swipes').insert({
         swiper_id: user.id,
@@ -571,6 +604,16 @@ function DiscoverPage() {
       <AnimatePresence>
         {detail && <ProfileDetailModal profile={detail} onClose={() => setDetail(null)} />}
       </AnimatePresence>
+
+      {boostPicker && (
+        <BoostPicker
+          reason={boostPicker}
+          onClose={() => {
+            setBoostPicker(null);
+            fetchBoostStatus().then(setBoostStatus);
+          }}
+        />
+      )}
 
       {/* FILTRES DRAWER */}
       <AnimatePresence>

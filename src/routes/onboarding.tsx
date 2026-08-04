@@ -18,6 +18,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { getSessionUser } from "@/lib/auth";
 
 type Photo = { id: string; url: string; name: string };
 
@@ -261,7 +262,7 @@ function OnboardingPage() {
           lastName = session.user.user_metadata?.last_name || "";
         } else {
           // 2. Fallback : tenter de récupérer l'utilisateur (refreshToken)
-          const { data: { user } } = await supabase.auth.getUser();
+          const user = await getSessionUser();
           if (user) {
             userId = user.id;
             firstName = user.user_metadata?.first_name || "";

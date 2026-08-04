@@ -14,6 +14,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { getCurrentUser } from "@/lib/auth";
 import { toast } from "sonner";
 import { useSubscription } from "@/lib/subscription";
 import {
@@ -134,19 +135,17 @@ function RequestsPage() {
     async function load() {
       setLoading(true);
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = await getCurrentUser();
         if (!user) return;
 
-        // Charger les likes / superlikes reçus
-        const { data: swipesData } = await supabase
-          .from("swipes")
-          .select("id, swiper_id, action, created_at, profiles!swipes_swiper_id_fkey(id, first_name, birth_date, city, photos)")
-          .eq("target_id", user.id)
-          .in("action", ["like", "superlike"])
-          .order("created_at", { ascending: false });
-
-        // Les personnes bloquées ou déjà refusées ne doivent plus apparaître
-        const [blockedIds, dismissedIds] = await Promise.all([
+        // Tout ce qui ne dépend de rien part en parallèle : 1 ronde au lieu de 2
+        const [{ data: swipesData }, blockedIds, dismissedIds] = await Promise.all([
+          supabase
+            .from("swipes")
+            .select("id, swiper_id, action, created_at, profiles!swipes_swiper_id_fkey(id, first_name, birth_date, city, photos)")
+            .eq("target_id", user.id)
+            .in("action", ["like", "superlike"])
+            .order("created_at", { ascending: false }),
           fetchBlockedIds(),
           fetchDismissedIds(),
         ]);
@@ -232,7 +231,7 @@ function RequestsPage() {
   };
 
   const acceptLike = async (entry: LikeEntry) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) return;
 
     // upsert : si j'avais déjà swipé cette personne, on ne veut pas d'erreur

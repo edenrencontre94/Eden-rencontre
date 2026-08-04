@@ -4,9 +4,12 @@ import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, Crown, UserPlus, ArrowRight, Eye, BookOpen, Compass, Pause, Users, HeartHandshake, X, CheckCircle2, Church } from "lucide-react";
 import { ProfileCard } from "@/components/app/ProfileCard";
 import { supabase } from "@/lib/supabase";
+import { getCurrentUser } from "@/lib/auth";
 import { type Profile } from "@/lib/mock-data";
 import { getCountryCode } from "@/lib/utils";
 import { useDailyContent } from "@/hooks/useDailyContent";
+import { boostedFirst, excludePaused, fetchAdmirerIds, filterByVisibility } from "@/lib/visibility";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/accueil")({
   head: () => ({
@@ -35,10 +38,18 @@ function HomePage() {
   useEffect(() => {
     async function loadProfiles() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = await getCurrentUser();
         if (!user) return;
-        
-        const { data: currentUserData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+
+        // Ronde 1 : profil, visites et admirateurs sont indépendants
+        const [{ data: currentUserData }, { data: visits }, admirerIds] = await Promise.all([
+          supabase.from('profiles').select('*').eq('id', user.id).single(),
+          supabase.from('profile_visits').select('visitor_id, created_at').eq('visited_id', user.id).order('created_at', { ascending: false }).limit(5),
+          fetchAdmirerIds(user.id),
+        ]);
+
+        const admirers = new Set(admirerIds);
+
         if (currentUserData) {
           setCurrentUser(currentUserData);
           
@@ -61,15 +72,26 @@ function HomePage() {
         }
 
         let query = supabase.from('profiles').select('*').neq('id', user.id).limit(50);
-        
+
+        // Respecte le réglage de visibilité de chacun
+        query = excludePaused(query);
+
         if (currentUserData && currentUserData.seeking_gender && currentUserData.seeking_gender !== "all") {
           query = query.eq('gender', currentUserData.seeking_gender);
         }
 
-        const { data } = await query;
-        
+        // Ronde 2 : le deck et les profils des visiteurs partent ensemble
+        const visitorIds = (visits ?? []).map((v: any) => v.visitor_id);
+        const [{ data }, { data: visitorProfiles }] = await Promise.all([
+          query,
+          visitorIds.length > 0
+            ? supabase.from('profiles').select('*').in('id', visitorIds)
+            : Promise.resolve({ data: [] as any[] }),
+        ]);
+
         if (data) {
-          const formatted: Profile[] = data.map((p: any) => ({
+          const visible = boostedFirst(filterByVisibility(data as any[], admirers));
+          const formatted: Profile[] = visible.map((p: any) => ({
             id: p.id,
             firstName: p.first_name || "Membre",
             age: p.birth_date ? new Date().getFullYear() - new Date(p.birth_date).getFullYear() : 25,
@@ -96,11 +118,8 @@ function HomePage() {
           }));
           setProfiles(formatted);
           
-          // Fetch real visitors
-          const { data: visits } = await supabase.from('profile_visits').select('visitor_id, created_at').eq('visited_id', user.id).order('created_at', { ascending: false }).limit(5);
+          // Visiteurs : déjà chargés plus haut, plus aucune requête ici
           if (visits && visits.length > 0) {
-            const visitorIds = visits.map((v: any) => v.visitor_id);
-            const { data: visitorProfiles } = await supabase.from('profiles').select('*').in('id', visitorIds);
             if (visitorProfiles) {
               const formattedVisitors = visits.map((v: any) => {
                 const p = visitorProfiles.find((vp: any) => vp.id === v.visitor_id);
@@ -125,11 +144,30 @@ function HomePage() {
   }, []);
 
   const updateVisibility = async (newVis: "tous" | "demande" | "pause") => {
+    const previous = visibility;
     setVisibility(newVis);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from('profiles').update({ visibility: newVis }).eq('id', user.id);
+
+    const user = await getCurrentUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ visibility: newVis })
+      .eq('id', user.id);
+
+    if (error) {
+      console.error('[accueil] visibilité:', error);
+      setVisibility(previous); // on rétablit si l'écriture a échoué
+      toast.error("Le réglage n'a pas pu être enregistré");
+      return;
     }
+
+    const messages = {
+      tous: "Votre profil est visible par tous les membres",
+      demande: "Votre profil n'est visible que des personnes que vous avez likées",
+      pause: "Votre profil est masqué — vous n'apparaissez plus dans les découvertes",
+    } as const;
+    toast.success(messages[newVis]);
   };
 
   const sections: Section[] = [
@@ -140,6 +178,28 @@ function HomePage() {
 
   return (
     <div className="pt-4">
+      {/* Rappel : sans ça, on oublie qu'on est masqué et on s'étonne du silence */}
+      {visibility !== "tous" && !loading && (
+        <div className="mx-4 mb-3 rounded-xl border border-gold/40 bg-gold/10 px-3 py-2.5 flex items-center gap-2.5">
+          {visibility === "pause" ? (
+            <Pause className="w-4 h-4 text-gold shrink-0" />
+          ) : (
+            <HeartHandshake className="w-4 h-4 text-gold shrink-0" />
+          )}
+          <p className="text-[11px] flex-1 min-w-0">
+            {visibility === "pause"
+              ? "Votre profil est en pause : personne ne peut vous découvrir."
+              : "Visibilité sur demande : seules les personnes que vous avez likées vous voient."}
+          </p>
+          <button
+            onClick={() => updateVisibility("tous")}
+            className="shrink-0 px-2.5 py-1 rounded-lg bg-gold text-gold-foreground text-[10px] font-semibold"
+          >
+            Réactiver
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex justify-center p-8">
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />

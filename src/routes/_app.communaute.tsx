@@ -8,6 +8,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { getCurrentUser } from "@/lib/auth";
 import { coupleTestimonials } from "@/lib/mock-data";
 import { toast } from "sonner";
 import { useDailyContent } from "@/hooks/useDailyContent";
@@ -372,7 +373,7 @@ function CommunityPage() {
 
   useEffect(() => {
     async function init() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getCurrentUser();
       if (user) {
         setCurrentUserId(user.id);
         const { data: p } = await supabase.from("profiles").select("first_name, city, photos").eq("id", user.id).single();

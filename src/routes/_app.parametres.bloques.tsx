@@ -3,6 +3,7 @@ import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { getCurrentUser } from "@/lib/auth";
 import { unblockUser } from "@/lib/moderation";
 
 export const Route = createFileRoute("/_app/parametres/bloques")({
@@ -21,7 +22,7 @@ function BlockedProfilesPage() {
   useEffect(() => {
     async function load() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = await getCurrentUser();
         if (!user) return;
 
         const { data: rows, error } = await supabase
