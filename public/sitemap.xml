@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AgapeMeet — plan du site
+
+  Seules les pages PUBLIQUES y figurent. L'espace membre (/accueil,
+  /decouvrir, /messages…) exige une session : l'y référencer ferait
+  remonter des pages vides ou des redirections vers la connexion.
+
+  Les sections de la page d'accueil (#fonctionnalites, #tarifs, #faq…)
+  sont des ancres, pas des URL distinctes : elles n'ont pas leur place ici,
+  Google les traite comme la même page.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://agapemeet.com/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://agapemeet.com/inscription</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>

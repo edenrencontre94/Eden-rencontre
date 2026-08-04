@@ -12,8 +12,17 @@ export const Route = createFileRoute("/inscription")({
   head: () => ({
     meta: [
       { title: "Créer votre compte — AgapeMeet" },
-      { name: "description", content: "Rejoignez AgapeMeet en moins d'une minute." },
+      {
+        name: "description",
+        content:
+          "Créez votre compte AgapeMeet gratuitement et rejoignez une communauté de chrétiens qui cherchent une relation sérieuse orientée vers le mariage.",
+      },
+      { property: "og:title", content: "Créer votre compte — AgapeMeet" },
+      { property: "og:url", content: "https://agapemeet.com/inscription" },
+      { property: "og:type", content: "website" },
     ],
+    // Absolue, pour la même raison que sur la page d'accueil
+    links: [{ rel: "canonical", href: "https://agapemeet.com/inscription" }],
   }),
   component: InscriptionPage,
 });

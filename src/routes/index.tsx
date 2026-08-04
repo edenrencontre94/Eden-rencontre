@@ -14,6 +14,9 @@ import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
 
+/** Domaine canonique. Toute URL de référencement doit en découler. */
+export const SITE_URL = "https://agapemeet.com";
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -33,8 +36,17 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "AgapeMeet — La rencontre chrétienne sérieuse №1 en Afrique francophone" },
       { name: "twitter:description", content: "Rencontres chrétiennes sérieuses. Profils vérifiés, appels vidéo, communauté chrétienne active. Rejoignez AgapeMeet gratuitement." },
+      // og:url absolue, sinon les partages sociaux pointent dans le vide
+      { property: "og:url", content: `${SITE_URL}/` },
+      { property: "og:site_name", content: "AgapeMeet" },
+      { property: "og:locale", content: "fr_FR" },
+      { property: "og:image", content: `${SITE_URL}/favicon.png` },
+      { name: "twitter:image", content: `${SITE_URL}/favicon.png` },
     ],
-    links: [{ rel: "canonical", href: "/" }],
+    // ABSOLUE, impérativement. Un canonical relatif (« / ») se résout contre
+    // l'URL courante : http://www.agapemeet.com/ se déclarait alors canonique
+    // de lui-même, et Google indexait cette variante au lieu du vrai domaine.
+    links: [{ rel: "canonical", href: `${SITE_URL}/` }],
     scripts: [
       {
         type: "application/ld+json",

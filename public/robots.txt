@@ -1,0 +1,54 @@
+# AgapeMeet — https://agapemeet.com
+#
+# Ce fichier remplace le robots.txt managé que Cloudflare servait par défaut.
+# Celui-ci n'empêchait pas Google de crawler (User-agent: * / Allow: /) mais
+# ne déclarait aucun sitemap, et bloquait les robots d'IA.
+# On conserve ces blocages et on ajoute ce qui manquait.
+
+User-agent: *
+Allow: /
+
+# Espaces privés : aucun intérêt pour la recherche, et ils exposeraient
+# des pages nécessitant une session.
+Disallow: /accueil
+Disallow: /decouvrir
+Disallow: /messages
+Disallow: /demandes
+Disallow: /communaute
+Disallow: /profil
+Disallow: /parametres
+Disallow: /abonnement
+Disallow: /admin
+Disallow: /onboarding
+Disallow: /login
+
+# Paramètre ajouté au retour de paiement : évite de créer des doublons d'URL
+Disallow: /*?paiement=
+
+# ── Robots d'entraînement IA ──────────────────────────────────────────────
+# Les contenus des membres ne doivent pas alimenter de modèles.
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: meta-externalagent
+Disallow: /
+
+Sitemap: https://agapemeet.com/sitemap.xml
