@@ -19,15 +19,18 @@ import {
   Sparkles,
   MessageCircle,
   UserPlus,
+  Lock,
   Heart as HeartIcon
 } from "lucide-react";
 import { type Profile } from "@/lib/mock-data";
 import { toast } from "sonner";
 import { useSubscription } from "@/lib/subscription";
 import { fetchBlockedIds } from "@/lib/moderation";
-import { boostedFirst, excludePaused, fetchAdmirerIds, filterByVisibility } from "@/lib/visibility";
+import { excludePaused, fetchAdmirerIds, filterByVisibility } from "@/lib/visibility";
+import { compatibilityScore, rankProfiles } from "@/lib/matching";
 import { BOOST_DURATION_MIN, boostErrorMessage, fetchBoostStatus, startBoost, type BoostStatus } from "@/lib/boost";
 import { BoostPicker } from "@/components/app/BoostPicker";
+import { daysUntilSuperLike, fetchQuotas, quotaErrorMessage, type Quotas } from "@/lib/quotas";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -62,7 +65,10 @@ function DiscoverPage() {
   const [userProfile, setUserProfile] = useState<any>(null);
 
   const navigate = useNavigate();
-  const { superLikesLeft, consumeSuperLike } = useSubscription();
+  const { superLikesLeft, consumeSuperLike, features } = useSubscription();
+  const [quotas, setQuotas] = useState<Quotas | null>(null);
+  const refreshQuotas = () => fetchQuotas().then(setQuotas);
+  useEffect(() => { refreshQuotas(); }, []);
   const [boostStatus, setBoostStatus] = useState<BoostStatus | null>(null);
   const [boostPicker, setBoostPicker] = useState<"plan" | "quota" | null>(null);
   useEffect(() => { fetchBoostStatus().then(setBoostStatus); }, []);
@@ -92,7 +98,11 @@ function DiscoverPage() {
         // une seule ronde réseau
         const [{ data: currentUserData }, { data: swipesData }, blockedIds, admirerIds] =
           await Promise.all([
-            supabase.from('profiles').select('seeking_gender, visibility').eq('id', user.id).single(),
+            supabase
+              .from('profiles')
+              .select('seeking_gender, visibility, birth_date, city, country, denomination, practice_level, church_attendance, marriage_intent, wants_children')
+              .eq('id', user.id)
+              .single(),
             supabase.from('swipes').select('target_id').eq('swiper_id', user.id),
             fetchBlockedIds(),
             fetchAdmirerIds(user.id),
@@ -109,11 +119,22 @@ function DiscoverPage() {
         // Les personnes bloquées ne doivent plus jamais réapparaître dans le deck
         const excludedIds = [...new Set([...swipedIds, ...blockedIds])];
 
+        // Colonnes ciblées plutôt que `*` : le deck charge 100 profils, et
+        // tirer chaque colonne inutile se paie sur la bande passante mobile.
         let query = supabase
           .from('profiles')
-          .select('*')
+          .select(
+            'id, first_name, birth_date, city, country, denomination, photos, bio, ' +
+            'is_verified, boosted_until, practice_level, church_attendance, ' +
+            'marriage_intent, wants_children, last_seen',
+          )
           .neq('id', user.id)
-          .limit(100); // Fetch more so we can filter locally
+          // Tri CÔTÉ SERVEUR : les profils boostés entrent forcément dans les
+          // 100 récupérés. Un tri purement local ne les aurait remontés que
+          // s'ils s'y trouvaient déjà par hasard — le Boost aurait été inopérant
+          // dès que la base dépasse la centaine de membres.
+          .order('boosted_until', { ascending: false, nullsFirst: false })
+          .limit(100);
 
         // Les profils « En pause » sont écartés dès la requête
         query = excludePaused(query);
@@ -135,7 +156,7 @@ function DiscoverPage() {
           // personnes qu'ils ont eux-mêmes choisies.
           // Puis les profils boostés passent devant — c'est ce qui donne
           // sa valeur au Boost.
-          const visible = boostedFirst(filterByVisibility(data as any[], admirers));
+          const visible = filterByVisibility(data as any[], admirers);
 
           const formatted: Profile[] = visible.map((p: any) => ({
             id: p.id,
@@ -144,7 +165,10 @@ function DiscoverPage() {
             city: p.city || "Ville inconnue",
             country: p.country || "",
             denomination: p.denomination || "Non précisé",
-            compatibility: Math.floor(Math.random() * 20) + 80,
+            // Score réel, calculé sur la confession, la pratique, la vision
+            // du mariage, les enfants, la proximité et l'écart d'âge
+            compatibility: compatibilityScore(currentUserData ?? {}, p),
+            boostedUntil: p.boosted_until ?? null,
             verified: p.is_verified || false,
             premium: false,
             lastActive: "Récemment",
@@ -164,7 +188,9 @@ function DiscoverPage() {
             // No mock online status
             online: false
           }));
-          setDeck(formatted);
+
+          // Boostés d'abord, puis par compatibilité décroissante
+          setDeck(rankProfiles(formatted));
         }
       } catch (err) {
         console.error("Erreur chargement profils:", err);
@@ -175,9 +201,18 @@ function DiscoverPage() {
     loadProfiles();
   }, []);
 
+  // Un boost peut expirer pendant que l'utilisateur swipe : ce tick fait
+  // retomber l'étiquette et le classement à la seconde près, sans refetch.
+  const [boostTick, setBoostTick] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setBoostTick(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
   // Application des filtres côté client
   const filteredDeck = useMemo(() => {
-    return deck.filter(p => {
+    void boostTick; // recalcule le classement à l'expiration d'un boost
+    return rankProfiles(deck, boostTick).filter(p => {
       if (filters.onlineOnly && !(p as any).online) return false;
       if (filters.verifiedOnly && !p.verified) return false;
       if (filters.city && !p.city.toLowerCase().includes(filters.city.toLowerCase())) return false;
@@ -185,7 +220,7 @@ function DiscoverPage() {
       // Distance is mocked visually for now
       return true;
     });
-  }, [deck, filters]);
+  }, [deck, filters, boostTick]);
 
   const currentFiltered = filteredDeck[index];
   const nextFiltered = filteredDeck[index + 1];
@@ -208,24 +243,57 @@ function DiscoverPage() {
 
   const swipe = async (action: "left" | "right" | "super") => {
     if (!currentFiltered) return;
-    if (action === "super" && !consumeSuperLike()) {
-      upsell("Plus de Super Likes aujourd'hui");
+
+    // Vérifications d'usage avant de consommer la carte : rien de pire que
+    // de voir un profil disparaître pour un refus arrivé après coup.
+    if (action === "super") {
+      const wait = daysUntilSuperLike(quotas?.superLikeAvailableAt ?? null);
+      if (wait > 0) {
+        upsell(`Prochain Super Like dans ${wait} jour${wait > 1 ? "s" : ""}`);
+        return;
+      }
+      if (!consumeSuperLike()) {
+        upsell("Plus de Super Likes disponibles");
+        return;
+      }
+    }
+
+    if (action === "right" && quotas && quotas.likesLeft === 0) {
+      upsell("Vous avez atteint vos 25 likes du jour");
       return;
     }
-    setHistory((h) => [...h, { id: currentFiltered.id, action }]);
-    if (action === "right") toast.success(`Vous aimez ${currentFiltered.firstName}`);
-    if (action === "super") toast.success(`Super Like envoyé à ${currentFiltered.firstName} ⭐`);
+
+    const target = currentFiltered;
+    setHistory((h) => [...h, { id: target.id, action }]);
+    if (action === "right") toast.success(`Vous aimez ${target.firstName}`);
+    if (action === "super") toast.success(`Super Like envoyé à ${target.firstName} ⭐`);
     setIndex((i) => i + 1);
 
     try {
       const user = await getCurrentUser();
       if (user) {
         const dbAction = action === "left" ? "pass" : action === "right" ? "like" : "superlike";
-        await supabase.from('swipes').insert({
+        const { error: swipeError } = await supabase.from('swipes').insert({
           swiper_id: user.id,
-          target_id: currentFiltered.id,
+          target_id: target.id,
           action: dbAction
         });
+
+        // La base a le dernier mot : elle peut refuser même si l'interface
+        // pensait le quota disponible (deuxième onglet ouvert, par exemple).
+        if (swipeError) {
+          const message = quotaErrorMessage(swipeError);
+          if (message) {
+            upsell(message);
+            setIndex(i => Math.max(0, i - 1));
+            setHistory(h => h.slice(0, -1));
+            refreshQuotas();
+            return;
+          }
+          throw swipeError;
+        }
+
+        refreshQuotas();
 
         if (dbAction === 'like' || dbAction === 'superlike') {
           const { data: matchCheck } = await supabase
@@ -246,7 +314,22 @@ function DiscoverPage() {
     }
   };
 
+  /** Refus expliqué + raccourci vers les formules, plutôt qu'un blocage muet. */
+  const requirePlan = (message: string) => {
+    toast.error(message, {
+      action: { label: "Voir les formules", onClick: () => navigate({ to: "/abonnement" }) },
+    });
+  };
+
   const rewind = () => {
+    if (!features.rewind) {
+      requirePlan("Revenir en arrière est réservé aux membres Premium");
+      return;
+    }
+    doRewind();
+  };
+
+  const doRewind = () => {
     if (history.length === 0) {
       toast.info("Rien à annuler");
       return;
@@ -398,9 +481,16 @@ function DiscoverPage() {
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={rewind}
-            className="w-10 h-10 rounded-full border-2 border-gold bg-background flex items-center justify-center text-gold hover:bg-gold/10 transition-transform active:scale-95 shadow-sm"
+            className={`relative w-10 h-10 rounded-full border-2 flex items-center justify-center transition-transform active:scale-95 shadow-sm ${
+              features.rewind
+                ? "border-gold bg-background text-gold hover:bg-gold/10"
+                : "border-border bg-secondary/60 text-muted-foreground"
+            }`}
           >
             <Undo2 className="w-4 h-4" />
+            {!features.rewind && (
+              <Lock className="absolute -top-1 -right-1 w-3 h-3 text-gold bg-background rounded-full p-[1px]" />
+            )}
           </button>
           <span className="text-[10px] text-muted-foreground font-medium">Retour</span>
         </div>
@@ -437,10 +527,24 @@ function DiscoverPage() {
 
         <div className="flex flex-col items-center gap-1">
           <button
-            onClick={() => currentFiltered ? setShowMessageModal(currentFiltered) : toast.info("Chargement…")}
-            className="w-12 h-12 rounded-full border-2 border-primary/60 bg-background flex items-center justify-center text-primary/80 hover:bg-primary/10 transition-transform active:scale-95 shadow-sm"
+            onClick={() => {
+              if (!features.preMatchMessage) {
+                requirePlan("Écrire avant le match est réservé aux membres Premium");
+                return;
+              }
+              if (currentFiltered) setShowMessageModal(currentFiltered);
+              else toast.info("Chargement…");
+            }}
+            className={`relative w-12 h-12 rounded-full border-2 flex items-center justify-center transition-transform active:scale-95 shadow-sm ${
+              features.preMatchMessage
+                ? "border-primary/60 bg-background text-primary/80 hover:bg-primary/10"
+                : "border-border bg-secondary/60 text-muted-foreground"
+            }`}
           >
             <MessageCircle className="w-5 h-5" />
+            {!features.preMatchMessage && (
+              <Lock className="absolute -top-1 -right-1 w-3 h-3 text-gold bg-background rounded-full p-[1px]" />
+            )}
           </button>
           <span className="text-[10px] text-muted-foreground font-medium">Message</span>
         </div>

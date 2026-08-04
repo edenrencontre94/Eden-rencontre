@@ -12,6 +12,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { coupleTestimonials } from "@/lib/mock-data";
 import { toast } from "sonner";
 import { useDailyContent } from "@/hooks/useDailyContent";
+import { useSubscription } from "@/lib/subscription";
+import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_app/communaute")({
   head: () => ({
@@ -367,6 +369,8 @@ function CommunityPage() {
   const [composerMediaPreview, setComposerMediaPreview] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadingMedia, setUploadingMedia] = useState(false);
+  const { features } = useSubscription();
+  const navigate = useNavigate();
 
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -454,6 +458,22 @@ function CommunityPage() {
   // ─ Upload to Supabase Storage ─────────────────────────────────────────────
   const uploadMedia = async (): Promise<{ image_url: string | null; video_url: string | null }> => {
     if (!composerMedia || !composerMediaType || !currentUserId) {
+      return { image_url: null, video_url: null };
+    }
+
+    // Le trigger en base refuserait la publication : autant ne pas
+    // téléverser un fichier pour rien, ni laisser espérer l'utilisateur.
+    if (composerMediaType === "video" && !features.communityVideo) {
+      toast.error("Publier une vidéo est réservé aux membres VIP", {
+        action: { label: "Voir les formules", onClick: () => navigate({ to: "/abonnement" }) },
+      });
+      return { image_url: null, video_url: null };
+    }
+
+    if (!features.communityMedia) {
+      toast.error("Publier une photo ou une vidéo est réservé aux membres Premium", {
+        action: { label: "Voir les formules", onClick: () => navigate({ to: "/abonnement" }) },
+      });
       return { image_url: null, video_url: null };
     }
 

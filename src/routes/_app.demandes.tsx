@@ -129,7 +129,13 @@ function RequestsPage() {
   const [loading, setLoading] = useState(true);
   const { features } = useSubscription();
   const navigate = useNavigate();
-  const isPremiumLocked = active === "visit" && !features.visitors;
+
+  // En formule Gratuit, seuls les Matches sont consultables. « M'ont aimé »,
+  // « Super Likes » et « Visiteurs » montrent qui s'intéresse à vous : c'est
+  // précisément ce qu'on découvre en s'abonnant.
+  const isPremiumLocked =
+    (active === "visit" && !features.visitors) ||
+    (["like", "superlike"].includes(active) && !features.seeAdmirers);
 
   useEffect(() => {
     async function load() {
@@ -299,6 +305,9 @@ function RequestsPage() {
             >
               <Icon className="w-3.5 h-3.5" />
               {t.label}
+              {t.id !== "match" && !features.seeAdmirers && (
+                <Lock className="w-3 h-3 opacity-70" />
+              )}
             </button>
           );
         })}
@@ -311,7 +320,10 @@ function RequestsPage() {
           ))}
         </div>
       ) : isPremiumLocked ? (
-        <PremiumGate />
+        <PremiumGate
+          tab={active}
+          count={active === "visit" ? visits.length : active === "superlike" ? superlikes.length : likes.length}
+        />
       ) : showVisits ? (
         visits.length === 0 ? (
           <EmptyState message="Personne n'a encore visité votre profil." />
@@ -470,7 +482,21 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-function PremiumGate() {
+function PremiumGate({ count = 0, tab }: { count?: number; tab?: TabId }) {
+  const label =
+    tab === "visit"
+      ? "personne n'a encore regardé votre profil"
+      : tab === "superlike"
+        ? "aucun Super Like reçu pour l'instant"
+        : "personne ne vous a encore aimé";
+
+  const teaser =
+    tab === "visit"
+      ? `${count} membre${count > 1 ? "s ont" : " a"} récemment regardé votre profil`
+      : tab === "superlike"
+        ? `${count} Super Like${count > 1 ? "s" : ""} vous attend${count > 1 ? "ent" : ""}`
+        : `${count} membre${count > 1 ? "s vous ont" : " vous a"} aimé`;
+
   return (
     <div className="rounded-3xl overflow-hidden relative">
       <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/85 to-primary/70" />
@@ -478,9 +504,17 @@ function PremiumGate() {
         <div className="w-14 h-14 rounded-full bg-gold text-gold-foreground mx-auto flex items-center justify-center shadow-elegant">
           <Lock className="w-6 h-6" />
         </div>
-        <h3 className="font-serif text-2xl mt-4">Fonctionnalité Premium</h3>
-        <p className="text-sm opacity-90 mt-2 max-w-sm mx-auto">
-          Passez Premium pour voir qui a visité votre profil et accéder à toutes les fonctionnalités avancées.
+
+        {/* L'aperçu chiffré : on dit COMBIEN, pas QUI. C'est ce qui donne
+            envie de s'abonner, et ça reste honnête. */}
+        <div className="font-serif text-3xl font-semibold mt-4">
+          {count > 0 ? count : "—"}
+        </div>
+        <p className="text-sm opacity-95 mt-1">{count > 0 ? teaser : label}</p>
+
+        <h3 className="font-serif text-xl mt-4">Découvrez qui c'est</h3>
+        <p className="text-sm opacity-90 mt-1.5 max-w-sm mx-auto">
+          Passez Premium pour voir leurs profils et répondre à leur intérêt.
         </p>
         <Link
           to="/abonnement"

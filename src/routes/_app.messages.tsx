@@ -8,7 +8,7 @@ import {
   Search, ArrowLeft, Send, Smile, Mic,
   Image as ImageIcon, Video as VideoIcon, Phone, Sticker,
   Check, CheckCheck, MoreVertical, Archive, Flag, Ban,
-  X, GalleryHorizontal, Loader2, Play, Pause, BadgeCheck,
+  X, GalleryHorizontal, Loader2, Play, Pause, BadgeCheck, Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 // Le SDK Agora (~1,5 Mo) n'est téléchargé qu'au lancement d'un appel
@@ -17,6 +17,9 @@ const CallView = lazy(() =>
 );
 import { createCall } from "@/lib/calls";
 import { blockUser, fetchBlockedIds, reportUser } from "@/lib/moderation";
+import { useSubscription } from "@/lib/subscription";
+import { fetchQuotas, quotaErrorMessage, type Quotas } from "@/lib/quotas";
+import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_app/messages")({
   head: () => ({
@@ -704,11 +707,13 @@ function ChatView({
   currentUserId,
   onBack,
   onRead,
+  onQuotaChange,
 }: {
   chat: MatchChat;
   currentUserId: string;
   onBack: () => void;
   onRead: (matchId: string) => void;
+  onQuotaChange?: () => void;
 }) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [now, setNow] = useState(() => Date.now());
@@ -723,10 +728,25 @@ function ChatView({
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [callState, setCallState] = useState<{ type: "audio" | "video"; callId: string } | null>(null);
   const [startingCall, setStartingCall] = useState(false);
+  const { features } = useSubscription();
+  const navigate = useNavigate();
+
+  const requirePlan = (message: string) =>
+    toast.error(message, {
+      action: { label: "Voir les formules", onClick: () => navigate({ to: "/abonnement" }) },
+    });
 
   // Crée la ligne `calls` : c'est cet INSERT qui fait sonner chez l'autre.
   const startCall = async (type: "audio" | "video") => {
     if (startingCall) return;
+    if (!features.calls) {
+      requirePlan("Les appels sont réservés aux membres Premium");
+      return;
+    }
+    if (type === "video" && !features.videoCalls) {
+      requirePlan("Les appels vidéo sont réservés aux membres VIP");
+      return;
+    }
     setStartingCall(true);
     const call = await createCall({
       matchId: chat.id,
@@ -744,6 +764,10 @@ function ChatView({
   };
 
   const presence = useMemo(() => formatLastSeen(chat.profile.lastSeen, now), [chat.profile.lastSeen, now]);
+
+  const [quotas, setQuotas] = useState<Quotas | null>(null);
+  const loadQuotas = () => fetchQuotas().then(setQuotas);
+  useEffect(() => { loadQuotas(); }, []);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const audioChunks = useRef<Blob[]>([]);
@@ -830,7 +854,24 @@ function ChatView({
       media_url: opts.media_url || null,
       media_type: opts.media_type || null,
     });
-    if (error) toast.error("Erreur d'envoi");
+
+    if (!error) {
+      onQuotaChange?.();
+      loadQuotas();
+      return false;
+    }
+
+    // La base applique les limites de la formule Gratuit : on traduit son
+    // refus plutôt que d'afficher « Erreur d'envoi », qui n'apprend rien.
+    const limit = quotaErrorMessage(error);
+    if (limit) {
+      toast.error(limit, {
+        action: { label: "Voir les formules", onClick: () => navigate({ to: "/abonnement" }) },
+      });
+    } else {
+      toast.error("Erreur d'envoi");
+    }
+    return true;
   };
 
   // ── Send text ──
@@ -846,6 +887,13 @@ function ChatView({
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "image" | "video") => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Inutile de téléverser un fichier que la base refusera ensuite
+    if (type === "video" && !features.videoMessages) {
+      requirePlan("L'envoi de vidéos en conversation est réservé aux membres VIP");
+      e.target.value = "";
+      return;
+    }
     setUploading(true);
     const url = await uploadMedia(file, type === "image" ? "images" : "videos");
     if (url) await sendMessage({ media_url: url, media_type: type });
@@ -856,6 +904,10 @@ function ChatView({
 
   // ── Voice recording ──
   const startRecording = async () => {
+    if (!features.voiceMessages) {
+      requirePlan("Les messages vocaux sont réservés aux membres Premium");
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream);
@@ -1164,6 +1216,30 @@ function ChatView({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Quota restant — annoncé avant d'écrire, pas après le refus */}
+      {quotas && quotas.messagesLeft >= 0 && (
+        <div
+          className={`px-3 py-1.5 text-[11px] flex items-center justify-center gap-1.5 border-t border-border/50 ${
+            quotas.messagesLeft === 0 ? "bg-destructive/10 text-destructive" : "bg-secondary/50 text-muted-foreground"
+          }`}
+        >
+          {quotas.messagesLeft === 0 ? (
+            <>
+              <Lock className="w-3 h-3" />
+              Vous avez utilisé vos {quotas.messagesQuota} messages du jour
+              <button onClick={() => navigate({ to: "/abonnement" })} className="font-semibold underline">
+                Passer Premium
+              </button>
+            </>
+          ) : (
+            <>
+              {quotas.messagesLeft} message{quotas.messagesLeft > 1 ? "s" : ""} restant
+              {quotas.messagesLeft > 1 ? "s" : ""} aujourd'hui
+            </>
+          )}
+        </div>
+      )}
 
       {/* Composer */}
       <div className="border-t border-border/50 bg-background p-2 flex items-center gap-1.5">

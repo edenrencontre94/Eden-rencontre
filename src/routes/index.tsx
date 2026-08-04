@@ -13,6 +13,8 @@ import heroCouple from "@/assets/hero-couple.jpg";
 import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
+import { COUNTRIES } from "@/content/countries";
+import { ARTICLES } from "@/content/articles";
 
 /** Domaine canonique. Toute URL de référencement doit en découler. */
 export const SITE_URL = "https://agapemeet.com";
@@ -92,9 +94,9 @@ function Nav() {
           <a href="#fonctionnalites" className="hover:text-foreground transition">Fonctionnalités</a>
           <a href="#comment" className="hover:text-foreground transition">Comment ça marche</a>
           <a href="#temoignages" className="hover:text-foreground transition">Témoignages</a>
-          <a href="#tarifs" className="hover:text-foreground transition">Tarifs</a>
-          <a href="#blog" className="hover:text-foreground transition">Blog</a>
-          <a href="#faq" className="hover:text-foreground transition">FAQ</a>
+          <Link to="/tarifs" className="hover:text-foreground transition">Tarifs</Link>
+          <Link to="/blog" className="hover:text-foreground transition">Blog</Link>
+          <Link to="/faq" className="hover:text-foreground transition">FAQ</Link>
         </nav>
         <Link
           to="/inscription"
@@ -827,6 +829,33 @@ function FinalCTA() {
 // ─── Footer ───────────────────────────────────────────────────────────────────
 function Footer() {
   return (
+    <>
+    {/* Pays couverts — ces liens sont le seul chemin par lequel Google
+        découvrira les pages pays. Sans maillage depuis l'accueil, une page
+        peut exister sans jamais être visitée par un robot. */}
+    <section className="border-t border-border bg-background py-10" aria-label="Rencontres chrétiennes par pays">
+      <div className="max-w-7xl mx-auto px-6">
+        <h2 className="font-serif text-2xl font-semibold text-center">
+          La rencontre chrétienne près de chez vous
+        </h2>
+        <p className="text-sm text-muted-foreground text-center mt-2">
+          Découvrez la communauté AgapeMeet dans votre pays.
+        </p>
+        <div className="flex flex-wrap justify-center gap-2 mt-6">
+          {COUNTRIES.map(c => (
+            <Link
+              key={c.slug}
+              to="/rencontre-chretienne/$pays"
+              params={{ pays: c.slug }}
+              className="px-4 py-2 rounded-full border border-border bg-card text-sm font-medium hover:border-primary/40 hover:text-primary transition"
+            >
+              {c.flag} {c.name}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+
     <footer className="border-t border-border bg-secondary/30" aria-label="Pied de page AgapeMeet">
       <div className="max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-5 gap-10">
         {/* Brand */}
@@ -863,23 +892,26 @@ function Footer() {
           <ul className="space-y-2.5 text-sm text-muted-foreground">
             <li><a href="#fonctionnalites" className="hover:text-foreground transition">Fonctionnalités</a></li>
             <li><a href="#comment" className="hover:text-foreground transition">Comment ça marche</a></li>
-            <li><a href="#tarifs" className="hover:text-foreground transition">Tarifs & Abonnements</a></li>
+            <li><Link to="/tarifs" className="hover:text-foreground transition">Tarifs & Abonnements</Link></li>
             <li><a href="#temoignages" className="hover:text-foreground transition">Témoignages</a></li>
             <li><Link to="/login" className="hover:text-foreground transition">Se connecter</Link></li>
             <li><Link to="/inscription" className="hover:text-foreground transition">S'inscrire gratuitement</Link></li>
           </ul>
         </div>
 
-        {/* Blog */}
+        {/* Blog — liens vers de VRAIS articles. Des ancres « #blog » ne
+            créaient aucune URL : rien n'était indexable ni découvrable. */}
         <div>
           <h4 className="font-semibold text-foreground mb-4 text-sm">Blog & Ressources</h4>
           <ul className="space-y-2.5 text-sm text-muted-foreground">
-            <li><a href="#blog" className="hover:text-foreground transition">Conseils rencontres chrétiennes</a></li>
-            <li><a href="#blog" className="hover:text-foreground transition">Préparer son mariage chrétien</a></li>
-            <li><a href="#blog" className="hover:text-foreground transition">Discernement & relation</a></li>
-            <li><a href="#blog" className="hover:text-foreground transition">Témoignages de couples</a></li>
-            <li><a href="#blog" className="hover:text-foreground transition">Vie de foi & amour</a></li>
-            <li><a href="#blog" className="hover:text-foreground transition">Guide du célibataire chrétien</a></li>
+            {ARTICLES.map(a => (
+              <li key={a.slug}>
+                <Link to="/blog/$slug" params={{ slug: a.slug }} className="hover:text-foreground transition">
+                  {a.title}
+                </Link>
+              </li>
+            ))}
+            <li><Link to="/blog" className="hover:text-foreground transition">Tous les articles</Link></li>
           </ul>
         </div>
 
@@ -887,12 +919,10 @@ function Footer() {
         <div>
           <h4 className="font-semibold text-foreground mb-4 text-sm">Entreprise</h4>
           <ul className="space-y-2.5 text-sm text-muted-foreground">
-            <li><a href="#" className="hover:text-foreground transition">À propos de nous</a></li>
-            <li><a href="#" className="hover:text-foreground transition">Politique de confidentialité</a></li>
-            <li><a href="#" className="hover:text-foreground transition">Conditions d'utilisation</a></li>
-            <li><a href="#faq" className="hover:text-foreground transition">FAQ</a></li>
-            <li><a href="#" className="hover:text-foreground transition">Nous contacter</a></li>
-            <li><a href="#" className="hover:text-foreground transition">Signaler un abus</a></li>
+            <li><Link to="/confidentialite" className="hover:text-foreground transition">Politique de confidentialité</Link></li>
+            <li><Link to="/conditions" className="hover:text-foreground transition">Conditions d'utilisation</Link></li>
+            <li><Link to="/faq" className="hover:text-foreground transition">FAQ</Link></li>
+            <li><Link to="/tarifs" className="hover:text-foreground transition">Tarifs</Link></li>
           </ul>
         </div>
       </div>
@@ -905,6 +935,7 @@ function Footer() {
         </div>
       </div>
     </footer>
+    </>
   );
 }
 

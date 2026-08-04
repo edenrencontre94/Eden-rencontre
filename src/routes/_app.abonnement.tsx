@@ -45,7 +45,7 @@ export const Route = createFileRoute("/_app/abonnement")({
 
 function SubscriptionPage() {
   const {
-    plan, planId, expiresAt, daysLeft, isPaid, loading,
+    plan, planId, expiresAt, daysLeft, isPaid, isFounder, loading,
     superLikesLeft, boostsLeft, refresh, pendingPayments, reconcile,
   } = useSubscription();
   const [checkoutOffer, setCheckoutOffer] = useState<Offer | null>(null);
@@ -84,11 +84,36 @@ function SubscriptionPage() {
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold/15 text-gold text-[11px] font-semibold">
           <Crown className="w-3.5 h-3.5" /> Abonnement
         </div>
-        <h1 className="font-serif text-2xl font-semibold mt-2">Passez au niveau supérieur</h1>
+        <h1 className="font-serif text-2xl font-semibold mt-2">
+          {isFounder ? "Vous êtes membre fondateur" : "Passez au niveau supérieur"}
+        </h1>
         <p className="text-xs text-muted-foreground mt-1">
-          Voyez vos visiteurs, envoyez des Super Likes illimités et boostez votre profil.
+          {isFounder
+            ? "Merci d'avoir rejoint AgapeMeet dès les débuts."
+            : "Voyez vos visiteurs, envoyez des Super Likes illimités et boostez votre profil."}
         </p>
       </div>
+
+      {/* Fondateur : on remercie, on ne vend rien */}
+      {isFounder && (
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-5 rounded-2xl overflow-hidden relative"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-gold via-gold/90 to-gold/70" />
+          <div className="relative p-5 text-gold-foreground text-center">
+            <div className="w-12 h-12 rounded-full bg-white/25 mx-auto flex items-center justify-center">
+              <Crown className="w-6 h-6" />
+            </div>
+            <h2 className="font-serif text-xl font-semibold mt-3">Accès VIP à vie</h2>
+            <p className="text-xs opacity-90 mt-1.5 max-w-xs mx-auto leading-relaxed">
+              Parce que vous étiez là avant tout le monde, l'intégralité des fonctionnalités
+              vous reste offerte — sans abonnement, sans limite de durée.
+            </p>
+          </div>
+        </motion.div>
+      )}
 
       {/* Paiement encaissé mais pas encore confirmé */}
       {pendingPayments > 0 && (
@@ -155,24 +180,28 @@ function SubscriptionPage() {
         </div>
       </div>
 
-      {/* Formules */}
-      <div className="mt-6 space-y-4">
-        {PLANS.map((p, i) => (
-          <PlanCard
-            key={p.id}
-            plan={p}
-            current={p.id === planId}
-            delay={i * 0.05}
-            onChoose={setCheckoutOffer}
-          />
-        ))}
-      </div>
+      {/* Formules — inutile de les proposer à qui a déjà tout */}
+      {!isFounder && (
+        <>
+          <div className="mt-6 space-y-4">
+            {PLANS.map((p, i) => (
+              <PlanCard
+                key={p.id}
+                plan={p}
+                current={p.id === planId}
+                delay={i * 0.05}
+                onChoose={setCheckoutOffer}
+              />
+            ))}
+          </div>
 
-      <p className="text-[11px] text-muted-foreground text-center mt-5 leading-relaxed">
-        Paiement unique, sans engagement ni prélèvement automatique.
-        <br />
-        Un nouvel achat pendant une période active <strong>prolonge</strong> votre abonnement.
-      </p>
+          <p className="text-[11px] text-muted-foreground text-center mt-5 leading-relaxed">
+            Paiement unique, sans engagement ni prélèvement automatique.
+            <br />
+            Un nouvel achat pendant une période active <strong>prolonge</strong> votre abonnement.
+          </p>
+        </>
+      )}
 
       <AnimatePresence>
         {checkoutOffer && (

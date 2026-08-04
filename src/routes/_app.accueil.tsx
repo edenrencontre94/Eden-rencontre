@@ -8,8 +8,12 @@ import { getCurrentUser } from "@/lib/auth";
 import { type Profile } from "@/lib/mock-data";
 import { getCountryCode } from "@/lib/utils";
 import { useDailyContent } from "@/hooks/useDailyContent";
-import { boostedFirst, excludePaused, fetchAdmirerIds, filterByVisibility } from "@/lib/visibility";
+import { excludePaused, fetchAdmirerIds, filterByVisibility } from "@/lib/visibility";
+import { compatibilityScore, rankProfiles } from "@/lib/matching";
 import { toast } from "sonner";
+import { useSubscription } from "@/lib/subscription";
+import { useNavigate } from "@tanstack/react-router";
+import { Lock } from "lucide-react";
 
 export const Route = createFileRoute("/_app/accueil")({
   head: () => ({
@@ -34,6 +38,8 @@ function HomePage() {
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
 
   const { content: dailyContent, loading: dailyLoading } = useDailyContent();
+  const { features } = useSubscription();
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function loadProfiles() {
@@ -71,7 +77,19 @@ function HomePage() {
           }
         }
 
-        let query = supabase.from('profiles').select('*').neq('id', user.id).limit(50);
+        // Colonnes ciblées, et tri des boostés CÔTÉ SERVEUR : sans ça, un
+        // profil boosté ne remonterait que s'il figurait déjà par hasard
+        // parmi les 50 tirés.
+        let query = supabase
+          .from('profiles')
+          .select(
+            'id, first_name, birth_date, city, country, denomination, photos, bio, ' +
+            'is_verified, boosted_until, practice_level, church_attendance, ' +
+            'marriage_intent, wants_children, gender',
+          )
+          .neq('id', user.id)
+          .order('boosted_until', { ascending: false, nullsFirst: false })
+          .limit(50);
 
         // Respecte le réglage de visibilité de chacun
         query = excludePaused(query);
@@ -90,7 +108,7 @@ function HomePage() {
         ]);
 
         if (data) {
-          const visible = boostedFirst(filterByVisibility(data as any[], admirers));
+          const visible = filterByVisibility(data as any[], admirers);
           const formatted: Profile[] = visible.map((p: any) => ({
             id: p.id,
             firstName: p.first_name || "Membre",
@@ -98,7 +116,10 @@ function HomePage() {
             city: p.city || "Ville inconnue",
             country: p.country || "",
             denomination: p.denomination || "Non précisé",
-            compatibility: Math.floor(Math.random() * 20) + 80,
+            // Score réel : confession, pratique, vision du mariage, enfants,
+            // proximité géographique et écart d'âge
+            compatibility: compatibilityScore(currentUserData ?? {}, p),
+            boostedUntil: p.boosted_until ?? null,
             verified: true,
             premium: false,
             lastActive: "Récemment",
@@ -116,7 +137,7 @@ function HomePage() {
             church: p.church_attendance || "",
             faithImportance: p.practice_level || ""
           }));
-          setProfiles(formatted);
+          setProfiles(rankProfiles(formatted));
           
           // Visiteurs : déjà chargés plus haut, plus aucune requête ici
           if (visits && visits.length > 0) {
@@ -144,6 +165,13 @@ function HomePage() {
   }, []);
 
   const updateVisibility = async (newVis: "tous" | "demande" | "pause") => {
+    if (!features.visibilityControl) {
+      toast.error("Le réglage de visibilité est réservé aux membres Premium", {
+        action: { label: "Voir les formules", onClick: () => navigate({ to: "/abonnement" }) },
+      });
+      return;
+    }
+
     const previous = visibility;
     setVisibility(newVis);
 
@@ -433,8 +461,13 @@ function HomePage() {
               <div className="flex items-center gap-2 mb-4">
                 <Eye className="w-4 h-4 text-primary" />
                 <div>
-                  <h3 className="text-sm font-bold">Visibilité du profil</h3>
-                  <p className="text-xs text-muted-foreground">Choisis qui peut voir ton profil</p>
+                  <h3 className="text-sm font-bold flex items-center gap-1.5">
+                    Visibilité du profil
+                    {!features.visibilityControl && <Lock className="w-3 h-3 text-gold" />}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {features.visibilityControl ? "Choisis qui peut voir ton profil" : "Réservé aux membres Premium"}
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-2">

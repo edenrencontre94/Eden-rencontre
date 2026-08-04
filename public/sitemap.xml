@@ -6,19 +6,113 @@
   /decouvrir, /messages…) exige une session : l'y référencer ferait
   remonter des pages vides ou des redirections vers la connexion.
 
-  Les sections de la page d'accueil (#fonctionnalites, #tarifs, #faq…)
-  sont des ancres, pas des URL distinctes : elles n'ont pas leur place ici,
-  Google les traite comme la même page.
+  Les sections de la page d'accueil (#fonctionnalites, #temoignages…)
+  sont des ancres, pas des URL distinctes : Google les traite comme la
+  même page, les lister n'apporterait rien.
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- Pages principales -->
   <url>
     <loc>https://agapemeet.com/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://agapemeet.com/inscription</loc>
+    <loc>https://agapemeet.com/tarifs</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://agapemeet.com/faq</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>https://agapemeet.com/inscription</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Blog -->
+  <url>
+    <loc>https://agapemeet.com/blog</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://agapemeet.com/blog/reconnaitre-relation-saine-chretienne</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://agapemeet.com/blog/questions-avant-de-se-marier</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://agapemeet.com/blog/rencontre-chretienne-en-ligne-precautions</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://agapemeet.com/blog/prier-pour-son-futur-conjoint</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Pages par pays -->
+  <url>
+    <loc>https://agapemeet.com/rencontre-chretienne/togo</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://agapemeet.com/rencontre-chretienne/benin</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://agapemeet.com/rencontre-chretienne/cote-divoire</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://agapemeet.com/rencontre-chretienne/senegal</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://agapemeet.com/rencontre-chretienne/cameroun</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://agapemeet.com/rencontre-chretienne/burkina-faso</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://agapemeet.com/rencontre-chretienne/gabon</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://agapemeet.com/rencontre-chretienne/france</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Pages légales -->
+  <url>
+    <loc>https://agapemeet.com/conditions</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://agapemeet.com/confidentialite</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
 </urlset>
