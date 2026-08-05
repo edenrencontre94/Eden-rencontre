@@ -6,6 +6,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { getCurrentUserId } from "@/lib/auth";
+import { SupportContactBlock } from "@/components/SupportContact";
 
 export const Route = createFileRoute("/_app/aide")({
   component: AidePage,
@@ -239,6 +240,14 @@ function AidePage() {
           </p>
         </div>
       </Link>
+
+      <SupportContactBlock
+        title="Nous joindre directement"
+        description="Pour une réponse rapide, WhatsApp est le canal le plus direct."
+        message="Bonjour, j'ai besoin d'aide sur AgapeMeet."
+        subject="Demande d'aide — AgapeMeet"
+        compact
+      />
 
       {composing ? (
         <div className="rounded-2xl border border-border bg-card p-5 space-y-4">

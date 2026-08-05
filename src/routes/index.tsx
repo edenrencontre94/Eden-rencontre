@@ -15,6 +15,7 @@ import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
 import { COUNTRIES } from "@/content/countries";
 import { ARTICLES } from "@/content/articles";
+import { WhatsAppButton, useSupportContact } from "@/components/SupportContact";
 
 /** Domaine canonique. Toute URL de référencement doit en découler. */
 export const SITE_URL = "https://agapemeet.com";
@@ -832,6 +833,38 @@ function FinalCTA() {
 }
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
+/**
+ * Assistance en pied de page.
+ *
+ * Le numéro WhatsApp n'est pas écrit : un bouton ouvre directement la
+ * conversation. Afficher les chiffres inviterait à les recopier à la main,
+ * avec les fautes de frappe que cela suppose — et sur mobile, le clic
+ * fonctionne, pas la sélection.
+ */
+function FooterContact() {
+  const { email } = useSupportContact();
+
+  return (
+    <div className="space-y-2.5">
+      <WhatsAppButton
+        label="WhatsApp"
+        compact
+        message="Bonjour, je vous écris depuis le site AgapeMeet."
+        className="inline-flex items-center gap-2 px-3.5 py-2 text-sm rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors"
+      />
+      {email && (
+        <a
+          href={`mailto:${email}`}
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition"
+        >
+          <Mail className="w-4 h-4 shrink-0" />
+          <span className="truncate">{email}</span>
+        </a>
+      )}
+    </div>
+  );
+}
+
 function Footer() {
   return (
     <>
@@ -929,6 +962,9 @@ function Footer() {
             <li><Link to="/faq" className="hover:text-foreground transition">FAQ</Link></li>
             <li><Link to="/tarifs" className="hover:text-foreground transition">Tarifs</Link></li>
           </ul>
+
+          <h4 className="font-semibold text-foreground mt-8 mb-3 text-sm">Assistance</h4>
+          <FooterContact />
         </div>
       </div>
 

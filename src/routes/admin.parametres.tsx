@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Settings, Shield, Wrench, Save, AlertTriangle, Rocket, Mail, Loader2,
-  MessageSquare, Phone, Users2, Info, RotateCcw,
+  MessageSquare, Phone, Users2, Info, RotateCcw, LifeBuoy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -334,6 +334,83 @@ function AdminParametres() {
               <p className="text-[11px] text-muted-foreground mt-1.5">{g.hint}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ── Contact assistance ────────────────────────────────── */}
+      <section className="rounded-2xl border border-border bg-card p-5">
+        <h2 className="font-serif text-lg font-semibold flex items-center gap-2">
+          <LifeBuoy className="w-5 h-5 text-primary" /> Contact assistance
+        </h2>
+        <p className="text-xs text-muted-foreground mt-1 max-w-2xl">
+          Coordonnées affichées aux membres sur la page d'aide. Laisser un champ
+          vide masque la ligne correspondante — mieux vaut ne rien annoncer que
+          promettre un canal que personne ne surveille.
+        </p>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Adresse e-mail
+            </label>
+            <input
+              type="email"
+              value={settings.support_email ?? ""}
+              onChange={e => setValue("support_email", e.target.value)}
+              placeholder="contact@agapemeet.com"
+              className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            {settings.support_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(settings.support_email) && (
+              <p className="text-[11px] text-destructive mt-1">Cette adresse semble incomplète.</p>
+            )}
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Numéro WhatsApp
+            </label>
+            <input
+              type="tel"
+              value={settings.support_whatsapp ?? ""}
+              onChange={e => setValue("support_whatsapp", e.target.value)}
+              placeholder="+228 96479555"
+              className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Avec l'indicatif pays. Le lien wa.me est construit automatiquement :
+              {" "}
+              <code className="px-1 rounded bg-secondary">
+                wa.me/{String(settings.support_whatsapp ?? "").replace(/\D/g, "") || "…"}
+              </code>
+            </p>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Horaires
+            </label>
+            <input
+              value={settings.support_hours ?? ""}
+              onChange={e => setValue("support_hours", e.target.value)}
+              placeholder="Du lundi au samedi, de 8 h à 20 h (GMT)"
+              className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Délai de réponse annoncé
+            </label>
+            <input
+              value={settings.support_response_time ?? ""}
+              onChange={e => setValue("support_response_time", e.target.value)}
+              placeholder="Nous répondons généralement sous 24 heures."
+              className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              À confronter au délai réel, visible sur la page Support.
+            </p>
+          </div>
         </div>
       </section>
 

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { CheckoutSheet } from "@/components/app/CheckoutSheet";
+import { SupportContactBlock, WhatsAppButton } from "@/components/SupportContact";
 import {
   PLANS,
   formatPrice,
@@ -129,13 +130,23 @@ function SubscriptionPage() {
               Si vous avez validé le paiement sur votre téléphone, votre formule s'activera
               automatiquement. Vous pouvez aussi vérifier maintenant.
             </p>
-            <button
-              onClick={verifyNow}
-              disabled={checking}
-              className="mt-2 px-3 py-1.5 rounded-lg bg-gold text-gold-foreground text-[11px] font-semibold disabled:opacity-60"
-            >
-              {checking ? "Vérification…" : "Vérifier mon paiement"}
-            </button>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                onClick={verifyNow}
+                disabled={checking}
+                className="px-3 py-1.5 rounded-lg bg-gold text-gold-foreground text-[11px] font-semibold disabled:opacity-60"
+              >
+                {checking ? "Vérification…" : "Vérifier mon paiement"}
+              </button>
+              {/* Un paiement bloqué est le moment où l'on perd un client :
+                  il a payé et n'a rien reçu. Le canal le plus direct doit
+                  être là, pas trois écrans plus loin. */}
+              <WhatsAppButton
+                label="Nous écrire"
+                message="Bonjour, j'ai payé sur AgapeMeet mais mon abonnement n'est toujours pas actif."
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-[11px] font-semibold hover:bg-emerald-700 transition-colors"
+              />
+            </div>
           </div>
         </motion.div>
       )}
@@ -214,6 +225,16 @@ function SubscriptionPage() {
           />
         )}
       </AnimatePresence>
+
+      <div className="mt-8">
+        <SupportContactBlock
+          title="Un problème avec votre paiement ?"
+          description="Paiement débité sans activation, erreur de l'opérateur mobile, ou simple question sur les formules : écrivez-nous, une personne vous répond."
+          message="Bonjour, j'ai une question concernant mon paiement sur AgapeMeet."
+          subject="Question sur mon paiement AgapeMeet"
+          compact
+        />
+      </div>
     </div>
   );
 }
