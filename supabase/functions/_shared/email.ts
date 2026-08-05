@@ -43,6 +43,13 @@ function admin() {
   return createClient(SUPABASE_URL, SERVICE_KEY);
 }
 
+/**
+ * Marqueur posé par `layout()` quand le jeton n'est pas encore connu, puis
+ * résolu par `sendNotification`. Volontairement improbable dans un contenu
+ * rédigé : il ne doit jamais être remplacé par accident.
+ */
+const UNSUB_PLACEHOLDER = "__AGAPE_UNSUB_URL__";
+
 /** URL de désabonnement en un clic — sans connexion, comme l'exige Gmail. */
 export function unsubscribeUrl(token: string, category: EmailCategory | "all" = "all") {
   return `${SUPABASE_URL}/functions/v1/unsubscribe?token=${token}&category=${category}`;
@@ -209,12 +216,23 @@ export async function sendNotification(params: {
     .eq("id", params.userId)
     .single();
 
+  // Le gabarit a pu poser un marqueur faute de connaître le jeton au moment
+  // de sa construction. C'est ici, et seulement ici, qu'il est résolu.
+  const token = profile?.unsubscribe_token;
+  const html = params.html.includes(UNSUB_PLACEHOLDER)
+    ? params.html.split(UNSUB_PLACEHOLDER).join(
+        token
+          ? unsubscribeUrl(token, params.category)
+          : `${APP_URL}/parametres/notifications`,
+      )
+    : params.html;
+
   const res = await deliver({
     to: params.to,
     subject: params.subject,
-    html: params.html,
+    html,
     category: params.category,
-    unsubToken: profile?.unsubscribe_token,
+    unsubToken: token,
   });
 
   if (res.ok) {
@@ -258,11 +276,19 @@ export function layout(opts: {
 
   // Le lien de désabonnement n'apparaît que sur les envois facultatifs :
   // proposer de se désabonner d'un reçu de paiement n'aurait pas de sens.
-  const unsub = opts.unsubToken && opts.category && opts.category !== "transactional"
-    ? `<br><a href="${unsubscribeUrl(opts.unsubToken, opts.category)}" style="color:#8b7f86;text-decoration:underline">
+  //
+  // L'appelant construit souvent le HTML sans connaître le jeton, qui n'est
+  // lu qu'au moment de l'envoi. Dans ce cas on pose un marqueur que
+  // `sendNotification` remplacera : sans quoi l'en-tête List-Unsubscribe
+  // serait présent mais le lien visible absent — or Gmail exige les deux
+  // pour les expéditeurs de volume.
+  const optional = opts.category && opts.category !== "transactional";
+  const unsub = !optional
+    ? ""
+    : `<br><a href="${opts.unsubToken ? unsubscribeUrl(opts.unsubToken, opts.category!) : UNSUB_PLACEHOLDER}"
+             style="color:#8b7f86;text-decoration:underline">
          Ne plus recevoir ce type d'e-mail
-       </a>`
-    : "";
+       </a>`;
 
   return `<!doctype html>
 <html lang="fr">

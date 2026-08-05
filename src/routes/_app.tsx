@@ -40,6 +40,8 @@ import { usePresence } from "@/hooks/usePresence";
 import { IncomingCallListener } from "@/components/app/IncomingCallListener";
 import { BoostPicker } from "@/components/app/BoostPicker";
 import { getCurrentUser, useIsAdmin } from "@/lib/auth";
+import { useSetting } from "@/lib/appSettings";
+import { MaintenanceScreen } from "@/components/MaintenanceScreen";
 
 export const Route = createFileRoute("/_app")({
   // No beforeLoad — auth is checked client-side only to avoid SSR logout on refresh
@@ -140,6 +142,7 @@ function AppLayout() {
   usePresence();
   
   const isAdmin = useIsAdmin();
+  const maintenance = useSetting<boolean>("maintenance_mode", false);
   const [authChecked, setAuthChecked] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -224,6 +227,15 @@ function AppLayout() {
       unsub?.();
     };
   }, [navigate]);
+
+  // Mode maintenance : l'application est fermée aux membres, mais reste
+  // ouverte aux administrateurs — sinon celui qui l'active se verrouillerait
+  // lui-même dehors et ne pourrait plus le désactiver.
+  // `undefined` signifie « pas encore connu » : on ne coupe l'accès qu'une
+  // fois les deux réponses arrivées, jamais sur une supposition.
+  if (maintenance === true && isAdmin === false) {
+    return <MaintenanceScreen />;
+  }
 
   // Show nothing while checking — prevents flash of protected content
   if (!authChecked || !authed) {

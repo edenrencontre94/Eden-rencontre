@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import logoAsset from "@/assets/logo.png";
 import { toast } from "sonner";
+import { useSetting } from "@/lib/appSettings";
 
 export const Route = createFileRoute("/inscription")({
   head: () => ({
@@ -35,14 +36,24 @@ function InscriptionPage() {
   const [acceptedCGU, setAcceptedCGU] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const registrationOpen = useSetting<boolean>("registration_open", true);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Vérifié aussi ici, et pas seulement en désactivant le bouton :
+    // le formulaire peut être soumis à la touche Entrée, et l'état a pu
+    // changer entre l'ouverture de la page et l'envoi.
+    if (registrationOpen === false) {
+      toast.error("Les inscriptions sont momentanément fermées.");
+      return;
+    }
+
     if (!fullName.trim() || !email.trim().includes("@") || password.length < 6 || !acceptedCGU) {
       toast.error("Veuillez remplir tous les champs correctement.");
       return;
     }
-    
+
     setLoading(true);
     try {
       const { supabase } = await import("@/lib/supabase");
@@ -110,9 +121,24 @@ function InscriptionPage() {
             </p>
           </div>
 
+          {registrationOpen === false && (
+            <div className="mb-6 rounded-2xl border border-gold/50 bg-gold/10 p-4 text-sm leading-relaxed">
+              <p className="font-semibold">Les inscriptions sont momentanément fermées.</p>
+              <p className="text-muted-foreground mt-1">
+                Nous accueillons de nouveaux membres par vagues, afin que chacun
+                trouve une communauté vivante. Revenez d'ici quelques jours — et
+                si vous avez déjà un compte, vous pouvez{" "}
+                <Link to="/login" className="text-primary underline underline-offset-2">
+                  vous connecter
+                </Link>
+                .
+              </p>
+            </div>
+          )}
+
           <div className="bg-card rounded-[2rem] shadow-elegant border border-border/50 p-8 sm:p-10">
             <form onSubmit={handleSubmit} className="space-y-6">
-              
+
               <div className="space-y-2">
                 <Label htmlFor="fullname" className="text-sm font-semibold">Nom complet</Label>
                 <div className="relative">
@@ -195,10 +221,12 @@ function InscriptionPage() {
                 <Button
                   type="submit"
                   size="lg"
-                  disabled={loading || !acceptedCGU}
+                  disabled={loading || !acceptedCGU || registrationOpen === false}
                   className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base shadow-soft"
                 >
-                  {loading ? "Création en cours..." : "Créer mon compte"}
+                  {registrationOpen === false
+                    ? "Inscriptions fermées"
+                    : loading ? "Création en cours..." : "Créer mon compte"}
                 </Button>
               </motion.div>
             </form>
