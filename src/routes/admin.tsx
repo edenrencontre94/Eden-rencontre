@@ -30,17 +30,53 @@ function AdminLayout() {
         navigate({ to: "/login" });
         return;
       }
-      
-      // Verification très basique pour le mockup
-      // Dans la réalité, vous vérifiez une colonne 'role' = 'admin'
-      const { data } = await supabase.from('profiles').select('email').eq('id', user.id).single();
-      // On autorise par défaut pour la démo, mais on peut bloquer si besoin
-      setIsAdmin(true);
+
+      // Le rôle est décidé EN BASE, jamais ici. `is_admin()` lit
+      // profiles.role pour auth.uid(), et un trigger empêche quiconque
+      // de modifier son propre rôle. Cet écran ne fait que refléter
+      // une décision serveur : même contourné, il ne donnerait accès
+      // à rien, les policies RLS refusant les données.
+      const { data, error } = await supabase.rpc("is_admin");
+
+      if (error) {
+        console.error("[admin] vérification du rôle:", error);
+        setIsAdmin(false);
+        return;
+      }
+      setIsAdmin(Boolean(data));
     }
     checkAdmin();
   }, [navigate]);
 
-  if (isAdmin === null) return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">Chargement...</div>;
+  if (isAdmin === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
+        Chargement…
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="max-w-sm text-center">
+          <div className="w-14 h-14 rounded-full bg-destructive/10 mx-auto flex items-center justify-center">
+            <ShieldAlert className="w-7 h-7 text-destructive" />
+          </div>
+          <h1 className="font-serif text-2xl font-semibold mt-4">Accès refusé</h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            Cet espace est réservé à l'équipe d'administration.
+          </p>
+          <Link
+            to="/accueil"
+            className="mt-5 inline-flex px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
+          >
+            Retour à l'accueil
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-secondary/20 flex font-sans text-foreground">

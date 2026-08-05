@@ -23,6 +23,10 @@ type Stats = {
   totalMatches: number;
   totalMessages: number;
   openReports: number;
+  revenueTotal: number;
+  revenueMonth: number;
+  activeSubs: number;
+  vipSubs: number;
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -130,6 +134,7 @@ export default function AdminDashboard() {
     totalUsers: 0, newUsersToday: 0, newUsersThisWeek: 0, newUsersThisMonth: 0,
     verifiedUsers: 0, maleUsers: 0, femaleUsers: 0,
     totalMatches: 0, totalMessages: 0, openReports: 0,
+    revenueTotal: 0, revenueMonth: 0, activeSubs: 0, vipSubs: 0,
   });
   const [recentUsers, setRecentUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -153,6 +158,9 @@ export default function AdminDashboard() {
           { count: matches },
           { count: messages },
           { data: recent },
+          { data: paid },
+          { data: subs },
+          { count: openReports },
         ] = await Promise.all([
           supabase.from("profiles").select("*", { count: "exact", head: true }),
           supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", todayStart),
@@ -164,7 +172,17 @@ export default function AdminDashboard() {
           supabase.from("matches").select("*", { count: "exact", head: true }),
           supabase.from("messages").select("*", { count: "exact", head: true }),
           supabase.from("profiles").select("id, first_name, city, gender, photos, created_at, is_verified").order("created_at", { ascending: false }).limit(8),
+          // Revenus, abonnés et signalements : ces chiffres manquaient alors
+          // que les données existent depuis la mise en place des paiements.
+          supabase.from("payments").select("amount_xof, completed_at").eq("status", "completed"),
+          supabase.from("subscriptions").select("plan_id").gt("expires_at", new Date().toISOString()),
+          supabase.from("reports").select("id", { count: "exact", head: true }).eq("status", "pending"),
         ]);
+
+        const revenueTotal = (paid ?? []).reduce((sum: number, p: any) => sum + (p.amount_xof || 0), 0);
+        const revenueMonth = (paid ?? [])
+          .filter((p: any) => (p.completed_at ?? "") >= monthStart)
+          .reduce((sum: number, p: any) => sum + (p.amount_xof || 0), 0);
 
         setStats({
           totalUsers: total || 0,
@@ -176,7 +194,12 @@ export default function AdminDashboard() {
           femaleUsers: female || 0,
           totalMatches: matches || 0,
           totalMessages: messages || 0,
-          openReports: 12,
+          // Chiffre réel : « 12 » était écrit en dur, donc toujours faux
+          openReports: openReports || 0,
+          revenueTotal,
+          revenueMonth,
+          activeSubs: (subs ?? []).length,
+          vipSubs: (subs ?? []).filter((x: any) => x.plan_id === "vip").length,
         });
         setRecentUsers(recent || []);
       } catch (e) {
@@ -228,6 +251,44 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* ── Revenus ──────────────────────────────────────────────── */}
+      {/* Chiffres réels issus de `payments` et `subscriptions`. Ils
+          manquaient totalement alors que ce sont les seuls indicateurs
+          qui disent si l'activité est viable. */}
+      <section className="rounded-3xl bg-gradient-to-br from-primary/90 to-primary p-6 sm:p-8 text-primary-foreground shadow-elegant">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium opacity-80">Encaissé ces 30 derniers jours</p>
+            <p className="text-4xl sm:text-5xl font-serif font-bold mt-1.5">
+              {loading ? "—" : `${new Intl.NumberFormat("fr-FR").format(stats.revenueMonth)} FCFA`}
+            </p>
+            <p className="text-xs opacity-80 mt-2">
+              Net après commission :{" "}
+              <strong>
+                {loading ? "—" : `${new Intl.NumberFormat("fr-FR").format(Math.round(stats.revenueMonth * 0.85))} FCFA`}
+              </strong>
+            </p>
+          </div>
+
+          <div className="flex gap-6 sm:gap-8">
+            <div>
+              <p className="text-2xl font-serif font-bold">{loading ? "—" : stats.activeSubs}</p>
+              <p className="text-[11px] opacity-80">Abonnés actifs</p>
+            </div>
+            <div>
+              <p className="text-2xl font-serif font-bold">{loading ? "—" : stats.vipSubs}</p>
+              <p className="text-[11px] opacity-80">dont VIP</p>
+            </div>
+            <div>
+              <p className="text-2xl font-serif font-bold">
+                {loading ? "—" : `${new Intl.NumberFormat("fr-FR").format(stats.revenueTotal)}`}
+              </p>
+              <p className="text-[11px] opacity-80">Total cumulé (FCFA)</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── KPI Row 1: Users ─────────────────────────────────────── */}
       <section>
         <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-2">
@@ -262,7 +323,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard title="Profils vérifiés" value={`${verifiedPct}%`} sub={`${stats.verifiedUsers} membres certifiés`} trend="up" trendValue="+5% ce mois" icon={UserCheck} iconBg="bg-emerald-500/10 text-emerald-600" sparkData={[18,22,20,28,26,32,30,36,34,40,38,verifiedPct || 44]} sparkColor="#10b981" />
           <KpiCard title="Profils visités" value="8.4K" sub="Vues de profil aujourd'hui" trend="up" trendValue="+12%" icon={Eye} iconBg="bg-primary/10 text-primary" sparkData={[4200,5800,3500,7100,6400,8900,7800,9800,8600,10200,9500,8400]} sparkColor="hsl(var(--primary))" />
-          <KpiCard title="Signalements" value={String(stats.openReports)} sub="En attente de traitement" trend="down" trendValue="-3.1% — Bon score" icon={AlertTriangle} iconBg="bg-amber-500/10 text-amber-500" sparkData={[18,22,14,26,19,28,22,24,18,20,15,stats.openReports || 12]} sparkColor="#f59e0b" />
+          <KpiCard title="Signalements" value={String(stats.openReports)} sub="En attente de traitement" trend="down" trendValue="-3.1% — Bon score" icon={AlertTriangle} iconBg="bg-amber-500/10 text-amber-500" sparkData={[18,22,14,26,19,28,22,24,18,20,15,stats.openReports]} sparkColor="#f59e0b" />
           <KpiCard title="Super Likes" value="342" sub="Envoyés aujourd'hui" trend="up" trendValue="+8 vs hier" icon={Star} iconBg="bg-primary/10 text-primary" sparkData={[180,245,152,312,278,388,342,415,392,448,428,342]} sparkColor="hsl(var(--primary))" />
         </div>
       </section>
