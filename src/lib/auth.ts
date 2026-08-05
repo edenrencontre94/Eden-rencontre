@@ -62,6 +62,47 @@ export function peekCurrentUserId(): string | null | undefined {
   return cachedUserId;
 }
 
+/**
+ * Statut d'administrateur, décidé en base par `is_admin()`.
+ *
+ * Renvoie `undefined` tant que la réponse n'est pas arrivée — à distinguer
+ * de `false`. Sans cette nuance, l'interface afficherait brièvement le
+ * contenu réservé aux membres ordinaires avant de se corriger, ou
+ * l'inverse.
+ *
+ * Ce hook ne PROTÈGE rien : il pilote l'affichage. La protection réelle
+ * vient des policies RLS, qui refusent les données quoi qu'affiche l'écran.
+ */
+export function useIsAdmin(): boolean | undefined {
+  const [isAdmin, setIsAdmin] = useState<boolean | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const userId = await getCurrentUserId();
+      if (!userId) {
+        if (!cancelled) setIsAdmin(false);
+        return;
+      }
+
+      const { data, error } = await supabase.rpc("is_admin");
+      if (cancelled) return;
+
+      if (error) {
+        console.error("[auth] is_admin:", error);
+        setIsAdmin(false);
+        return;
+      }
+      setIsAdmin(Boolean(data));
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
+
+  return isAdmin;
+}
+
 export function useCurrentUserId(): string | null | undefined {
   const [userId, setUserId] = useState<string | null | undefined>(peekCurrentUserId);
 

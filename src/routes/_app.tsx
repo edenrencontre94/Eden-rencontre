@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-router";
 import { BottomNav } from "@/components/app/BottomNav";
-import { Bell, Crown, Rocket, User } from "lucide-react";
+import { Bell, Crown, Rocket, Shield, User } from "lucide-react";
 import {
   BOOST_DURATION_MIN,
   boostErrorMessage,
@@ -39,7 +39,7 @@ import { Input } from "@/components/ui/input";
 import { usePresence } from "@/hooks/usePresence";
 import { IncomingCallListener } from "@/components/app/IncomingCallListener";
 import { BoostPicker } from "@/components/app/BoostPicker";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, useIsAdmin } from "@/lib/auth";
 
 export const Route = createFileRoute("/_app")({
   // No beforeLoad — auth is checked client-side only to avoid SSR logout on refresh
@@ -139,6 +139,7 @@ function BoostButton() {
 function AppLayout() {
   usePresence();
   
+  const isAdmin = useIsAdmin();
   const [authChecked, setAuthChecked] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -248,6 +249,18 @@ function AppLayout() {
               <span className="font-serif text-lg font-semibold">AgapeMeet</span>
             </Link>
             <div className="flex items-center gap-2">
+              {/* Visible des seuls administrateurs. C'est la porte d'entrée
+                  du back-office : aucun lien n'y mène ailleurs dans l'app. */}
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  aria-label="Administration"
+                  title="Administration"
+                  className="w-9 h-9 rounded-full bg-foreground text-background flex items-center justify-center shadow-soft transition-transform hover:scale-105"
+                >
+                  <Shield className="w-4 h-4" />
+                </Link>
+              )}
               <Link
                 to="/abonnement"
                 aria-label="Abonnement"

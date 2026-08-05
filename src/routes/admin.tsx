@@ -26,8 +26,12 @@ function AdminLayout() {
   useEffect(() => {
     async function checkAdmin() {
       const user = await getCurrentUser();
+
+      // Pas de compte → on l'oriente vers l'inscription.
+      // `replace: true` retire /admin de l'historique : le bouton Retour
+      // ne le ramènera pas ici en boucle.
       if (!user) {
-        navigate({ to: "/login" });
+        navigate({ to: "/inscription", replace: true });
         return;
       }
 
@@ -40,40 +44,30 @@ function AdminLayout() {
 
       if (error) {
         console.error("[admin] vérification du rôle:", error);
-        setIsAdmin(false);
+        navigate({ to: "/accueil", replace: true });
         return;
       }
-      setIsAdmin(Boolean(data));
+
+      if (!data) {
+        // Membre connecté sans droits : renvoyé à l'accueil sans un mot.
+        // Un message du type « accès refusé » confirmerait qu'un
+        // back-office existe à cette adresse, ce qui inviterait à insister.
+        navigate({ to: "/accueil", replace: true });
+        return;
+      }
+
+      setIsAdmin(true);
     }
     checkAdmin();
   }, [navigate]);
 
-  if (isAdmin === null) {
+  // Tant que le rôle n'est pas tranché — et pendant la redirection des
+  // non-autorisés — on n'affiche qu'un écran neutre. Il ne doit rien
+  // laisser deviner du contenu qui se trouve derrière.
+  if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
         Chargement…
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="max-w-sm text-center">
-          <div className="w-14 h-14 rounded-full bg-destructive/10 mx-auto flex items-center justify-center">
-            <ShieldAlert className="w-7 h-7 text-destructive" />
-          </div>
-          <h1 className="font-serif text-2xl font-semibold mt-4">Accès refusé</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            Cet espace est réservé à l'équipe d'administration.
-          </p>
-          <Link
-            to="/accueil"
-            className="mt-5 inline-flex px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold"
-          >
-            Retour à l'accueil
-          </Link>
-        </div>
       </div>
     );
   }
