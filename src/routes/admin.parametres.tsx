@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
-  Settings, Shield, Wrench, Save, AlertTriangle, Users, Rocket, Mail, Loader2,
+  Settings, Shield, Wrench, Save, AlertTriangle, Rocket, Mail, Loader2,
+  MessageSquare, Phone, Users2, Info, RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -25,37 +26,63 @@ export const Route = createFileRoute("/admin/parametres")({
 
 type Settings = Record<string, any>;
 
-const NUMERIC_FIELDS: { key: string; label: string; hint: string; icon: any }[] = [
+/** 0 = Gratuit, 1 à 3 = paliers Premium, 4 = VIP. */
+const LEVELS = [
+  { lvl: 0, label: "Gratuit",  short: "Gratuit",  tone: "muted" },
+  { lvl: 1, label: "Premium — 15 jours", short: "15 j", tone: "premium" },
+  { lvl: 2, label: "Premium — 1 mois",   short: "1 mois", tone: "premium" },
+  { lvl: 3, label: "Premium — 3 mois",   short: "3 mois", tone: "premium" },
+  { lvl: 4, label: "VIP",      short: "VIP",      tone: "vip" },
+] as const;
+
+/** Une ligne de la grille = un quota, décliné sur les cinq paliers. */
+const QUOTA_ROWS: { prefix: string; label: string; hint: string; icon: any }[] = [
   {
-    key: "free_messages_per_day",
-    label: "Messages par jour — Gratuit",
-    hint: "Appliqué par un trigger sur la table messages",
-    icon: Mail,
+    prefix: "quota_messages_l",
+    label: "Messages par jour",
+    hint: "Nombre de messages envoyés par 24 h. Imposé par un trigger sur la table messages.",
+    icon: MessageSquare,
   },
   {
-    key: "free_likes_per_day",
-    label: "Likes par jour — Gratuit",
-    hint: "Appliqué par un trigger sur la table swipes",
-    icon: Users,
+    prefix: "quota_likes_l",
+    label: "Likes par jour",
+    hint: "Au-delà, le swipe est refusé côté base.",
+    icon: Users2,
   },
   {
-    key: "free_superlike_cooldown_days",
-    label: "Délai entre Super Likes — Gratuit",
-    hint: "En jours. Au-delà, le Super Like redevient disponible",
-    icon: Users,
+    prefix: "quota_superlikes_l",
+    label: "Super Likes par jour",
+    hint: "Ignoré si un délai est défini ci-dessous pour le même palier.",
+    icon: Users2,
   },
   {
-    key: "boost_duration_minutes",
-    label: "Durée du Boost inclus",
-    hint: "En minutes. Ne concerne pas les Boosts achetés à l'unité",
+    prefix: "superlike_cooldown_l",
+    label: "Délai entre Super Likes",
+    hint: "En jours. Mettre 0 pour appliquer le quota journalier à la place.",
+    icon: Users2,
+  },
+  {
+    prefix: "quota_boosts_l",
+    label: "Boosts inclus par mois",
+    hint: "Ne concerne pas les Boosts achetés à l'unité, qui restent ouverts à tous.",
     icon: Rocket,
   },
   {
-    key: "email_daily_cap",
-    label: "E-mails facultatifs par jour",
-    hint: "Par membre. Protège la réputation du domaine d'envoi",
-    icon: Mail,
+    prefix: "boost_minutes_l",
+    label: "Durée du Boost inclus",
+    hint: "En minutes. Une durée de 0 désactive le Boost inclus pour ce palier.",
+    icon: Rocket,
   },
+];
+
+/** Fonctionnalités ouvertes à partir d'un palier donné. */
+const GATES: { key: string; label: string; hint: string; icon: any }[] = [
+  { key: "min_level_voice_message", label: "Message vocal", hint: "Trigger sur messages", icon: MessageSquare },
+  { key: "min_level_video_message", label: "Vidéo en conversation", hint: "Trigger sur messages", icon: MessageSquare },
+  { key: "min_level_audio_call", label: "Appel audio", hint: "Trigger sur calls", icon: Phone },
+  { key: "min_level_video_call", label: "Appel vidéo", hint: "Trigger sur calls", icon: Phone },
+  { key: "min_level_post_image", label: "Photo en communauté", hint: "Trigger sur community_posts", icon: Users2 },
+  { key: "min_level_post_video", label: "Vidéo en communauté", hint: "Trigger sur community_posts", icon: Users2 },
 ];
 
 function AdminParametres() {
@@ -65,29 +92,29 @@ function AdminParametres() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function load() {
-      const { data, error: err } = await supabase
-        .from("app_settings")
-        .select("key, value");
+  const load = async () => {
+    const { data, error: err } = await supabase.from("app_settings").select("key, value");
 
-      if (err) {
-        console.error("[admin/paramètres]", err);
-        setError("Lecture impossible. La migration 32 a-t-elle été exécutée ?");
-        setLoading(false);
-        return;
-      }
-
-      const map: Settings = {};
-      (data ?? []).forEach((r: any) => { map[r.key] = r.value; });
-      setSettings(map);
-      setInitial(map);
+    if (err) {
+      console.error("[admin/paramètres]", err);
+      setError("Lecture impossible. Les migrations 32 et 33 ont-elles été exécutées ?");
       setLoading(false);
+      return;
     }
-    load();
-  }, []);
 
-  const dirty = JSON.stringify(settings) !== JSON.stringify(initial);
+    const map: Settings = {};
+    (data ?? []).forEach((r: any) => { map[r.key] = r.value; });
+    setSettings(map);
+    setInitial(map);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const changedKeys = Object.keys(settings).filter(
+    k => JSON.stringify(settings[k]) !== JSON.stringify(initial[k]),
+  );
+  const dirty = changedKeys.length > 0;
 
   const save = async () => {
     setSaving(true);
@@ -95,11 +122,7 @@ function AdminParametres() {
 
     // On n'écrit QUE ce qui a changé : moins d'écritures, et l'horodatage
     // de modification reste significatif pour les autres réglages.
-    const changed = Object.keys(settings).filter(
-      k => JSON.stringify(settings[k]) !== JSON.stringify(initial[k]),
-    );
-
-    for (const key of changed) {
+    for (const key of changedKeys) {
       const { error: err } = await supabase
         .from("app_settings")
         .update({ value: settings[key], updated_at: new Date().toISOString(), updated_by: userId })
@@ -119,13 +142,16 @@ function AdminParametres() {
     // qu'au prochain rechargement complet.
     invalidateSettings();
     setSaving(false);
-    toast.success(
-      changed.length === 0 ? "Aucune modification" : `${changed.length} réglage(s) enregistré(s)`,
-    );
+    toast.success(`${changedKeys.length} réglage(s) enregistré(s)`);
   };
 
   const setValue = (key: string, value: any) =>
     setSettings(prev => ({ ...prev, [key]: value }));
+
+  const reset = () => {
+    setSettings(initial);
+    toast.info("Modifications annulées");
+  };
 
   if (loading) {
     return (
@@ -137,23 +163,15 @@ function AdminParametres() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
           <h1 className="text-3xl font-serif font-bold">Paramètres</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Ces valeurs sont lues directement par la base. Une modification prend
-            effet immédiatement, sans redéploiement.
+          <p className="text-muted-foreground mt-1 text-sm max-w-xl">
+            Ces valeurs sont lues directement par la base à chaque action.
+            Une modification prend effet immédiatement, sans redéploiement.
           </p>
         </div>
-        <button
-          onClick={save}
-          disabled={saving || !dirty}
-          className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-elegant disabled:opacity-50"
-        >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          {dirty ? "Enregistrer" : "À jour"}
-        </button>
       </div>
 
       {error && (
@@ -163,7 +181,7 @@ function AdminParametres() {
         </div>
       )}
 
-      {/* Accès à la plateforme */}
+      {/* ── Accès à la plateforme ─────────────────────────────── */}
       <section className="rounded-2xl border border-border bg-card p-5">
         <h2 className="font-serif text-lg font-semibold flex items-center gap-2">
           <Wrench className="w-5 h-5 text-primary" /> Accès à la plateforme
@@ -186,6 +204,18 @@ function AdminParametres() {
           />
         </div>
 
+        <div className="mt-5">
+          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Message affiché pendant la maintenance
+          </label>
+          <textarea
+            rows={3}
+            value={settings.maintenance_message ?? ""}
+            onChange={e => setValue("maintenance_message", e.target.value)}
+            className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-y"
+          />
+        </div>
+
         {settings.maintenance_mode === true && (
           <div className="mt-4 rounded-xl border border-destructive/40 bg-destructive/10 p-3 flex gap-2.5">
             <AlertTriangle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
@@ -197,36 +227,151 @@ function AdminParametres() {
         )}
       </section>
 
-      {/* Quotas */}
+      {/* ── Quotas par offre ──────────────────────────────────── */}
       <section className="rounded-2xl border border-border bg-card p-5">
         <h2 className="font-serif text-lg font-semibold flex items-center gap-2">
-          <Shield className="w-5 h-5 text-primary" /> Limites et quotas
+          <Shield className="w-5 h-5 text-primary" /> Limites et quotas par offre
         </h2>
-        <p className="text-xs text-muted-foreground mt-1">
-          Ces valeurs sont imposées par des triggers en base — elles ne se
+        <p className="text-xs text-muted-foreground mt-1 max-w-2xl">
+          Saisissez <strong className="text-foreground">-1</strong> pour « illimité »
+          et <strong className="text-foreground">0</strong> pour « aucun accès ».
+          Ces limites sont imposées par des triggers en base — elles ne se
           contournent pas depuis le navigateur.
         </p>
 
+        <div className="mt-5 overflow-x-auto -mx-5 px-5">
+          <table className="w-full border-collapse min-w-[720px]">
+            <thead>
+              <tr>
+                <th className="text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground pb-3 pr-4 w-56">
+                  Quota
+                </th>
+                {LEVELS.map(l => (
+                  <th key={l.lvl} className="pb-3 px-1.5 text-center">
+                    <LevelBadge tone={l.tone} label={l.short} />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {QUOTA_ROWS.map(row => (
+                <tr key={row.prefix} className="border-t border-border/60">
+                  <td className="py-3 pr-4 align-top">
+                    <div className="flex items-start gap-2">
+                      <row.icon className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                      <div>
+                        <div className="text-sm font-medium leading-tight">{row.label}</div>
+                        <div className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                          {row.hint}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  {LEVELS.map(l => {
+                    const key = row.prefix + l.lvl;
+                    const touched = JSON.stringify(settings[key]) !== JSON.stringify(initial[key]);
+                    return (
+                      <td key={l.lvl} className="py-3 px-1.5 align-top">
+                        <input
+                          type="number"
+                          value={settings[key] ?? ""}
+                          onChange={e => setValue(key, Number(e.target.value))}
+                          className={`w-full px-2 py-2 rounded-lg border text-sm text-center tabular-nums focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+                            touched
+                              ? "border-primary bg-primary/5 font-semibold"
+                              : "border-border bg-background"
+                          }`}
+                        />
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-5 rounded-xl bg-secondary/60 p-3.5 flex gap-2.5">
+          <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Les quotas Premium et VIP s'appliquent aussi aux abonnés{" "}
+            <strong className="text-foreground">déjà payants</strong>. Réduire une
+            valeur revient à modifier ce qu'ils ont acheté — à la hausse, en
+            revanche, personne ne s'en plaindra.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Ouverture des fonctionnalités ─────────────────────── */}
+      <section className="rounded-2xl border border-border bg-card p-5">
+        <h2 className="font-serif text-lg font-semibold flex items-center gap-2">
+          <Users2 className="w-5 h-5 text-primary" /> Ouverture des fonctionnalités
+        </h2>
+        <p className="text-xs text-muted-foreground mt-1 max-w-2xl">
+          Palier minimum requis pour chaque fonctionnalité. Abaisser une valeur
+          l'ouvre immédiatement aux paliers inférieurs — pratique pour une
+          opération commerciale limitée dans le temps.
+        </p>
+
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          {NUMERIC_FIELDS.map(f => (
-            <div key={f.key}>
-              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                <f.icon className="w-3.5 h-3.5" /> {f.label}
-              </label>
-              <input
-                type="number"
-                min={0}
-                value={settings[f.key] ?? ""}
-                onChange={e => setValue(f.key, Number(e.target.value))}
-                className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-secondary border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-              />
-              <p className="text-[11px] text-muted-foreground mt-1">{f.hint}</p>
+          {GATES.map(g => (
+            <div key={g.key} className="rounded-xl border border-border/60 bg-background/50 p-3.5">
+              <div className="flex items-center gap-2">
+                <g.icon className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">{g.label}</span>
+              </div>
+              <select
+                value={settings[g.key] ?? 1}
+                onChange={e => setValue(g.key, Number(e.target.value))}
+                className="mt-2.5 w-full px-3 py-2 rounded-lg bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+              >
+                {LEVELS.map(l => (
+                  <option key={l.lvl} value={l.lvl}>
+                    À partir de : {l.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-muted-foreground mt-1.5">{g.hint}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Ce qui n'est volontairement pas ici */}
+      {/* ── E-mails ───────────────────────────────────────────── */}
+      <section className="rounded-2xl border border-border bg-card p-5">
+        <h2 className="font-serif text-lg font-semibold flex items-center gap-2">
+          <Mail className="w-5 h-5 text-primary" /> E-mails
+        </h2>
+
+        <div className="mt-5 max-w-xs">
+          <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            E-mails facultatifs par jour
+          </label>
+          <input
+            type="number"
+            min={0}
+            value={settings.email_daily_cap ?? ""}
+            onChange={e => setValue("email_daily_cap", Number(e.target.value))}
+            className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Par membre. Les e-mails transactionnels (paiement, sécurité) ne sont
+            jamais plafonnés.
+          </p>
+        </div>
+
+        <div className="mt-4 rounded-xl bg-secondary/60 p-3.5 flex gap-2.5">
+          <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            C'est ce plafond qui protège la réputation du domaine. Dix e-mails
+            quotidiens sur une application de rencontre, et le taux de plainte
+            dépasse le seuil de Gmail — vos confirmations d'inscription cessent
+            alors d'arriver, puisqu'elles partent de la même adresse.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Hors interface ────────────────────────────────────── */}
       <section className="rounded-2xl border border-border bg-secondary/40 p-5">
         <h2 className="font-serif text-lg font-semibold flex items-center gap-2">
           <Settings className="w-5 h-5 text-muted-foreground" /> Réglages non modifiables ici
@@ -238,8 +383,8 @@ function AdminParametres() {
             réellement encaissé.
           </li>
           <li>
-            <strong className="text-foreground">Quotas Premium et VIP</strong> — liés aux durées
-            vendues. Les changer reviendrait à modifier ce que vos abonnés ont déjà payé.
+            <strong className="text-foreground">Durées vendues</strong> — 15 jours, 1 mois,
+            3 mois. Liées aux produits Chariow et aux paiements déjà enregistrés.
           </li>
           <li>
             <strong className="text-foreground">Rôles administrateurs</strong> — attribués en base,
@@ -247,7 +392,48 @@ function AdminParametres() {
           </li>
         </ul>
       </section>
+
+      {/* Barre d'enregistrement : elle suit le défilement, car la page est
+          désormais assez longue pour qu'un bouton en haut soit hors de vue
+          au moment où l'on termine une saisie. */}
+      {dirty && (
+        <div className="fixed bottom-0 left-0 right-0 md:left-64 z-40 border-t border-border bg-card/95 backdrop-blur-xl px-4 md:px-8 py-3 flex items-center justify-between gap-3 animate-in slide-in-from-bottom-4">
+          <p className="text-sm">
+            <strong>{changedKeys.length}</strong> modification(s) non enregistrée(s)
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={reset}
+              disabled={saving}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border text-sm hover:bg-secondary transition-colors disabled:opacity-50"
+            >
+              <RotateCcw className="w-4 h-4" /> Annuler
+            </button>
+            <button
+              onClick={save}
+              disabled={saving}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold shadow-elegant disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Enregistrer
+            </button>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+function LevelBadge({ tone, label }: { tone: string; label: string }) {
+  const cls = tone === "vip"
+    ? "bg-gold/20 text-gold"
+    : tone === "premium"
+      ? "bg-primary/15 text-primary"
+      : "bg-secondary text-muted-foreground";
+  return (
+    <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${cls}`}>
+      {label}
+    </span>
   );
 }
 

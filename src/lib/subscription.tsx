@@ -19,6 +19,7 @@ import {
   type PlanId,
   type PlanLevel,
 } from "@/lib/plans";
+import { useSettings, applyQuotaSettings } from "@/lib/appSettings";
 
 export { PLANS, OFFERS, getPlan, formatPrice, offersFor, getOffer, pricePerDay, savingsVsMonthly } from "@/lib/plans";
 export type { Plan, PlanId, PlanFeatures, Offer, DurationId } from "@/lib/plans";
@@ -79,6 +80,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   /** Membre inscrit avant la mise en place du paiement : accès VIP à vie. */
   const [isFounder, setIsFounder] = useState(false);
   const [level, setLevel] = useState<PlanLevel>(0);
+  // Réglages d'administration : lus une fois, mis en cache par le module.
+  const settings = useSettings();
 
   // ── Compteurs d'usage (locaux) ──
   useEffect(() => {
@@ -214,8 +217,12 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<SubscriptionContextValue>(() => {
     const plan = getPlan(planId);
-    // Les quotas dépendent du palier acheté, pas seulement de la formule
-    const f = featuresFor(planId, level);
+    // Les quotas dépendent du palier acheté, pas seulement de la formule.
+    // `applyQuotaSettings` recale ensuite ces valeurs sur les réglages
+    // d'administration, afin que l'interface annonce exactement ce que la
+    // base autorise — sans quoi les deux divergeraient dès le premier
+    // ajustement fait dans /admin/parametres.
+    const f = applyQuotaSettings(featuresFor(planId, level), settings, level);
 
     const superLikesLeft =
       f.superLikesPerDay === -1 ? -1 : Math.max(0, f.superLikesPerDay - usage.superLikes);
@@ -293,7 +300,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       pendingPayments,
       reconcile,
     };
-  }, [planId, expiresAt, loading, usage, persistUsage, load, pendingPayments, reconcile, isFounder, level]);
+  }, [planId, expiresAt, loading, usage, persistUsage, load, pendingPayments, reconcile, isFounder, level, settings]);
 
   return <SubscriptionContext.Provider value={value}>{children}</SubscriptionContext.Provider>;
 }

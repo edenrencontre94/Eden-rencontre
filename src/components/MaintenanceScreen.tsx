@@ -2,6 +2,7 @@ import { Wrench } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "@tanstack/react-router";
+import { useSetting } from "@/lib/appSettings";
 
 /**
  * Affiché lorsque le mode maintenance est actif.
@@ -10,8 +11,13 @@ import { useNavigate } from "@tanstack/react-router";
  * dont la session pose problème resterait bloqué sur cet écran sans aucun
  * recours, y compris après la fin de la maintenance.
  */
+const DEFAULT_MESSAGE =
+  "Nous améliorons AgapeMeet en ce moment même. L'application sera de nouveau " +
+  "accessible d'ici peu — vos conversations et votre profil sont intacts.";
+
 export function MaintenanceScreen() {
   const navigate = useNavigate();
+  const message = useSetting<string>("maintenance_message", DEFAULT_MESSAGE);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 flex items-center justify-center px-6">
@@ -24,10 +30,8 @@ export function MaintenanceScreen() {
 
         <h1 className="mt-5 text-2xl font-serif font-bold">Maintenance en cours</h1>
 
-        <p className="mt-3 text-muted-foreground leading-relaxed">
-          Nous améliorons AgapeMeet en ce moment même. L'application sera de
-          nouveau accessible d'ici peu — vos conversations et votre profil sont
-          intacts.
+        <p className="mt-3 text-muted-foreground leading-relaxed whitespace-pre-line">
+          {message ?? DEFAULT_MESSAGE}
         </p>
 
         <p className="mt-6 text-sm text-muted-foreground">
