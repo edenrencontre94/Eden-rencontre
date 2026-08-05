@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendTransactional, subscriptionConfirmedEmail } from "../_shared/email.ts";
 
 /**
  * Un ou plusieurs secrets, séparés par des virgules.
@@ -22,14 +23,20 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
  * métadonnées, qu'un attaquant pourrait tenter de manipuler.
  */
 type OfferDef =
-  | { kind: "subscription"; planId: "premium" | "vip"; days: number }
+  | { kind: "subscription"; planId: "premium" | "vip"; days: number; level: number }
   | { kind: "boost"; hours: number };
 
+/** Montants de reference, pour le recu. Jamais lus depuis le webhook. */
+const PRICES: Record<string, number> = {
+  premium_15j: 2500, premium_1m: 4000, premium_3m: 10500, vip_1m: 12000,
+  boost_24h: 1000, boost_3j: 2000, boost_7j: 3500,
+};
+
 const OFFER_DAYS: Record<string, OfferDef> = {
-  premium_15j: { kind: "subscription", planId: "premium", days: 15 },
-  premium_1m: { kind: "subscription", planId: "premium", days: 30 },
-  premium_3m: { kind: "subscription", planId: "premium", days: 90 },
-  vip_1m: { kind: "subscription", planId: "vip", days: 30 },
+  premium_15j: { kind: "subscription", planId: "premium", days: 15, level: 1 },
+  premium_1m: { kind: "subscription", planId: "premium", days: 30, level: 2 },
+  premium_3m: { kind: "subscription", planId: "premium", days: 90, level: 3 },
+  vip_1m: { kind: "subscription", planId: "vip", days: 30, level: 4 },
   boost_24h: { kind: "boost", hours: 24 },
   boost_3j: { kind: "boost", hours: 72 },
   boost_7j: { kind: "boost", hours: 168 },
@@ -190,6 +197,7 @@ serve(async (req: Request) => {
             p_user_id: userId,
             p_plan_id: offer.planId,
             p_days: offer.days,
+            p_level: offer.level,
           });
 
     if (rpcError) {
@@ -205,6 +213,46 @@ serve(async (req: Request) => {
 
     const label = offer.kind === "boost" ? `Boost ${offer.hours} h` : `Abonnement ${offer.planId}`;
     console.log(`${label} activé pour ${userId} jusqu'au ${newExpiry}`);
+
+    // ── 6. Confirmation par e-mail ──
+    // Volontairement APRÈS l'activation et sans `throw` : l'accès est déjà
+    // ouvert, un e-mail qui ne part pas ne doit jamais faire échouer le
+    // webhook — Chariow le rejouerait et on risquerait un double crédit.
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("first_name")
+        .eq("id", userId)
+        .single();
+
+      const { data: authUser } = await supabase.auth.admin.getUserById(userId);
+      const email = authUser?.user?.email;
+
+      if (email) {
+        const isBoost = offer.kind === "boost";
+        const mail = subscriptionConfirmedEmail({
+          firstName: profile?.first_name || "à vous",
+          planLabel: isBoost ? "Boost" : offer.planId === "vip" ? "VIP" : "Premium",
+          durationLabel: isBoost
+            ? `${offer.hours} heures de mise en avant`
+            : `${offer.days} jours`,
+          amountXOF: PRICES[offerId] ?? 0,
+          expiresAt: typeof newExpiry === "string" ? newExpiry : null,
+        });
+
+        await sendTransactional({
+          userId,
+          to: email,
+          subject: mail.subject,
+          html: mail.html,
+          template: "subscription_confirmed",
+          // Un rejeu de la notification ne renverra pas le reçu deux fois
+          dedupeKey: `payment:${paymentId ?? sale?.id ?? deliveryId}`,
+        });
+      }
+    } catch (mailError) {
+      console.error("[webhook] e-mail de confirmation:", mailError);
+    }
     return new Response("OK", { status: 200 });
   } catch (err) {
     console.error("chariow-webhook:", err);

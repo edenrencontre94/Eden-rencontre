@@ -17,16 +17,18 @@ type Offer = {
   planId: "premium" | "vip" | "boost";
   days: number;
   hours?: number;
+  /** Palier Premium : 1 = 15 jours, 2 = 1 mois, 3 = 3 mois. 4 pour le VIP. */
+  level?: number;
   amountXOF: number;
   env: string;
 };
 
 const OFFERS: Record<string, Offer> = {
   // Abonnements
-  premium_15j: { kind: "subscription", planId: "premium", days: 15, amountXOF: 2500, env: "CHARIOW_PRODUCT_PREMIUM_15J" },
-  premium_1m: { kind: "subscription", planId: "premium", days: 30, amountXOF: 4000, env: "CHARIOW_PRODUCT_PREMIUM_1M" },
-  premium_3m: { kind: "subscription", planId: "premium", days: 90, amountXOF: 10500, env: "CHARIOW_PRODUCT_PREMIUM_3M" },
-  vip_1m: { kind: "subscription", planId: "vip", days: 30, amountXOF: 12000, env: "CHARIOW_PRODUCT_VIP_1M" },
+  premium_15j: { kind: "subscription", planId: "premium", days: 15, level: 1, amountXOF: 2500, env: "CHARIOW_PRODUCT_PREMIUM_15J" },
+  premium_1m: { kind: "subscription", planId: "premium", days: 30, level: 2, amountXOF: 4000, env: "CHARIOW_PRODUCT_PREMIUM_1M" },
+  premium_3m: { kind: "subscription", planId: "premium", days: 90, level: 3, amountXOF: 10500, env: "CHARIOW_PRODUCT_PREMIUM_3M" },
+  vip_1m: { kind: "subscription", planId: "vip", days: 30, level: 4, amountXOF: 12000, env: "CHARIOW_PRODUCT_VIP_1M" },
   // Boosts à l'unité
   boost_24h: { kind: "boost", planId: "boost", days: 1, hours: 24, amountXOF: 1000, env: "CHARIOW_PRODUCT_BOOST_24H" },
   boost_3j: { kind: "boost", planId: "boost", days: 3, hours: 72, amountXOF: 2000, env: "CHARIOW_PRODUCT_BOOST_3J" },
@@ -127,6 +129,7 @@ serve(async (req: Request) => {
           kind: offer.kind,
           plan_id: offer.planId,
           days: String(offer.days),
+          level: String(offer.level ?? 1),
           hours: String(offer.hours ?? ""),
         },
         redirect_url: `${APP_URL}/abonnement?paiement=retour`,
@@ -167,6 +170,7 @@ serve(async (req: Request) => {
           p_user_id: user.id,
           p_plan_id: offer.planId,
           p_days: offer.days,
+          p_level: offer.level ?? 1,
         });
       }
       return json({ step: "completed", paymentId: payment.id, kind: offer.kind });

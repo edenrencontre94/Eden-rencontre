@@ -10,16 +10,94 @@
 export type PlanId = "gratuit" | "premium" | "vip";
 export type DurationId = "15j" | "1m" | "3m";
 
+/**
+ * Droits d'une formule.
+ *
+ * Ces valeurs pilotent l'INTERFACE. Les limites qui comptent vraiment
+ * (messages, likes, Super Likes, appels, médias, visibilité) sont en plus
+ * imposées par des triggers en base — voir 26_limites_gratuit.sql. Sans
+ * cette double barrière, il suffirait d'appeler l'API depuis la console.
+ */
 export type PlanFeatures = {
+  /** Voir réellement les visiteurs (le gratuit n'a qu'un aperçu flouté) */
   visitors: boolean;
+  /** Consulter les onglets M'ont aimé / Super Likes / Visiteurs */
+  seeAdmirers: boolean;
   superLikesPerDay: number; // -1 = illimité
+  /** Délai entre deux Super Likes, en jours (0 = pas de délai) */
+  superLikeCooldownDays: number;
+  /** Likes quotidiens : -1 = illimité */
+  dailyLikes: number;
+  /** Messages envoyés par jour : -1 = illimité */
+  dailyMessages: number;
   boostsPerMonth: number; // -1 = illimité
+  /** Droit d'utiliser le Boost inclus */
+  canBoost: boolean;
   unlimitedLikes: boolean;
   advancedFilters: boolean;
   readReceipts: boolean;
   incognito: boolean;
   priorityVerification: boolean;
+  /** Messages vocaux */
+  voiceMessages: boolean;
+  /** Appels audio et vidéo */
+  calls: boolean;
+  /** Bouton Retour (annuler le dernier swipe) */
+  rewind: boolean;
+  /** Bouton Message avant le match */
+  preMatchMessage: boolean;
+  /** Régler la visibilité de son profil */
+  visibilityControl: boolean;
+  /** Publier des photos dans la communauté */
+  communityMedia: boolean;
+  /** Publier des vidéos dans la communauté — VIP uniquement */
+  communityVideo: boolean;
+  /** Envoyer une vidéo en conversation — VIP uniquement */
+  videoMessages: boolean;
+  /** Appel vidéo — VIP uniquement (l'audio suffit en Premium) */
+  videoCalls: boolean;
+  /** Vidéo de présentation sur le profil — VIP uniquement */
+  profileVideo: boolean;
+  /** Assistant coach IA — VIP uniquement */
+  aiCoach: boolean;
 };
+
+/** Palier : 0 = gratuit, 1 = 15 j, 2 = 1 mois, 3 = 3 mois, 4 = VIP. */
+export type PlanLevel = 0 | 1 | 2 | 3 | 4;
+
+/** Messages par jour selon le palier. -1 = illimité. */
+export const MESSAGES_BY_LEVEL: Record<PlanLevel, number> = {
+  0: 5, 1: 20, 2: 35, 3: 55, 4: -1,
+};
+
+/** Boosts par mois selon le palier. -1 = illimité. */
+export const BOOSTS_BY_LEVEL: Record<PlanLevel, number> = {
+  0: 0, 1: 1, 2: 2, 3: 4, 4: -1,
+};
+
+export const LEVEL_LABELS: Record<PlanLevel, string> = {
+  0: "Gratuit",
+  1: "Premium 15 jours",
+  2: "Premium 1 mois",
+  3: "Premium 3 mois",
+  4: "VIP",
+};
+
+/**
+ * Droits effectifs, ajustés au palier réellement acheté.
+ *
+ * Les quotas de messages et de Boosts varient d'un palier Premium à
+ * l'autre ; tout le reste dépend seulement de la formule.
+ */
+export function featuresFor(planId: PlanId, level: PlanLevel): PlanFeatures {
+  const base = planId === "gratuit" ? FREE_FEATURES : getPlan(planId).features;
+  return {
+    ...base,
+    dailyMessages: MESSAGES_BY_LEVEL[level] ?? base.dailyMessages,
+    boostsPerMonth: BOOSTS_BY_LEVEL[level] ?? base.boostsPerMonth,
+    canBoost: (BOOSTS_BY_LEVEL[level] ?? 0) !== 0,
+  };
+}
 
 export type Offer = {
   id: string; // identifiant interne, sert de clé côté base
@@ -48,14 +126,54 @@ export type Plan = {
 
 export const FREE_FEATURES: PlanFeatures = {
   visitors: false,
+  seeAdmirers: false,
   superLikesPerDay: 1,
+  superLikeCooldownDays: 7,
+  dailyLikes: 25,
+  dailyMessages: 5,
   boostsPerMonth: 0,
+  canBoost: false,
   unlimitedLikes: false,
   advancedFilters: false,
   readReceipts: false,
   incognito: false,
   priorityVerification: false,
+  voiceMessages: false,
+  calls: false,
+  rewind: false,
+  preMatchMessage: false,
+  visibilityControl: false,
+  communityMedia: false,
+  communityVideo: false,
+  videoMessages: false,
+  videoCalls: false,
+  profileVideo: false,
+  aiCoach: false,
 };
+
+const PAID_BASE = {
+  visitors: true,
+  seeAdmirers: true,
+  superLikeCooldownDays: 0,
+  dailyLikes: -1,
+  dailyMessages: -1,
+  canBoost: true,
+  unlimitedLikes: true,
+  advancedFilters: true,
+  readReceipts: true,
+  voiceMessages: true,
+  calls: true,
+  rewind: true,
+  preMatchMessage: true,
+  visibilityControl: true,
+  communityMedia: true,
+  // Tout ce qui touche à la vidéo, plus le coach IA, reste au VIP
+  communityVideo: false,
+  videoMessages: false,
+  videoCalls: false,
+  profileVideo: false,
+  aiCoach: false,
+} as const;
 
 export const PLANS: Plan[] = [
   {
@@ -65,14 +183,16 @@ export const PLANS: Plan[] = [
     promise: "Découvrez la communauté à votre rythme, sans rien débourser.",
     perks: [
       "Un profil complet pour vous présenter tel que vous êtes",
-      "20 likes par jour pour explorer sans précipitation",
-      "1 Super Like quotidien, pour les profils qui vous touchent vraiment",
-      "Messagerie, photos et appels illimités avec vos matchs",
-      "Le verset du jour et toute la vie de la communauté",
+      "25 likes par jour pour explorer sans précipitation",
+      "1 Super Like par semaine, pour les profils qui vous touchent vraiment",
+      "5 messages par jour avec vos matchs",
+      "Le verset du jour et la vie de la communauté",
     ],
     limits: [
-      "Vous ne voyez pas qui visite votre profil",
-      "Recherche limitée : ni confession, ni pratique, ni distance",
+      "Vous ne voyez pas qui a visité votre profil ni qui vous a aimé",
+      "Ni appels audio ou vidéo, ni messages vocaux",
+      "Publications sans photo ni vidéo",
+      "Ni Boost, ni filtres avancés, ni réglage de visibilité",
     ],
     features: FREE_FEATURES,
   },
@@ -91,12 +211,9 @@ export const PLANS: Plan[] = [
       "Accusés de lecture : sachez quand votre message a été lu",
     ],
     features: {
-      visitors: true,
+      ...PAID_BASE,
       superLikesPerDay: 5,
       boostsPerMonth: 1,
-      unlimitedLikes: true,
-      advancedFilters: true,
-      readReceipts: true,
       incognito: false,
       priorityVerification: false,
     },
@@ -116,14 +233,17 @@ export const PLANS: Plan[] = [
       "Un conseiller dédié pour vous accompagner jusqu'à la rencontre",
     ],
     features: {
-      visitors: true,
+      ...PAID_BASE,
       superLikesPerDay: -1,
       boostsPerMonth: -1,
-      unlimitedLikes: true,
-      advancedFilters: true,
-      readReceipts: true,
       incognito: true,
       priorityVerification: true,
+      // Le VIP a accès à tout, sans exception
+      communityVideo: true,
+      videoMessages: true,
+      videoCalls: true,
+      profileVideo: true,
+      aiCoach: true,
     },
   },
 ];

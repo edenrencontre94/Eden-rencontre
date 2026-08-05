@@ -12,9 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as ConditionsRouteImport } from './routes/conditions'
+import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as AppAbonnementRouteImport } from './routes/_app.abonnement'
 import { Route as AppAccueilRouteImport } from './routes/_app.accueil'
 import { Route as AppCommunauteRouteImport } from './routes/_app.communaute'
@@ -28,6 +32,9 @@ import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
 import { Route as AdminModerationRouteImport } from './routes/admin.moderation'
 import { Route as AdminParametresRouteImport } from './routes/admin.parametres'
 import { Route as AdminUtilisateursRouteImport } from './routes/admin.utilisateurs'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as RencontreChretiennePaysRouteImport } from './routes/rencontre-chretienne.$pays'
 import { Route as AppParametresBloquesRouteImport } from './routes/_app.parametres.bloques'
 import { Route as AppParametresLangueRouteImport } from './routes/_app.parametres.langue'
 import { Route as AppParametresNotificationsRouteImport } from './routes/_app.parametres.notifications'
@@ -47,6 +54,21 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConditionsRoute = ConditionsRouteImport.update({
+  id: '/conditions',
+  path: '/conditions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfidentialiteRoute = ConfidentialiteRouteImport.update({
+  id: '/confidentialite',
+  path: '/confidentialite',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InscriptionRoute = InscriptionRouteImport.update({
   id: '/inscription',
   path: '/inscription',
@@ -60,6 +82,11 @@ const LoginRoute = LoginRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TarifsRoute = TarifsRouteImport.update({
+  id: '/tarifs',
+  path: '/tarifs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppAbonnementRoute = AppAbonnementRouteImport.update({
@@ -127,6 +154,21 @@ const AdminUtilisateursRoute = AdminUtilisateursRouteImport.update({
   path: '/utilisateurs',
   getParentRoute: () => AdminRoute,
 } as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RencontreChretiennePaysRoute = RencontreChretiennePaysRouteImport.update({
+  id: '/rencontre-chretienne/$pays',
+  path: '/rencontre-chretienne/$pays',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppParametresBloquesRoute = AppParametresBloquesRouteImport.update({
   id: '/parametres/bloques',
   path: '/parametres/bloques',
@@ -152,9 +194,13 @@ const AppParametresSecuriteRoute = AppParametresSecuriteRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/conditions': typeof ConditionsRoute
+  '/confidentialite': typeof ConfidentialiteRoute
+  '/faq': typeof FaqRoute
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/tarifs': typeof TarifsRoute
   '/abonnement': typeof AppAbonnementRoute
   '/accueil': typeof AppAccueilRoute
   '/communaute': typeof AppCommunauteRoute
@@ -167,7 +213,10 @@ export interface FileRoutesByFullPath {
   '/admin/moderation': typeof AdminModerationRoute
   '/admin/parametres': typeof AdminParametresRoute
   '/admin/utilisateurs': typeof AdminUtilisateursRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/rencontre-chretienne/$pays': typeof RencontreChretiennePaysRoute
   '/admin/': typeof AdminIndexRoute
+  '/blog/': typeof BlogIndexRoute
   '/parametres/bloques': typeof AppParametresBloquesRoute
   '/parametres/langue': typeof AppParametresLangueRoute
   '/parametres/notifications': typeof AppParametresNotificationsRoute
@@ -175,9 +224,13 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/conditions': typeof ConditionsRoute
+  '/confidentialite': typeof ConfidentialiteRoute
+  '/faq': typeof FaqRoute
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/tarifs': typeof TarifsRoute
   '/abonnement': typeof AppAbonnementRoute
   '/accueil': typeof AppAccueilRoute
   '/communaute': typeof AppCommunauteRoute
@@ -190,7 +243,10 @@ export interface FileRoutesByTo {
   '/admin/moderation': typeof AdminModerationRoute
   '/admin/parametres': typeof AdminParametresRoute
   '/admin/utilisateurs': typeof AdminUtilisateursRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/rencontre-chretienne/$pays': typeof RencontreChretiennePaysRoute
   '/admin': typeof AdminIndexRoute
+  '/blog': typeof BlogIndexRoute
   '/parametres/bloques': typeof AppParametresBloquesRoute
   '/parametres/langue': typeof AppParametresLangueRoute
   '/parametres/notifications': typeof AppParametresNotificationsRoute
@@ -201,9 +257,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
+  '/conditions': typeof ConditionsRoute
+  '/confidentialite': typeof ConfidentialiteRoute
+  '/faq': typeof FaqRoute
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/tarifs': typeof TarifsRoute
   '/_app/abonnement': typeof AppAbonnementRoute
   '/_app/accueil': typeof AppAccueilRoute
   '/_app/communaute': typeof AppCommunauteRoute
@@ -216,7 +276,10 @@ export interface FileRoutesById {
   '/admin/moderation': typeof AdminModerationRoute
   '/admin/parametres': typeof AdminParametresRoute
   '/admin/utilisateurs': typeof AdminUtilisateursRoute
+  '/blog/$slug': typeof BlogSlugRoute
+  '/rencontre-chretienne/$pays': typeof RencontreChretiennePaysRoute
   '/admin/': typeof AdminIndexRoute
+  '/blog/': typeof BlogIndexRoute
   '/_app/parametres/bloques': typeof AppParametresBloquesRoute
   '/_app/parametres/langue': typeof AppParametresLangueRoute
   '/_app/parametres/notifications': typeof AppParametresNotificationsRoute
@@ -227,9 +290,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/conditions'
+    | '/confidentialite'
+    | '/faq'
     | '/inscription'
     | '/login'
     | '/onboarding'
+    | '/tarifs'
     | '/abonnement'
     | '/accueil'
     | '/communaute'
@@ -242,7 +309,10 @@ export interface FileRouteTypes {
     | '/admin/moderation'
     | '/admin/parametres'
     | '/admin/utilisateurs'
+    | '/blog/$slug'
+    | '/rencontre-chretienne/$pays'
     | '/admin/'
+    | '/blog/'
     | '/parametres/bloques'
     | '/parametres/langue'
     | '/parametres/notifications'
@@ -250,9 +320,13 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/conditions'
+    | '/confidentialite'
+    | '/faq'
     | '/inscription'
     | '/login'
     | '/onboarding'
+    | '/tarifs'
     | '/abonnement'
     | '/accueil'
     | '/communaute'
@@ -265,7 +339,10 @@ export interface FileRouteTypes {
     | '/admin/moderation'
     | '/admin/parametres'
     | '/admin/utilisateurs'
+    | '/blog/$slug'
+    | '/rencontre-chretienne/$pays'
     | '/admin'
+    | '/blog'
     | '/parametres/bloques'
     | '/parametres/langue'
     | '/parametres/notifications'
@@ -275,9 +352,13 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/admin'
+    | '/conditions'
+    | '/confidentialite'
+    | '/faq'
     | '/inscription'
     | '/login'
     | '/onboarding'
+    | '/tarifs'
     | '/_app/abonnement'
     | '/_app/accueil'
     | '/_app/communaute'
@@ -290,7 +371,10 @@ export interface FileRouteTypes {
     | '/admin/moderation'
     | '/admin/parametres'
     | '/admin/utilisateurs'
+    | '/blog/$slug'
+    | '/rencontre-chretienne/$pays'
     | '/admin/'
+    | '/blog/'
     | '/_app/parametres/bloques'
     | '/_app/parametres/langue'
     | '/_app/parametres/notifications'
@@ -301,9 +385,16 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   AdminRoute: typeof AdminRouteWithChildren
+  ConditionsRoute: typeof ConditionsRoute
+  ConfidentialiteRoute: typeof ConfidentialiteRoute
+  FaqRoute: typeof FaqRoute
   InscriptionRoute: typeof InscriptionRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
+  TarifsRoute: typeof TarifsRoute
+  BlogSlugRoute: typeof BlogSlugRoute
+  RencontreChretiennePaysRoute: typeof RencontreChretiennePaysRoute
+  BlogIndexRoute: typeof BlogIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -329,6 +420,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/conditions': {
+      id: '/conditions'
+      path: '/conditions'
+      fullPath: '/conditions'
+      preLoaderRoute: typeof ConditionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confidentialite': {
+      id: '/confidentialite'
+      path: '/confidentialite'
+      fullPath: '/confidentialite'
+      preLoaderRoute: typeof ConfidentialiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/inscription': {
       id: '/inscription'
       path: '/inscription'
@@ -348,6 +460,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tarifs': {
+      id: '/tarifs'
+      path: '/tarifs'
+      fullPath: '/tarifs'
+      preLoaderRoute: typeof TarifsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/abonnement': {
@@ -441,6 +560,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUtilisateursRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rencontre-chretienne/$pays': {
+      id: '/rencontre-chretienne/$pays'
+      path: '/rencontre-chretienne/$pays'
+      fullPath: '/rencontre-chretienne/$pays'
+      preLoaderRoute: typeof RencontreChretiennePaysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/parametres/bloques': {
       id: '/_app/parametres/bloques'
       path: '/parametres/bloques'
@@ -526,9 +666,16 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   AdminRoute: AdminRouteWithChildren,
+  ConditionsRoute: ConditionsRoute,
+  ConfidentialiteRoute: ConfidentialiteRoute,
+  FaqRoute: FaqRoute,
   InscriptionRoute: InscriptionRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
+  TarifsRoute: TarifsRoute,
+  BlogSlugRoute: BlogSlugRoute,
+  RencontreChretiennePaysRoute: RencontreChretiennePaysRoute,
+  BlogIndexRoute: BlogIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

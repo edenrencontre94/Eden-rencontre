@@ -33,6 +33,11 @@ function json(body: unknown, status = 200) {
   });
 }
 
+/** Palier Premium par offre — jamais lu depuis la requête. */
+const LEVELS: Record<string, number> = {
+  premium_15j: 1, premium_1m: 2, premium_3m: 3, vip_1m: 4,
+};
+
 const SUCCESS = ["completed", "complete", "successful", "success", "paid"];
 const DEAD = ["abandoned", "cancelled", "canceled", "failed", "expired", "refunded"];
 
@@ -124,6 +129,8 @@ serve(async (req: Request) => {
                 p_user_id: user.id,
                 p_plan_id: p.plan_id,
                 p_days: p.days,
+                // Le palier vient du catalogue serveur, jamais de la ligne
+                p_level: LEVELS[p.offer_id] ?? 1,
               });
 
         if (rpcError) {

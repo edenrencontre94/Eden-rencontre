@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, BellRing, Smartphone, Mail } from "lucide-react";
+import { ArrowLeft, BellRing, Heart, Mail, MessageSquare, Eye, Users, Megaphone, ShieldCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import { supabase } from "@/lib/supabase";
+import { getCurrentUserId } from "@/lib/auth";
 
 export const Route = createFileRoute("/_app/parametres/notifications")({
   head: () => ({
@@ -11,28 +13,80 @@ export const Route = createFileRoute("/_app/parametres/notifications")({
   component: NotificationsPage,
 });
 
+/**
+ * Préférences d'e-mail.
+ *
+ * Elles vivaient dans le localStorage — donc invisibles du serveur, qui
+ * n'aurait pas pu les respecter au moment d'envoyer. Elles sont désormais
+ * en base, dans `email_preferences`, lue par les Edge Functions avant
+ * chaque envoi facultatif.
+ */
+type Prefs = {
+  matches: boolean;
+  messages: boolean;
+  visitors: boolean;
+  community: boolean;
+  marketing: boolean;
+};
+
+const DEFAULTS: Prefs = {
+  matches: true,
+  messages: true,
+  visitors: true,
+  community: true,
+  // Le marketing exige un consentement explicite : jamais activé d'office.
+  marketing: false,
+};
+
+const ITEMS: { key: keyof Prefs; icon: any; label: string; hint: string }[] = [
+  { key: "matches", icon: Heart, label: "Nouveaux matchs", hint: "Quand l'intérêt est réciproque" },
+  { key: "messages", icon: MessageSquare, label: "Messages non lus", hint: "Un résumé par jour, jamais plus" },
+  { key: "visitors", icon: Eye, label: "Visiteurs de votre profil", hint: "Récapitulatif hebdomadaire" },
+  { key: "community", icon: Users, label: "Communauté", hint: "Réponses à vos publications" },
+  { key: "marketing", icon: Megaphone, label: "Actualités et conseils", hint: "Nouveautés, articles, offres" },
+];
+
 function NotificationsPage() {
-  const [prefs, setPrefs] = useState({
-    push_messages: true,
-    push_matches: true,
-    email_messages: false,
-    email_newsletter: true
-  });
+  const [prefs, setPrefs] = useState<Prefs>(DEFAULTS);
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load from local storage
-    const saved = localStorage.getItem("agape_notif_prefs");
-    if (saved) {
-      try {
-        setPrefs(JSON.parse(saved));
-      } catch (e) {}
+    async function load() {
+      const id = await getCurrentUserId();
+      if (!id) { setLoading(false); return; }
+      setUserId(id);
+
+      const { data, error } = await supabase
+        .from("email_preferences")
+        .select("matches, messages, visitors, community, marketing")
+        .eq("user_id", id)
+        .maybeSingle();
+
+      if (error) console.error("[notifications] chargement:", error);
+      if (data) setPrefs(data as Prefs);
+      setLoading(false);
     }
+    load();
   }, []);
 
-  const handleToggle = (key: keyof typeof prefs) => {
+  const toggle = async (key: keyof Prefs) => {
+    if (!userId) return;
+
+    const previous = prefs;
     const next = { ...prefs, [key]: !prefs[key] };
     setPrefs(next);
-    localStorage.setItem("agape_notif_prefs", JSON.stringify(next));
+
+    const { error } = await supabase
+      .from("email_preferences")
+      .upsert({ user_id: userId, ...next, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+
+    if (error) {
+      console.error("[notifications] enregistrement:", error);
+      setPrefs(previous); // on rétablit plutôt que d'afficher un choix non enregistré
+      toast.error("Le réglage n'a pas pu être enregistré");
+      return;
+    }
     toast.success("Préférences enregistrées");
   };
 
@@ -45,78 +99,63 @@ function NotificationsPage() {
         <h1 className="font-serif text-2xl font-semibold">Notifications</h1>
       </div>
 
-      <div className="flex flex-col items-center justify-center py-6 mb-6">
+      <div className="flex flex-col items-center justify-center py-4 mb-6">
         <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
           <BellRing className="w-8 h-8 text-primary" />
         </div>
         <p className="text-sm text-center text-muted-foreground px-4">
-          Choisissez comment vous souhaitez être informé(e) des nouveautés.
+          Choisissez les e-mails que vous souhaitez recevoir.
         </p>
       </div>
 
-      <div className="space-y-6">
-        <div className="bg-card border border-border/50 rounded-3xl p-5 sm:p-6 shadow-soft">
-          <div className="flex items-center gap-3 mb-6">
-            <Smartphone className="w-5 h-5 text-primary" />
-            <h2 className="font-serif text-lg font-medium">Push / App</h2>
-          </div>
-          
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-sm">Nouveaux messages</p>
-                <p className="text-xs text-muted-foreground">Quand quelqu'un vous écrit</p>
-              </div>
-              <Switch 
-                checked={prefs.push_messages}
-                onCheckedChange={() => handleToggle("push_messages")}
-              />
-            </div>
-            <div className="h-px bg-border/50 w-full" />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-sm">Nouveaux Matchs</p>
-                <p className="text-xs text-muted-foreground">Quand l'intérêt est mutuel</p>
-              </div>
-              <Switch 
-                checked={prefs.push_matches}
-                onCheckedChange={() => handleToggle("push_matches")}
-              />
-            </div>
-          </div>
+      {loading ? (
+        <div className="space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-16 rounded-2xl bg-secondary animate-pulse" />
+          ))}
         </div>
+      ) : (
+        <>
+          <div className="bg-card border border-border/50 rounded-3xl p-5 shadow-soft">
+            <div className="flex items-center gap-3 mb-5">
+              <Mail className="w-5 h-5 text-primary" />
+              <h2 className="font-serif text-lg font-medium">E-mails</h2>
+            </div>
 
-        <div className="bg-card border border-border/50 rounded-3xl p-5 sm:p-6 shadow-soft">
-          <div className="flex items-center gap-3 mb-6">
-            <Mail className="w-5 h-5 text-primary" />
-            <h2 className="font-serif text-lg font-medium">Emails</h2>
-          </div>
-          
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-sm">Messages non lus</p>
-                <p className="text-xs text-muted-foreground">Résumé des messages ratés</p>
-              </div>
-              <Switch 
-                checked={prefs.email_messages}
-                onCheckedChange={() => handleToggle("email_messages")}
-              />
-            </div>
-            <div className="h-px bg-border/50 w-full" />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-sm">Actualités AgapeMeet</p>
-                <p className="text-xs text-muted-foreground">Nouveautés et offres</p>
-              </div>
-              <Switch 
-                checked={prefs.email_newsletter}
-                onCheckedChange={() => handleToggle("email_newsletter")}
-              />
+            <div className="space-y-5">
+              {ITEMS.map((item, i) => (
+                <div key={item.key}>
+                  {i > 0 && <div className="h-px bg-border/50 w-full mb-5" />}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <item.icon className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm">{item.label}</p>
+                        <p className="text-xs text-muted-foreground">{item.hint}</p>
+                      </div>
+                    </div>
+                    <Switch checked={prefs[item.key]} onCheckedChange={() => toggle(item.key)} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      </div>
+
+          {/* Ce que l'utilisateur ne peut pas désactiver — annoncé clairement
+              plutôt que découvert dans sa boîte mail. */}
+          <div className="mt-4 rounded-2xl border border-border/60 bg-secondary/40 p-4 flex gap-3">
+            <ShieldCheck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium">Toujours envoyés</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                Les confirmations de paiement et les alertes de sécurité de votre compte
+                vous parviennent quoi qu'il arrive. Ces messages ne relèvent pas de la
+                prospection : ils concernent vos transactions et la protection de votre compte.
+              </p>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -10,13 +10,14 @@ import {
 import { supabase } from "@/lib/supabase";
 import { getCurrentUserId } from "@/lib/auth";
 import {
-  FREE_FEATURES,
+  featuresFor,
   getPlan,
   OFFERS,
   PLANS,
   type Offer,
   type PlanFeatures,
   type PlanId,
+  type PlanLevel,
 } from "@/lib/plans";
 
 export { PLANS, OFFERS, getPlan, formatPrice, offersFor, getOffer, pricePerDay, savingsVsMonthly } from "@/lib/plans";
@@ -48,6 +49,10 @@ type SubscriptionContextValue = {
   expiresAt: string | null;
   daysLeft: number | null;
   isPaid: boolean;
+  /** Inscrit avant la mise en place du paiement — accès VIP à vie. */
+  isFounder: boolean;
+  /** 0 gratuit · 1 15j · 2 1 mois · 3 3 mois · 4 VIP */
+  level: PlanLevel;
   loading: boolean;
   features: PlanFeatures;
   superLikesLeft: number; // -1 = illimité
@@ -71,6 +76,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [usage, setUsage] = useState<Usage>(initialUsage);
   const [pendingPayments, setPendingPayments] = useState(0);
+  /** Membre inscrit avant la mise en place du paiement : accès VIP à vie. */
+  const [isFounder, setIsFounder] = useState(false);
+  const [level, setLevel] = useState<PlanLevel>(0);
 
   // ── Compteurs d'usage (locaux) ──
   useEffect(() => {
@@ -104,22 +112,26 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     if (!userId) {
       setPlanId("gratuit");
       setExpiresAt(null);
+      setIsFounder(false);
+      setLevel(0);
       setLoading(false);
       return;
     }
 
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .select("plan_id, expires_at")
-      .eq("user_id", userId)
-      .maybeSingle();
+    // Une seule requête, et le serveur tranche : abonnement payé, statut
+    // fondateur et expiration sont décidés en base, jamais côté client.
+    const { data, error } = await supabase.rpc("my_entitlements");
 
-    if (error) console.error("[subscription] chargement:", error);
+    if (error) {
+      console.error("[subscription] chargement:", error);
+      setLoading(false);
+      return;
+    }
 
-    // Une période échue ramène automatiquement à la formule gratuite
-    const expired = data?.expires_at ? new Date(data.expires_at).getTime() < Date.now() : true;
-    setPlanId(!data || expired ? "gratuit" : (data.plan_id as PlanId));
+    setPlanId((data?.plan as PlanId) ?? "gratuit");
     setExpiresAt(data?.expires_at ?? null);
+    setIsFounder(Boolean(data?.is_founder));
+    setLevel((data?.level ?? 0) as PlanLevel);
     setLoading(false);
   }, []);
 
@@ -176,6 +188,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           (payload: any) => {
             const row = payload.new;
             if (!row) return;
+            // Un fondateur reste VIP quoi qu'il arrive côté abonnements :
+            // sans cette garde, la réception d'une ligne expirée le
+            // rétrograderait en gratuit.
+            if (isFounder) return;
             const expired = row.expires_at ? new Date(row.expires_at).getTime() < Date.now() : true;
             setPlanId(expired ? "gratuit" : (row.plan_id as PlanId));
             setExpiresAt(row.expires_at ?? null);
@@ -185,7 +201,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     })();
 
     return () => { if (channel) supabase.removeChannel(channel); };
-  }, []);
+  }, [isFounder]);
 
   // Repasse au gratuit sans rechargement quand la période expire pendant la session
   useEffect(() => {
@@ -198,7 +214,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<SubscriptionContextValue>(() => {
     const plan = getPlan(planId);
-    const f = planId === "gratuit" ? FREE_FEATURES : plan.features;
+    // Les quotas dépendent du palier acheté, pas seulement de la formule
+    const f = featuresFor(planId, level);
 
     const superLikesLeft =
       f.superLikesPerDay === -1 ? -1 : Math.max(0, f.superLikesPerDay - usage.superLikes);
@@ -215,6 +232,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       expiresAt,
       daysLeft,
       isPaid: planId !== "gratuit",
+      isFounder,
+      level,
       loading,
       features: f,
       superLikesLeft,
@@ -274,7 +293,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       pendingPayments,
       reconcile,
     };
-  }, [planId, expiresAt, loading, usage, persistUsage, load, pendingPayments, reconcile]);
+  }, [planId, expiresAt, loading, usage, persistUsage, load, pendingPayments, reconcile, isFounder, level]);
 
   return <SubscriptionContext.Provider value={value}>{children}</SubscriptionContext.Provider>;
 }

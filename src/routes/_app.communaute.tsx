@@ -54,7 +54,8 @@ type CommunityPost = {
     city: string | null;
     photos: string[] | null;
     is_verified: boolean | null;
-    is_premium: boolean | null;
+    premium_until: string | null;
+    is_founder: boolean | null;
   } | null;
   liked: boolean;
   saved: boolean;
@@ -71,6 +72,17 @@ type Comment = {
     is_verified: boolean | null;
   } | null;
 };
+
+/**
+ * Badge Premium visible par les autres membres.
+ * On compare une DATE plutot que de lire un booleen : sans tache planifiee,
+ * un booleen resterait vrai apres l'expiration de l'abonnement.
+ */
+function isPremiumMember(profile?: { premium_until?: string | null; is_founder?: boolean | null } | null): boolean {
+  if (!profile) return false;
+  if (profile.is_founder) return true;
+  return Boolean(profile.premium_until) && new Date(profile.premium_until as string).getTime() > Date.now();
+}
 
 function timeAgo(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -380,7 +392,18 @@ function CommunityPage() {
       const user = await getCurrentUser();
       if (user) {
         setCurrentUserId(user.id);
-        const { data: p } = await supabase.from("profiles").select("first_name, city, photos").eq("id", user.id).single();
+        let { data: p } = await supabase
+          .from("profiles")
+          .select("first_name, city, photos, premium_until, is_founder")
+          .eq("id", user.id)
+          .single();
+        if (!p) {
+          ({ data: p } = await supabase
+            .from("profiles")
+            .select("first_name, city, photos")
+            .eq("id", user.id)
+            .single());
+        }
         setCurrentUserProfile(p);
       }
     }
@@ -391,12 +414,31 @@ function CommunityPage() {
     async function loadPosts() {
       setLoading(true);
       try {
-        const { data, error } = await supabase
+        // PostgREST rejette la requête ENTIÈRE si une seule colonne demandée
+        // n'existe pas — et le fil revient vide sans que rien ne l'explique.
+        // C'est ce qui s'est produit avec `is_premium`. On retente donc avec
+        // le jeu de colonnes minimal garanti plutôt que de tout perdre.
+        const COLS_FULL =
+          "id, user_id, category, text, image_url, video_url, likes_count, comments_count, created_at, " +
+          "profiles!community_posts_user_id_fkey(id, first_name, city, photos, is_verified, premium_until, is_founder)";
+        const COLS_MIN =
+          "id, user_id, category, text, image_url, video_url, likes_count, comments_count, created_at, " +
+          "profiles!community_posts_user_id_fkey(id, first_name, city, photos)";
+
+        let { data, error } = await supabase
           .from("community_posts")
-          .select(`id, user_id, category, text, image_url, video_url, likes_count, comments_count, created_at,
-            profiles!community_posts_user_id_fkey(id, first_name, city, photos, is_verified, is_premium)`)
+          .select(COLS_FULL)
           .order("created_at", { ascending: false })
           .limit(50);
+
+        if (error) {
+          console.warn("[communauté] colonnes optionnelles absentes, repli :", error.message);
+          ({ data, error } = await supabase
+            .from("community_posts")
+            .select(COLS_MIN)
+            .order("created_at", { ascending: false })
+            .limit(50));
+        }
 
         if (error) throw error;
         if (data) {
@@ -420,7 +462,10 @@ function CommunityPage() {
           })));
         }
       } catch (err) {
+        // Visible pour l'utilisateur : un fil vide sans explication laisse
+        // croire que sa publication n'a pas été enregistrée.
         console.error("Erreur chargement posts:", err);
+        toast.error("Impossible de charger les publications");
       } finally {
         setLoading(false);
       }
@@ -613,7 +658,8 @@ function CommunityPage() {
           city: currentUserProfile?.city || null,
           photos: currentUserProfile?.photos || null,
           is_verified: false,
-          is_premium: false,
+          premium_until: currentUserProfile?.premium_until ?? null,
+          is_founder: currentUserProfile?.is_founder ?? false,
         },
         liked: false,
         saved: false,
@@ -872,7 +918,7 @@ function CommunityPage() {
                   <div className="flex items-center gap-1.5">
                     <span className="font-semibold text-sm truncate">{p.profile?.first_name || "Membre"}</span>
                     {p.profile?.is_verified && <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />}
-                    {p.profile?.is_premium && <Crown className="w-3.5 h-3.5 text-gold shrink-0" />}
+                    {isPremiumMember(p.profile) && <Crown className="w-3.5 h-3.5 text-gold shrink-0" />}
                   </div>
                   <div className="text-[11px] text-muted-foreground">{timeAgo(p.created_at)} · {p.profile?.city || ""}</div>
                 </div>

@@ -83,10 +83,12 @@ const fadeUp = { hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } };
 function Nav() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border/40 shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <a href="#top" className="flex items-center gap-2">
-          <img src={logoAsset} alt="AgapeMeet – rencontres chrétiennes sérieuses" className="w-10 h-10 object-contain" />
-          <span className="font-serif text-xl font-semibold tracking-tight">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+        {/* shrink-0 sur le logo : sans lui, flex comprime le nom de la
+            plateforme pour laisser la place au bouton sur petit écran. */}
+        <a href="#top" className="flex items-center gap-2 shrink-0">
+          <img src={logoAsset} alt="AgapeMeet – rencontres chrétiennes sérieuses" className="w-9 h-9 sm:w-10 sm:h-10 object-contain" />
+          <span className="font-serif text-lg sm:text-xl font-semibold tracking-tight">
             Agape<span className="text-gold">Meet</span>
           </span>
         </a>
@@ -100,10 +102,13 @@ function Nav() {
         </nav>
         <Link
           to="/inscription"
-          className="inline-flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-5 py-2.5 text-sm font-medium hover:bg-primary/90 transition shadow-soft"
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-3.5 sm:px-5 py-2 sm:py-2.5 text-sm font-medium hover:bg-primary/90 transition shadow-soft"
         >
-          Rejoindre gratuitement
-          <ArrowRight className="w-4 h-4" />
+          {/* Libellé court sur mobile : « Rejoindre gratuitement » occupait
+              toute la largeur et écrasait le nom de la plateforme. */}
+          <span className="sm:hidden">Rejoindre</span>
+          <span className="hidden sm:inline">Rejoindre gratuitement</span>
+          <ArrowRight className="w-4 h-4 hidden sm:block" />
         </Link>
       </div>
     </header>

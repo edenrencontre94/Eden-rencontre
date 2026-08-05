@@ -22,6 +22,8 @@ export type Profile = {
   favoriteVerse: string;
   church: string;
   faithImportance: string;
+  /** Fin du Boost en cours — sert au classement et à l'étiquette */
+  boostedUntil?: string | null;
 };
 
 const pic = (seed: string, w = 800) =>
