@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Settings, Languages, Package, CreditCard, Ban, Trash2, LogOut, MessageSquare, Heart } from "lucide-react";
+import { Camera, Settings, Languages, Package, CreditCard, Ban, Trash2, LogOut, MessageSquare, Heart, LifeBuoy } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import {
@@ -405,6 +405,13 @@ function AppLayout() {
                     <Link to="/parametres/bloques" className="flex items-center gap-3 py-2.5 px-2">
                       <Ban className="w-4 h-4 text-muted-foreground" />
                       <span className="font-medium">Profils bloqués</span>
+                    </Link>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
+                    <Link to="/aide" className="flex items-center gap-3 py-2.5 px-2">
+                      <LifeBuoy className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-medium">Aide et support</span>
                     </Link>
                   </DropdownMenuItem>
 

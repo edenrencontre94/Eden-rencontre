@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, ShieldAlert, CreditCard, Megaphone, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, ShieldAlert, CreditCard, Megaphone, Settings, LogOut, BarChart3, LifeBuoy } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/lib/supabase";
 import { getCurrentUser } from "@/lib/auth";
@@ -14,6 +14,8 @@ const adminMenus = [
   { to: "/admin/utilisateurs", label: "Utilisateurs", icon: Users },
   { to: "/admin/moderation", label: "Modération", icon: ShieldAlert },
   { to: "/admin/abonnements", label: "Abonnements", icon: CreditCard },
+  { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/admin/support", label: "Support", icon: LifeBuoy },
   { to: "/admin/marketing", label: "Marketing", icon: Megaphone },
   { to: "/admin/parametres", label: "Paramètres", icon: Settings },
 ];

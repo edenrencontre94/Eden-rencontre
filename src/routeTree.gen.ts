@@ -23,6 +23,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as AppAbonnementRouteImport } from './routes/_app.abonnement'
 import { Route as AppAccueilRouteImport } from './routes/_app.accueil'
+import { Route as AppAideRouteImport } from './routes/_app.aide'
 import { Route as AppCommunauteRouteImport } from './routes/_app.communaute'
 import { Route as AppDecouvrirRouteImport } from './routes/_app.decouvrir'
 import { Route as AppDemandesRouteImport } from './routes/_app.demandes'
@@ -30,9 +31,11 @@ import { Route as AppMessagesRouteImport } from './routes/_app.messages'
 import { Route as AppProfilRouteImport } from './routes/_app.profil'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAbonnementsRouteImport } from './routes/admin.abonnements'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
 import { Route as AdminModerationRouteImport } from './routes/admin.moderation'
 import { Route as AdminParametresRouteImport } from './routes/admin.parametres'
+import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminUtilisateursRouteImport } from './routes/admin.utilisateurs'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
@@ -111,6 +114,11 @@ const AppAccueilRoute = AppAccueilRouteImport.update({
   path: '/accueil',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAideRoute = AppAideRouteImport.update({
+  id: '/aide',
+  path: '/aide',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCommunauteRoute = AppCommunauteRouteImport.update({
   id: '/communaute',
   path: '/communaute',
@@ -146,6 +154,11 @@ const AdminAbonnementsRoute = AdminAbonnementsRouteImport.update({
   path: '/abonnements',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminMarketingRoute = AdminMarketingRouteImport.update({
   id: '/marketing',
   path: '/marketing',
@@ -159,6 +172,11 @@ const AdminModerationRoute = AdminModerationRouteImport.update({
 const AdminParametresRoute = AdminParametresRouteImport.update({
   id: '/parametres',
   path: '/parametres',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSupportRoute = AdminSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminUtilisateursRoute = AdminUtilisateursRouteImport.update({
@@ -217,15 +235,18 @@ export interface FileRoutesByFullPath {
   '/tarifs': typeof TarifsRoute
   '/abonnement': typeof AppAbonnementRoute
   '/accueil': typeof AppAccueilRoute
+  '/aide': typeof AppAideRoute
   '/communaute': typeof AppCommunauteRoute
   '/decouvrir': typeof AppDecouvrirRoute
   '/demandes': typeof AppDemandesRoute
   '/messages': typeof AppMessagesRoute
   '/profil': typeof AppProfilRoute
   '/admin/abonnements': typeof AdminAbonnementsRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/moderation': typeof AdminModerationRoute
   '/admin/parametres': typeof AdminParametresRoute
+  '/admin/support': typeof AdminSupportRoute
   '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/rencontre-chretienne/$pays': typeof RencontreChretiennePaysRoute
@@ -249,15 +270,18 @@ export interface FileRoutesByTo {
   '/tarifs': typeof TarifsRoute
   '/abonnement': typeof AppAbonnementRoute
   '/accueil': typeof AppAccueilRoute
+  '/aide': typeof AppAideRoute
   '/communaute': typeof AppCommunauteRoute
   '/decouvrir': typeof AppDecouvrirRoute
   '/demandes': typeof AppDemandesRoute
   '/messages': typeof AppMessagesRoute
   '/profil': typeof AppProfilRoute
   '/admin/abonnements': typeof AdminAbonnementsRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/moderation': typeof AdminModerationRoute
   '/admin/parametres': typeof AdminParametresRoute
+  '/admin/support': typeof AdminSupportRoute
   '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/rencontre-chretienne/$pays': typeof RencontreChretiennePaysRoute
@@ -284,15 +308,18 @@ export interface FileRoutesById {
   '/tarifs': typeof TarifsRoute
   '/_app/abonnement': typeof AppAbonnementRoute
   '/_app/accueil': typeof AppAccueilRoute
+  '/_app/aide': typeof AppAideRoute
   '/_app/communaute': typeof AppCommunauteRoute
   '/_app/decouvrir': typeof AppDecouvrirRoute
   '/_app/demandes': typeof AppDemandesRoute
   '/_app/messages': typeof AppMessagesRoute
   '/_app/profil': typeof AppProfilRoute
   '/admin/abonnements': typeof AdminAbonnementsRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/marketing': typeof AdminMarketingRoute
   '/admin/moderation': typeof AdminModerationRoute
   '/admin/parametres': typeof AdminParametresRoute
+  '/admin/support': typeof AdminSupportRoute
   '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/rencontre-chretienne/$pays': typeof RencontreChretiennePaysRoute
@@ -319,15 +346,18 @@ export interface FileRouteTypes {
     | '/tarifs'
     | '/abonnement'
     | '/accueil'
+    | '/aide'
     | '/communaute'
     | '/decouvrir'
     | '/demandes'
     | '/messages'
     | '/profil'
     | '/admin/abonnements'
+    | '/admin/analytics'
     | '/admin/marketing'
     | '/admin/moderation'
     | '/admin/parametres'
+    | '/admin/support'
     | '/admin/utilisateurs'
     | '/blog/$slug'
     | '/rencontre-chretienne/$pays'
@@ -351,15 +381,18 @@ export interface FileRouteTypes {
     | '/tarifs'
     | '/abonnement'
     | '/accueil'
+    | '/aide'
     | '/communaute'
     | '/decouvrir'
     | '/demandes'
     | '/messages'
     | '/profil'
     | '/admin/abonnements'
+    | '/admin/analytics'
     | '/admin/marketing'
     | '/admin/moderation'
     | '/admin/parametres'
+    | '/admin/support'
     | '/admin/utilisateurs'
     | '/blog/$slug'
     | '/rencontre-chretienne/$pays'
@@ -385,15 +418,18 @@ export interface FileRouteTypes {
     | '/tarifs'
     | '/_app/abonnement'
     | '/_app/accueil'
+    | '/_app/aide'
     | '/_app/communaute'
     | '/_app/decouvrir'
     | '/_app/demandes'
     | '/_app/messages'
     | '/_app/profil'
     | '/admin/abonnements'
+    | '/admin/analytics'
     | '/admin/marketing'
     | '/admin/moderation'
     | '/admin/parametres'
+    | '/admin/support'
     | '/admin/utilisateurs'
     | '/blog/$slug'
     | '/rencontre-chretienne/$pays'
@@ -523,6 +559,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAccueilRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/aide': {
+      id: '/_app/aide'
+      path: '/aide'
+      fullPath: '/aide'
+      preLoaderRoute: typeof AppAideRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/communaute': {
       id: '/_app/communaute'
       path: '/communaute'
@@ -572,6 +615,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAbonnementsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/marketing': {
       id: '/admin/marketing'
       path: '/marketing'
@@ -591,6 +641,13 @@ declare module '@tanstack/react-router' {
       path: '/parametres'
       fullPath: '/admin/parametres'
       preLoaderRoute: typeof AdminParametresRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/support': {
+      id: '/admin/support'
+      path: '/support'
+      fullPath: '/admin/support'
+      preLoaderRoute: typeof AdminSupportRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/utilisateurs': {
@@ -655,6 +712,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAbonnementRoute: typeof AppAbonnementRoute
   AppAccueilRoute: typeof AppAccueilRoute
+  AppAideRoute: typeof AppAideRoute
   AppCommunauteRoute: typeof AppCommunauteRoute
   AppDecouvrirRoute: typeof AppDecouvrirRoute
   AppDemandesRoute: typeof AppDemandesRoute
@@ -669,6 +727,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAbonnementRoute: AppAbonnementRoute,
   AppAccueilRoute: AppAccueilRoute,
+  AppAideRoute: AppAideRoute,
   AppCommunauteRoute: AppCommunauteRoute,
   AppDecouvrirRoute: AppDecouvrirRoute,
   AppDemandesRoute: AppDemandesRoute,
@@ -684,18 +743,22 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface AdminRouteChildren {
   AdminAbonnementsRoute: typeof AdminAbonnementsRoute
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminMarketingRoute: typeof AdminMarketingRoute
   AdminModerationRoute: typeof AdminModerationRoute
   AdminParametresRoute: typeof AdminParametresRoute
+  AdminSupportRoute: typeof AdminSupportRoute
   AdminUtilisateursRoute: typeof AdminUtilisateursRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAbonnementsRoute: AdminAbonnementsRoute,
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminMarketingRoute: AdminMarketingRoute,
   AdminModerationRoute: AdminModerationRoute,
   AdminParametresRoute: AdminParametresRoute,
+  AdminSupportRoute: AdminSupportRoute,
   AdminUtilisateursRoute: AdminUtilisateursRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
