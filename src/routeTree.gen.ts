@@ -17,6 +17,8 @@ import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MotDePasseOublieRouteImport } from './routes/mot-de-passe-oublie'
+import { Route as NouveauMotDePasseRouteImport } from './routes/nouveau-mot-de-passe'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as AppAbonnementRouteImport } from './routes/_app.abonnement'
@@ -77,6 +79,16 @@ const InscriptionRoute = InscriptionRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MotDePasseOublieRoute = MotDePasseOublieRouteImport.update({
+  id: '/mot-de-passe-oublie',
+  path: '/mot-de-passe-oublie',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NouveauMotDePasseRoute = NouveauMotDePasseRouteImport.update({
+  id: '/nouveau-mot-de-passe',
+  path: '/nouveau-mot-de-passe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -199,6 +211,8 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
+  '/mot-de-passe-oublie': typeof MotDePasseOublieRoute
+  '/nouveau-mot-de-passe': typeof NouveauMotDePasseRoute
   '/onboarding': typeof OnboardingRoute
   '/tarifs': typeof TarifsRoute
   '/abonnement': typeof AppAbonnementRoute
@@ -229,6 +243,8 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
+  '/mot-de-passe-oublie': typeof MotDePasseOublieRoute
+  '/nouveau-mot-de-passe': typeof NouveauMotDePasseRoute
   '/onboarding': typeof OnboardingRoute
   '/tarifs': typeof TarifsRoute
   '/abonnement': typeof AppAbonnementRoute
@@ -262,6 +278,8 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
+  '/mot-de-passe-oublie': typeof MotDePasseOublieRoute
+  '/nouveau-mot-de-passe': typeof NouveauMotDePasseRoute
   '/onboarding': typeof OnboardingRoute
   '/tarifs': typeof TarifsRoute
   '/_app/abonnement': typeof AppAbonnementRoute
@@ -295,6 +313,8 @@ export interface FileRouteTypes {
     | '/faq'
     | '/inscription'
     | '/login'
+    | '/mot-de-passe-oublie'
+    | '/nouveau-mot-de-passe'
     | '/onboarding'
     | '/tarifs'
     | '/abonnement'
@@ -325,6 +345,8 @@ export interface FileRouteTypes {
     | '/faq'
     | '/inscription'
     | '/login'
+    | '/mot-de-passe-oublie'
+    | '/nouveau-mot-de-passe'
     | '/onboarding'
     | '/tarifs'
     | '/abonnement'
@@ -357,6 +379,8 @@ export interface FileRouteTypes {
     | '/faq'
     | '/inscription'
     | '/login'
+    | '/mot-de-passe-oublie'
+    | '/nouveau-mot-de-passe'
     | '/onboarding'
     | '/tarifs'
     | '/_app/abonnement'
@@ -390,6 +414,8 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   InscriptionRoute: typeof InscriptionRoute
   LoginRoute: typeof LoginRoute
+  MotDePasseOublieRoute: typeof MotDePasseOublieRoute
+  NouveauMotDePasseRoute: typeof NouveauMotDePasseRoute
   OnboardingRoute: typeof OnboardingRoute
   TarifsRoute: typeof TarifsRoute
   BlogSlugRoute: typeof BlogSlugRoute
@@ -453,6 +479,20 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mot-de-passe-oublie': {
+      id: '/mot-de-passe-oublie'
+      path: '/mot-de-passe-oublie'
+      fullPath: '/mot-de-passe-oublie'
+      preLoaderRoute: typeof MotDePasseOublieRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nouveau-mot-de-passe': {
+      id: '/nouveau-mot-de-passe'
+      path: '/nouveau-mot-de-passe'
+      fullPath: '/nouveau-mot-de-passe'
+      preLoaderRoute: typeof NouveauMotDePasseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -671,6 +711,8 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   InscriptionRoute: InscriptionRoute,
   LoginRoute: LoginRoute,
+  MotDePasseOublieRoute: MotDePasseOublieRoute,
+  NouveauMotDePasseRoute: NouveauMotDePasseRoute,
   OnboardingRoute: OnboardingRoute,
   TarifsRoute: TarifsRoute,
   BlogSlugRoute: BlogSlugRoute,

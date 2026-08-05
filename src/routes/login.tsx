@@ -102,13 +102,12 @@ function LoginPage() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="login-password">Mot de passe</Label>
-                  <a
-                    href="#"
-                    onClick={(e) => { e.preventDefault(); toast.info("Fonctionnalite bientot disponible"); }}
+                  <Link
+                    to="/mot-de-passe-oublie"
                     className="text-xs text-primary hover:opacity-80 transition"
                   >
-                    Mot de passe oublie ?
-                  </a>
+                    Mot de passe oublié ?
+                  </Link>
                 </div>
                 <div className="relative">
                   <Input
