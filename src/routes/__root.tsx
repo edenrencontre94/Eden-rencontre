@@ -96,7 +96,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.png", type: "image/png" },
+      // Google construit sa vignette à partir d'une icône CARRÉE dont le
+      // côté est un MULTIPLE DE 48. L'ancienne déclaration pointait sur un
+      // fichier de 1254×1254 — 1254 ÷ 48 = 26,125 — et pesant 964 Ko :
+      // hors critère, et chargé sur chaque page.
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+      { rel: "icon", href: "/favicon-48x48.png", type: "image/png", sizes: "48x48" },
+      { rel: "icon", href: "/favicon-96x96.png", type: "image/png", sizes: "96x96" },
+      { rel: "icon", href: "/favicon-144x144.png", type: "image/png", sizes: "144x144" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
+      { rel: "manifest", href: "/site.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
