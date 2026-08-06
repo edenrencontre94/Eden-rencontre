@@ -33,6 +33,16 @@ type Stats = {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const fmt = (n: number) => n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n / 1_000).toFixed(1)}K` : String(n);
 
+/** Horodatage relatif, pour le fil d'activité. */
+function ilYA(iso: string): string {
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 60) return "à l'instant";
+  if (s < 3600) return `il y a ${Math.floor(s / 60)} min`;
+  if (s < 86400) return `il y a ${Math.floor(s / 3600)} h`;
+  if (s < 604800) return `il y a ${Math.floor(s / 86400)} j`;
+  return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" });
+}
+
 // ─── Mini bar sparkline (SVG) ─────────────────────────────────────────────────
 function Sparkline({ data, color }: { data: number[]; color: string }) {
   const max = Math.max(...data, 1);
@@ -99,10 +109,39 @@ function DonutChart({ segments, size = 100 }: { segments: { value: number; color
   );
 }
 
+/**
+ * Variation entre une période et la précédente.
+ *
+ * Toutes les variations de cette page étaient écrites en dur — « +14,5 %
+ * ce mois », « +30,1 % », « Excellent » — donc fausses par construction et
+ * toujours flatteuses. Celle-ci se calcule, et sait dire qu'elle ne sait
+ * pas : sans période précédente, on n'affiche rien plutôt qu'un « +100 % »
+ * qui ne veut rien dire.
+ */
+function variation(actuel: number, precedent: number): {
+  trend: "up" | "down" | "neutral"; label: string;
+} | null {
+  if (precedent === 0) {
+    if (actuel === 0) return null;
+    return { trend: "up", label: "première période" };
+  }
+  const pct = Math.round(((actuel - precedent) / precedent) * 100);
+  if (pct === 0) return { trend: "neutral", label: "stable" };
+  return {
+    trend: pct > 0 ? "up" : "down",
+    label: `${pct > 0 ? "+" : ""}${pct} %`,
+  };
+}
+
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
-function KpiCard({ title, value, sub, trend, trendValue, icon: Icon, iconBg, sparkData, sparkColor }: {
-  title: string; value: string; sub: string; trend: "up" | "down" | "neutral";
-  trendValue: string; icon: any; iconBg: string; sparkData: number[]; sparkColor: string;
+function KpiCard({ title, value, sub, delta, icon: Icon, iconBg, sparkData, sparkColor }: {
+  title: string; value: string; sub: string;
+  delta?: { trend: "up" | "down" | "neutral"; label: string } | null;
+  icon: any; iconBg: string;
+  // Optionnelle : une carte sans série réelle n'affiche AUCUNE courbe.
+  // Les anciennes étaient des tableaux figés dont seule la dernière valeur
+  // était vraie — la courbe montait donc toujours, quoi qu'il arrive.
+  sparkData?: number[]; sparkColor?: string;
 }) {
   return (
     <div className="bg-card border border-border/50 rounded-2xl p-5 shadow-sm flex flex-col gap-3">
@@ -110,20 +149,27 @@ function KpiCard({ title, value, sub, trend, trendValue, icon: Icon, iconBg, spa
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg}`}>
           <Icon className="w-5 h-5" />
         </div>
-        <Sparkline data={sparkData} color={sparkColor} />
+        {sparkData && sparkData.length > 1 && (
+          <Sparkline data={sparkData} color={sparkColor ?? "hsl(var(--primary))"} />
+        )}
       </div>
       <div>
         <div className="text-2xl font-bold font-serif">{value}</div>
         <div className="text-xs text-muted-foreground mt-0.5">{title}</div>
       </div>
-      <div className="flex items-center justify-between border-t border-border/40 pt-3">
-        <span className="text-xs text-muted-foreground">{sub}</span>
-        <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${
-          trend === "up" ? "text-emerald-500" : trend === "down" ? "text-destructive" : "text-muted-foreground"
-        }`}>
-          {trend === "up" ? <ArrowUpRight className="w-3.5 h-3.5" /> : trend === "down" ? <ArrowDownRight className="w-3.5 h-3.5" /> : null}
-          {trendValue}
-        </span>
+      <div className="flex items-center justify-between border-t border-border/40 pt-3 gap-2">
+        <span className="text-xs text-muted-foreground truncate">{sub}</span>
+        {delta && (
+          <span className={`inline-flex items-center gap-0.5 text-xs font-semibold shrink-0 ${
+            delta.trend === "up" ? "text-emerald-500"
+              : delta.trend === "down" ? "text-destructive"
+              : "text-muted-foreground"
+          }`}>
+            {delta.trend === "up" ? <ArrowUpRight className="w-3.5 h-3.5" />
+              : delta.trend === "down" ? <ArrowDownRight className="w-3.5 h-3.5" /> : null}
+            {delta.label}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -149,6 +195,7 @@ function EmptyChart() {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState<any>(null);
+  const [ov, setOv] = useState<any>(null);
   const [stats, setStats] = useState<Stats>({
     totalUsers: 0, newUsersToday: 0, newUsersThisWeek: 0, newUsersThisMonth: 0,
     verifiedUsers: 0, maleUsers: 0, femaleUsers: 0,
@@ -224,8 +271,15 @@ export default function AdminDashboard() {
 
         // Séries et ventes par offre : la même fonction que /admin/analytics,
         // pour que les deux pages ne racontent pas deux histoires.
-        const { data: a, error: aErr } = await supabase.rpc("admin_analytics", { p_days: 30 });
+        const [
+          { data: a, error: aErr },
+          { data: o, error: oErr },
+        ] = await Promise.all([
+          supabase.rpc("admin_analytics", { p_days: 30 }),
+          supabase.rpc("admin_overview"),
+        ]);
         if (!aErr && a && !(a as any).error) setAnalytics(a);
+        if (!oErr && o && !(o as any).error) setOv(o);
       } catch (e) {
         console.error(e);
       } finally {
@@ -245,12 +299,13 @@ export default function AdminDashboard() {
     ? {
         inscriptions: analytics.signups.map((p: any) => Number(p.n)),
         matchs: analytics.matches.map((p: any) => Number(p.n)),
+        messages: analytics.messages.map((p: any) => Number(p.n)),
         revenus: analytics.revenue.map((p: any) => Number(p.n)),
         labels: analytics.signups.map((p: any) =>
           new Date(p.d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" }),
         ),
       }
-    : { inscriptions: [], matchs: [], revenus: [], labels: [] };
+    : { inscriptions: [], matchs: [], messages: [], revenus: [], labels: [] };
 
   // Aucune valeur de repli : afficher 60/40 quand la base est vide donne
   // l'illusion d'une communauté équilibrée qui n'existe pas encore.
@@ -352,10 +407,36 @@ export default function AdminDashboard() {
           <Users className="w-3.5 h-3.5" /> Utilisateurs
         </h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard title="Total membres" value={loading ? "—" : fmt(stats.totalUsers)} sub="Comptes inscrits" trend="up" trendValue="+14.5% ce mois" icon={Users} iconBg="bg-primary/10 text-primary" sparkData={[32,45,38,62,55,80,72,98,85,112,102,stats.totalUsers || 120]} sparkColor="hsl(var(--primary))" />
-          <KpiCard title="Inscriptions aujourd'hui" value={loading ? "—" : String(stats.newUsersToday)} sub="Aujourd'hui seulement" trend="up" trendValue="+8 vs hier" icon={UserCheck} iconBg="bg-emerald-500/10 text-emerald-600" sparkData={[5,8,4,12,9,14,11,17,14,18,15,stats.newUsersToday || 22]} sparkColor="#10b981" />
-          <KpiCard title="Cette semaine" value={loading ? "—" : String(stats.newUsersThisWeek)} sub="7 derniers jours" trend="up" trendValue="+22.4% vs semaine der." icon={Activity} iconBg="bg-sky-500/10 text-sky-500" sparkData={[40,52,38,68,58,84,72,95,88,110,102,stats.newUsersThisWeek || 128]} sparkColor="#0ea5e9" />
-          <KpiCard title="Ce mois-ci" value={loading ? "—" : String(stats.newUsersThisMonth)} sub="30 derniers jours" trend="up" trendValue="+18.2% vs mois der." icon={TrendingUp} iconBg="bg-gold/10 text-gold" sparkData={[80,105,78,132,115,162,142,185,172,210,198,stats.newUsersThisMonth || 248]} sparkColor="hsl(var(--gold))" />
+          <KpiCard
+            title="Total membres"
+            value={loading ? "—" : fmt(stats.totalUsers)}
+            sub={`${stats.verifiedUsers} vérifiés`}
+            delta={ov && variation(ov.inscrits.mois, ov.inscrits.mois_p)}
+            icon={Users} iconBg="bg-primary/10 text-primary"
+            sparkData={series.inscriptions} sparkColor="hsl(var(--primary))"
+          />
+          <KpiCard
+            title="Inscriptions aujourd'hui"
+            value={loading ? "—" : String(ov?.inscrits.jour ?? 0)}
+            sub={`${ov?.inscrits.hier ?? 0} hier`}
+            delta={ov && variation(ov.inscrits.jour, ov.inscrits.hier)}
+            icon={UserCheck} iconBg="bg-emerald-500/10 text-emerald-600"
+          />
+          <KpiCard
+            title="Cette semaine"
+            value={loading ? "—" : String(ov?.inscrits.semaine ?? 0)}
+            sub="vs 7 jours précédents"
+            delta={ov && variation(ov.inscrits.semaine, ov.inscrits.semaine_p)}
+            icon={Activity} iconBg="bg-sky-500/10 text-sky-500"
+          />
+          <KpiCard
+            title="Ce mois-ci"
+            value={loading ? "—" : String(ov?.inscrits.mois ?? 0)}
+            sub="vs 30 jours précédents"
+            delta={ov && variation(ov.inscrits.mois, ov.inscrits.mois_p)}
+            icon={TrendingUp} iconBg="bg-gold/10 text-gold"
+            sparkData={series.inscriptions} sparkColor="hsl(var(--gold))"
+          />
         </div>
       </section>
 
@@ -365,10 +446,36 @@ export default function AdminDashboard() {
           <Heart className="w-3.5 h-3.5" /> Engagement & Matchs
         </h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard title="Total matchs" value={loading ? "—" : fmt(stats.totalMatches)} sub="Connexions réelles" trend="up" trendValue="+30.1%" icon={Heart} iconBg="bg-primary/10 text-primary" sparkData={[12,18,10,24,19,30,26,38,34,44,40,stats.totalMatches || 52]} sparkColor="hsl(var(--primary))" />
-          <KpiCard title="Messages envoyés" value={loading ? "—" : fmt(stats.totalMessages)} sub="Dans toutes les conversations" trend="up" trendValue="+42.5%" icon={MessageCircle} iconBg="bg-sky-500/10 text-sky-500" sparkData={[200,310,180,420,360,540,480,620,580,720,680,stats.totalMessages || 800]} sparkColor="#0ea5e9" />
-          <KpiCard title="Taux de match" value={`${matchRate}%`} sub="Matchs / utilisateurs" trend="up" trendValue="Excellent" icon={Zap} iconBg="bg-emerald-500/10 text-emerald-600" sparkData={[3.2,4.1,2.9,5.0,4.4,6.2,5.7,7.1,6.6,8.0,7.5,parseFloat(matchRate) || 8.8]} sparkColor="#10b981" />
-          <KpiCard title="Msgs / match" value={String(avgMsgPerMatch || 24)} sub="Moyenne par conversation" trend="up" trendValue="+5 depuis jan." icon={Star} iconBg="bg-gold/10 text-gold" sparkData={[12,15,11,18,16,22,20,25,23,27,25,avgMsgPerMatch || 30]} sparkColor="hsl(var(--gold))" />
+          <KpiCard
+            title="Total matchs"
+            value={loading ? "—" : fmt(stats.totalMatches)}
+            sub={`${ov?.matchs_periode.mois ?? 0} sur 30 jours`}
+            delta={ov && variation(ov.matchs_periode.mois, ov.matchs_periode.mois_p)}
+            icon={Heart} iconBg="bg-primary/10 text-primary"
+            sparkData={series.matchs} sparkColor="hsl(var(--primary))"
+          />
+          <KpiCard
+            title="Messages envoyés"
+            value={loading ? "—" : fmt(stats.totalMessages)}
+            sub={`${ov?.messages_periode.mois ?? 0} sur 30 jours`}
+            delta={ov && variation(ov.messages_periode.mois, ov.messages_periode.mois_p)}
+            icon={MessageCircle} iconBg="bg-sky-500/10 text-sky-500"
+            sparkData={series.messages} sparkColor="#0ea5e9"
+          />
+          {/* Aucune variation ici : un ratio n'a pas de « période
+              précédente » sans historiser le calcul lui-même. */}
+          <KpiCard
+            title="Taux de match"
+            value={`${matchRate}%`}
+            sub="Matchs rapportés aux membres"
+            icon={Zap} iconBg="bg-emerald-500/10 text-emerald-600"
+          />
+          <KpiCard
+            title="Msgs / match"
+            value={loading ? "—" : String(avgMsgPerMatch)}
+            sub="Moyenne par conversation"
+            icon={Star} iconBg="bg-gold/10 text-gold"
+          />
         </div>
       </section>
 
@@ -378,10 +485,34 @@ export default function AdminDashboard() {
           <Shield className="w-3.5 h-3.5" /> Santé de la plateforme
         </h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard title="Profils vérifiés" value={`${verifiedPct}%`} sub={`${stats.verifiedUsers} membres certifiés`} trend="up" trendValue="+5% ce mois" icon={UserCheck} iconBg="bg-emerald-500/10 text-emerald-600" sparkData={[18,22,20,28,26,32,30,36,34,40,38,verifiedPct || 44]} sparkColor="#10b981" />
-          <KpiCard title="Profils visités" value="8.4K" sub="Vues de profil aujourd'hui" trend="up" trendValue="+12%" icon={Eye} iconBg="bg-primary/10 text-primary" sparkData={[4200,5800,3500,7100,6400,8900,7800,9800,8600,10200,9500,8400]} sparkColor="hsl(var(--primary))" />
-          <KpiCard title="Signalements" value={String(stats.openReports)} sub="En attente de traitement" trend="down" trendValue="-3.1% — Bon score" icon={AlertTriangle} iconBg="bg-amber-500/10 text-amber-500" sparkData={[18,22,14,26,19,28,22,24,18,20,15,stats.openReports]} sparkColor="#f59e0b" />
-          <KpiCard title="Super Likes" value="342" sub="Envoyés aujourd'hui" trend="up" trendValue="+8 vs hier" icon={Star} iconBg="bg-primary/10 text-primary" sparkData={[180,245,152,312,278,388,342,415,392,448,428,342]} sparkColor="hsl(var(--primary))" />
+          <KpiCard
+            title="Profils vérifiés"
+            value={`${verifiedPct}%`}
+            sub={`${stats.verifiedUsers} membres certifiés`}
+            icon={UserCheck} iconBg="bg-emerald-500/10 text-emerald-600"
+          />
+          {/* « 8.4K » était inventé, alors que `profile_visits` contient
+              le chiffre exact. */}
+          <KpiCard
+            title="Profils visités"
+            value={loading ? "—" : String(ov?.visites_jour ?? 0)}
+            sub="Vues de profil aujourd'hui"
+            delta={ov && variation(ov.visites_jour, ov.visites_hier)}
+            icon={Eye} iconBg="bg-primary/10 text-primary"
+          />
+          <KpiCard
+            title="Signalements"
+            value={String(stats.openReports)}
+            sub="En attente de traitement"
+            icon={AlertTriangle} iconBg="bg-amber-500/10 text-amber-500"
+          />
+          <KpiCard
+            title="Super Likes"
+            value={loading ? "—" : String(ov?.superlikes_jour ?? 0)}
+            sub="Envoyés aujourd'hui"
+            delta={ov && variation(ov.superlikes_jour, ov.superlikes_hier)}
+            icon={Star} iconBg="bg-primary/10 text-primary"
+          />
         </div>
       </section>
 
@@ -517,29 +648,47 @@ export default function AdminDashboard() {
         
         {/* Activity feed */}
         <div className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
-          <h3 className="font-semibold text-base mb-4">Activité en direct</h3>
+          <h3 className="font-semibold text-base mb-4">Activité récente</h3>
+
+          {/* Ce fil était entièrement imaginaire : « Marie & Jean-Baptiste »,
+              « Lucie A. — 24 990 FCFA » — un montant qui ne correspond même
+              pas au catalogue. Les événements viennent maintenant des
+              tables : inscriptions, matchs, paiements, signalements et
+              demandes de support. */}
           <div className="space-y-4">
-            {[
-              { text: "Nouveau match créé", detail: "Marie & Jean-Baptiste", time: "Il y a 2 min", type: "match", color: "bg-primary/10 text-primary" },
-              { text: "Nouveau Super Like", detail: "Esther → Paul", time: "Il y a 5 min", type: "star", color: "bg-gold/10 text-gold" },
-              { text: "Abonnement Premium (3 mois)", detail: "Lucie A. — 24 990 FCFA", time: "Il y a 9 min", type: "billing", color: "bg-emerald-500/10 text-emerald-600" },
-              { text: "Signalement ouvert", detail: "Profil #4892", time: "Il y a 15 min", type: "report", color: "bg-destructive/10 text-destructive" },
-              { text: "Profil vérifié", detail: "Sarah M., Douala", time: "Il y a 28 min", type: "verified", color: "bg-emerald-500/10 text-emerald-600" },
-              { text: "Nouveau membre inscrit", detail: "Daniel K., Abidjan", time: "Il y a 32 min", type: "user", color: "bg-sky-500/10 text-sky-500" },
-              { text: "Abonnement Premium (6 mois)", detail: "Rachel B. — 44 990 FCFA", time: "Il y a 1h", type: "billing", color: "bg-emerald-500/10 text-emerald-600" },
-              { text: "Nouveau match créé", detail: "Noémie & Samuel", time: "Il y a 1h 15", type: "match", color: "bg-primary/10 text-primary" },
-            ].map((a, i) => (
-              <div key={i} className="flex gap-3 items-start">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] mt-0.5 ${a.color}`}>
-                  {a.type === "match" ? "💞" : a.type === "star" ? "⭐" : a.type === "billing" ? "💳" : a.type === "report" ? "🚨" : a.type === "verified" ? "✅" : "👤"}
+            {loading ? (
+              [...Array(5)].map((_, i) => (
+                <div key={i} className="h-10 bg-secondary animate-pulse rounded-lg" />
+              ))
+            ) : !ov?.activite?.length ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                Aucune activité pour l'instant.
+              </p>
+            ) : (
+              ov.activite.map((a: any, i: number) => (
+                <div key={i} className="flex gap-3 items-start">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] mt-0.5 ${
+                    a.type === "match" ? "bg-primary/10"
+                      : a.type === "paiement" ? "bg-emerald-500/10"
+                      : a.type === "signalement" ? "bg-destructive/10"
+                      : a.type === "support" ? "bg-gold/10"
+                      : "bg-sky-500/10"
+                  }`}>
+                    {a.type === "match" ? "💞"
+                      : a.type === "paiement" ? "💳"
+                      : a.type === "signalement" ? "🚨"
+                      : a.type === "support" ? "🛟" : "👤"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold leading-tight truncate">{a.texte}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{a.detail}</p>
+                  </div>
+                  <span className="text-[9px] text-muted-foreground whitespace-nowrap">
+                    {ilYA(a.at)}
+                  </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold leading-tight truncate">{a.text}</p>
-                  <p className="text-[10px] text-muted-foreground truncate">{a.detail}</p>
-                </div>
-                <span className="text-[9px] text-muted-foreground whitespace-nowrap">{a.time}</span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -579,21 +728,47 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* ── Bottom stats row ──────────────────────────────────────── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Taux de rétention (M1)", value: "74%", icon: "↩️", color: "text-primary" },
-          { label: "Durée moy. de session", value: "12 min", icon: "⏱️", color: "text-sky-500" },
-          { label: "Compatibilité moy.", value: "87%", icon: "💡", color: "text-gold" },
-          { label: "NPS Score", value: "+62", icon: "❤️", color: "text-emerald-500" },
-        ].map(item => (
-          <div key={item.label} className="bg-card border border-border/50 rounded-2xl p-4 text-center shadow-sm">
-            <div className="text-2xl mb-1">{item.icon}</div>
-            <div className={`text-2xl font-bold font-serif ${item.color}`}>{item.value}</div>
-            <div className="text-[11px] text-muted-foreground mt-1">{item.label}</div>
+      {/* ── Rétention ─────────────────────────────────────────────── */}
+      {/* Cette rangée affichait quatre valeurs inventées : rétention 74 %,
+          session 12 min, compatibilité 87 %, NPS +62. Aucune n'est mesurée
+          — il n'existe ni chronomètre de session, ni enquête de
+          satisfaction. Les trois non mesurables ont été retirées plutôt
+          que simulées ; la rétention, elle, se calcule. */}
+      {ov && (
+        <div className="bg-card border border-border/50 rounded-2xl p-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 className="font-semibold text-base">Rétention à un mois</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-md leading-relaxed">
+                Part des membres inscrits il y a 30 à 60 jours qui se sont
+                reconnectés au cours des 30 derniers jours.
+              </p>
+            </div>
+            <div className="text-right">
+              {ov.retention === null || ov.retention_base === 0 ? (
+                <>
+                  <div className="text-2xl font-serif font-bold text-muted-foreground">—</div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Pas encore assez d'ancienneté
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className={`text-3xl font-serif font-bold ${
+                    ov.retention >= 40 ? "text-emerald-600"
+                      : ov.retention >= 20 ? "text-gold" : "text-destructive"
+                  }`}>
+                    {ov.retention} %
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    sur {ov.retention_base} membre(s) concerné(s)
+                  </p>
+                </>
+              )}
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
