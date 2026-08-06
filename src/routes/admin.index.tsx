@@ -6,6 +6,7 @@ import {
   Activity, Globe, Zap, Star, MessageCircle, Eye, UserCheck, UserX,
   ArrowUpRight, ArrowDownRight, BarChart3, PieChart, Clock, Shield
 } from "lucide-react";
+import { formatPrice } from "@/lib/plans";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
@@ -128,8 +129,26 @@ function KpiCard({ title, value, sub, trend, trendValue, icon: Icon, iconBg, spa
   );
 }
 
+/**
+ * Graphique sans données.
+ *
+ * Un graphique vide vaut mieux qu'un graphique inventé : il dit la vérité
+ * sur l'état de la plateforme au lieu de la maquiller.
+ */
+function EmptyChart() {
+  return (
+    <div className="h-40 flex flex-col items-center justify-center text-center rounded-xl border border-dashed border-border">
+      <BarChart3 className="w-8 h-8 text-muted-foreground/30" />
+      <p className="text-xs text-muted-foreground mt-2">
+        Pas encore de données sur cette période.
+      </p>
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function AdminDashboard() {
+  const [analytics, setAnalytics] = useState<any>(null);
   const [stats, setStats] = useState<Stats>({
     totalUsers: 0, newUsersToday: 0, newUsersThisWeek: 0, newUsersThisMonth: 0,
     verifiedUsers: 0, maleUsers: 0, femaleUsers: 0,
@@ -202,6 +221,11 @@ export default function AdminDashboard() {
           vipSubs: (subs ?? []).filter((x: any) => x.plan_id === "vip").length,
         });
         setRecentUsers(recent || []);
+
+        // Séries et ventes par offre : la même fonction que /admin/analytics,
+        // pour que les deux pages ne racontent pas deux histoires.
+        const { data: a, error: aErr } = await supabase.rpc("admin_analytics", { p_days: 30 });
+        if (!aErr && a && !(a as any).error) setAnalytics(a);
       } catch (e) {
         console.error(e);
       } finally {
@@ -211,23 +235,56 @@ export default function AdminDashboard() {
     load();
   }, []);
 
-  // Mock time-series data (would come from analytics in prod)
-  const inscriptionsData = [42, 58, 35, 71, 64, 89, 78, 112, 98, 134, 121, 148];
-  const matchsData = [18, 24, 15, 32, 27, 41, 37, 55, 48, 62, 58, 74];
-  const revenueData = [820, 940, 710, 1200, 1050, 1480, 1320, 1720, 1590, 2100, 1980, 2450];
-  const months = ["Jan","Fév","Mar","Avr","Mai","Jui","Jul","Aoû","Sep","Oct","Nov","Déc"];
+  // Séries RÉELLES, calculées en base sur 30 jours.
+  //
+  // Elles étaient écrites en dur : `[42, 58, 35, 71, …]` pour les
+  // inscriptions, `[820, 940, 710, …]` pour les revenus, et une répartition
+  // « 1 mois / 3 mois / 6 mois » de formules qui n'existent même pas au
+  // catalogue — les vraies sont 15 jours, 1 mois, 3 mois et VIP.
+  const series = analytics
+    ? {
+        inscriptions: analytics.signups.map((p: any) => Number(p.n)),
+        matchs: analytics.matches.map((p: any) => Number(p.n)),
+        revenus: analytics.revenue.map((p: any) => Number(p.n)),
+        labels: analytics.signups.map((p: any) =>
+          new Date(p.d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" }),
+        ),
+      }
+    : { inscriptions: [], matchs: [], revenus: [], labels: [] };
 
+  // Aucune valeur de repli : afficher 60/40 quand la base est vide donne
+  // l'illusion d'une communauté équilibrée qui n'existe pas encore.
+  const autres = Math.max(0, stats.totalUsers - stats.femaleUsers - stats.maleUsers);
   const genderSegments = [
-    { value: stats.femaleUsers || 60, color: "hsl(var(--primary))", label: "Femmes" },
-    { value: stats.maleUsers || 40, color: "hsl(var(--gold))", label: "Hommes" },
-    { value: Math.max(0, stats.totalUsers - stats.femaleUsers - stats.maleUsers), color: "hsl(var(--muted-foreground))", label: "Autre" },
+    { value: stats.femaleUsers, color: "hsl(var(--primary))", label: "Femmes" },
+    { value: stats.maleUsers, color: "hsl(var(--gold))", label: "Hommes" },
+    ...(autres > 0
+      ? [{ value: autres, color: "hsl(var(--muted-foreground))", label: "Non précisé" }]
+      : []),
   ];
 
-  const planSegments = [
-    { value: 420, color: "#6366f1", label: "1 mois" },
-    { value: 870, color: "#f59e0b", label: "3 mois" },
-    { value: 550, color: "#10b981", label: "6 mois" },
-  ];
+  const OFFER_COLORS: Record<string, string> = {
+    premium_15j: "#6366f1",
+    premium_1m: "#f59e0b",
+    premium_3m: "#10b981",
+    vip_1m: "#c9a227",
+  };
+  const OFFER_LABELS: Record<string, string> = {
+    premium_15j: "Premium 15 j",
+    premium_1m: "Premium 1 mois",
+    premium_3m: "Premium 3 mois",
+    vip_1m: "VIP 1 mois",
+    boost_24h: "Boost 24 h",
+    boost_3j: "Boost 3 jours",
+    boost_7j: "Boost 7 jours",
+  };
+
+  const planSegments = (analytics?.by_offer ?? []).map((o: any) => ({
+    value: Number(o.n),
+    color: OFFER_COLORS[o.offer_id] ?? "hsl(var(--muted-foreground))",
+    label: OFFER_LABELS[o.offer_id] ?? o.offer_id,
+  }));
+  const totalVentes = planSegments.reduce((s: number, p: any) => s + p.value, 0);
 
   const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
@@ -336,13 +393,19 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="font-semibold text-base">Croissance des inscriptions</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Nouveaux membres par mois — Année 2026</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Nouveaux membres, 30 derniers jours
+              </p>
             </div>
-            <div className="flex gap-2">
-              <span className="text-xs text-muted-foreground bg-secondary px-3 py-1 rounded-full">vs Matchs <span className="text-primary font-semibold">↑ corrélés</span></span>
-            </div>
+            <span className="text-xs bg-secondary px-3 py-1 rounded-full">
+              <strong>{series.matchs.reduce((a: number, b: number) => a + b, 0)}</strong> matchs sur la période
+            </span>
           </div>
-          <BarChartSVG data={inscriptionsData} labels={months} />
+          {series.inscriptions.length > 0 ? (
+            <BarChartSVG data={series.inscriptions} labels={series.labels} />
+          ) : (
+            <EmptyChart />
+          )}
         </div>
 
         {/* Gender distribution donut */}
@@ -382,46 +445,70 @@ export default function AdminDashboard() {
         <div className="lg:col-span-2 bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="font-semibold text-base">Revenus mensuels (FCFA)</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Abonnements Premium — Cumulatif 2026</p>
+              <h3 className="font-semibold text-base">Revenus (FCFA)</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Paiements encaissés, 30 derniers jours
+              </p>
             </div>
+            {/* Le badge annonçait « MRR : 50.7M FCFA », un chiffre écrit en
+                dur. Celui-ci est la somme réelle de la période — et le
+                terme « MRR » n'a pas lieu d'être : les formules sont
+                vendues à l'acte, sans prélèvement récurrent. */}
             <div className="bg-primary/10 text-primary text-xs font-bold px-3 py-1.5 rounded-full">
-              MRR : 50.7M FCFA
+              {formatPrice(series.revenus.reduce((a: number, b: number) => a + b, 0))}
             </div>
           </div>
-          <BarChartSVG data={revenueData} labels={months} color="#f59e0b" />
+          {series.revenus.length > 0 ? (
+            <BarChartSVG data={series.revenus} labels={series.labels} color="#f59e0b" />
+          ) : (
+            <EmptyChart />
+          )}
         </div>
 
         {/* Plans donut */}
         <div className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
-          <h3 className="font-semibold text-base mb-1">Formules Premium</h3>
-          <p className="text-xs text-muted-foreground mb-4">Répartition par durée d'abonnement</p>
-          <div className="flex flex-col items-center gap-4">
-            <div className="relative">
-              <DonutChart segments={planSegments} size={120} />
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-lg font-bold">1,840</span>
-                <span className="text-[9px] text-muted-foreground">abonnés</span>
+          <h3 className="font-semibold text-base mb-1">Ventes par offre</h3>
+          <p className="text-xs text-muted-foreground mb-4">
+            Depuis le lancement, toutes formules et Boosts confondus
+          </p>
+
+          {totalVentes === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-10">
+              Aucune vente enregistrée pour l'instant.
+            </p>
+          ) : (
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <DonutChart segments={planSegments} size={120} />
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-lg font-bold">{totalVentes}</span>
+                  <span className="text-[9px] text-muted-foreground">ventes</span>
+                </div>
+              </div>
+              <div className="w-full space-y-2.5">
+                {planSegments.map((item: any) => {
+                  const pct = Math.round((item.value / totalVentes) * 100);
+                  return (
+                    <div key={item.label} className="flex items-center gap-3">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ background: item.color }}
+                      />
+                      <span className="text-xs text-muted-foreground flex-1 truncate">{item.label}</span>
+                      <span className="text-xs font-semibold">{item.value}</span>
+                      <div className="w-12 h-1.5 bg-secondary rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full"
+                          style={{ width: `${pct}%`, background: item.color }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground w-8 text-right">{pct} %</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-            <div className="w-full space-y-2.5">
-              {[
-                { label: "1 mois", color: "bg-indigo-500", value: 420, pct: 23 },
-                { label: "3 mois", color: "bg-amber-500", value: 870, pct: 47 },
-                { label: "6 mois", color: "bg-emerald-500", value: 550, pct: 30 },
-              ].map(item => (
-                <div key={item.label} className="flex items-center gap-3">
-                  <span className={`w-2.5 h-2.5 rounded-full ${item.color} shrink-0`} />
-                  <span className="text-xs text-muted-foreground flex-1">{item.label}</span>
-                  <span className="text-xs font-semibold">{item.value}</span>
-                  <div className="w-12 h-1.5 bg-secondary rounded-full overflow-hidden">
-                    <div className={`h-full ${item.color} rounded-full`} style={{ width: `${item.pct}%` }} />
-                  </div>
-                  <span className="text-xs text-muted-foreground w-6 text-right">{item.pct}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          )}
         </div>
       </div>
 

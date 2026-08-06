@@ -84,6 +84,7 @@ function HomePage() {
             'is_verified, boosted_until, practice_level, church_attendance, ' +
             'marriage_intent, wants_children, gender, ' +
             'marital_status, marriage_vision, looking_for, education, height_cm, ' +
+            'public_plan, premium_until, is_founder, ' +
             'interests, qualities, flaws, dealbreakers',
           )
           .neq('id', user.id)
@@ -129,6 +130,9 @@ function HomePage() {
             compatibility: compatibilityScore(currentUserData ?? {}, p),
             boostedUntil: p.boosted_until ?? null,
             verified: true,
+            plan: p.public_plan ?? null,
+            planUntil: p.premium_until ?? null,
+            isFounder: Boolean(p.is_founder),
             premium: false,
             lastActive: "Récemment",
             photo: p.photos && p.photos.length > 0 ? p.photos[0] : 'https://placehold.co/400x600/1a1a2e/gold?text=😊',

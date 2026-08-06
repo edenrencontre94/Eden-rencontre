@@ -1,4 +1,5 @@
-import { CheckCircle2, Crown, MapPin, Circle, Rocket } from "lucide-react";
+import { CheckCircle2, MapPin, Circle, Rocket } from "lucide-react";
+import { PlanBadge } from "@/components/app/PlanBadge";
 import type { Profile } from "@/lib/mock-data";
 import { getCountryCode, displayName } from "@/lib/utils";
 import { isBoosted } from "@/lib/matching";
@@ -30,12 +31,16 @@ export function ProfileCard({ profile, size = "md" }: { profile: Profile; size?:
                 Vérifié
               </span>
             )}
-            {profile.premium && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gold text-gold-foreground text-[10px] font-semibold shadow-soft">
-                <Crown className="w-3 h-3" />
-                Premium
-              </span>
-            )}
+            {/* Badge d'offre réel. L'ancien test portait sur `profile.premium`,
+                câblé à `false` dans les deux écrans qui construisent les
+                profils : aucune couronne ne s'affichait jamais. */}
+            <PlanBadge
+              profile={{
+                public_plan: profile.plan,
+                premium_until: profile.planUntil,
+                is_founder: profile.isFounder,
+              }}
+            />
           </div>
           <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold shadow-elegant">
             {profile.compatibility}%

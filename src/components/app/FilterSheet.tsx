@@ -5,9 +5,10 @@ import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import {
   DEFAULT_FILTERS, countActiveFilters, fetchFilterOptions,
-  enableLocation, disableLocation, type Filters, type FilterOptions,
+  enableLocation, disableLocation, mergeWithCanonical,
+  type Filters, type FilterOptions,
 } from "@/lib/filtres";
-import { MARITAL_STATUSES, formatHeight } from "@/lib/profilChamps";
+import { MARITAL_STATUSES, EDUCATION_LEVELS, formatHeight } from "@/lib/profilChamps";
 import { Switch } from "@/components/ui/switch";
 
 /**
@@ -161,15 +162,31 @@ export function FilterSheet({
           </Section>
 
           {/* ── Avancés ─────────────────────────────────────── */}
-          <div className={canUseAdvanced ? "" : "relative"}>
+          {/* Les critères restent PARFAITEMENT LISIBLES pour un compte
+              gratuit. Un voile flouté cachait précisément ce qu'on cherche
+              à vendre : on ne désire pas ce qu'on ne peut pas lire. Le
+              verrou porte sur l'action, pas sur la lecture — et il tient
+              en base de toute façon. */}
+          <div>
             {!canUseAdvanced && (
               <button
                 onClick={upsell}
-                className="absolute inset-0 z-10 rounded-2xl bg-background/60 backdrop-blur-[2px] flex items-start justify-center pt-16"
+                className="w-full text-left rounded-2xl border border-gold/50 bg-gold/10 p-4 mb-5 flex items-start gap-3 hover:bg-gold/15 transition-colors"
               >
-                <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-gold text-gold-foreground text-sm font-semibold shadow-elegant">
-                  <Crown className="w-4 h-4" /> Débloquer avec Premium
-                </span>
+                <Crown className="w-5 h-5 text-gold shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">
+                    Ces sept filtres sont réservés aux membres Premium
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    Situation matrimoniale, distance, confession, fréquentation
+                    de l'église, intention de mariage, niveau d'études et taille.
+                    Regardez ce qu'ils permettent — puis débloquez-les.
+                  </p>
+                  <span className="inline-flex items-center gap-1.5 mt-2.5 px-3.5 py-1.5 rounded-full bg-gold text-gold-foreground text-xs font-semibold">
+                    Voir les formules
+                  </span>
+                </div>
               </button>
             )}
 
@@ -192,10 +209,11 @@ export function FilterSheet({
                   {locating ? (
                     <Loader2 className="w-5 h-5 animate-spin text-primary shrink-0 mt-1" />
                   ) : (
+                    // Actif plutôt que désactivé : un interrupteur mort ne
+                    // dit rien, celui-ci explique pourquoi il ne bascule pas.
                     <Switch
                       checked={locationShared}
-                      onCheckedChange={toggleLocation}
-                      disabled={!canUseAdvanced}
+                      onCheckedChange={v => (canUseAdvanced ? toggleLocation(v) : upsell())}
                     />
                   )}
                 </div>
@@ -212,10 +230,10 @@ export function FilterSheet({
                       type="range" min={0} max={500} step={10}
                       value={draft.maxKm ?? 0}
                       onChange={e => {
+                        if (!canUseAdvanced) { upsell(); return; }
                         const v = Number(e.target.value);
                         set("maxKm", v === 0 ? null : v);
                       }}
-                      disabled={!canUseAdvanced}
                       className="w-full accent-primary"
                     />
                     <p className="text-[11px] text-muted-foreground mt-1">
@@ -226,15 +244,18 @@ export function FilterSheet({
                 )}
               </div>
 
-              <Row label="Situation matrimoniale">
+              <Row label="Situation matrimoniale" locked={!canUseAdvanced}>
                 <Chips
-                  options={MARITAL_STATUSES.map(s => ({ value: s.key, label: s.label }))}
+                  options={mergeWithCanonical(
+                    MARITAL_STATUSES.map(s => ({ value: s.key, label: s.label })),
+                    options?.situations,
+                  )}
                   selected={draft.marital}
                   onToggle={v => canUseAdvanced ? toggleIn("marital", v) : upsell()}
                 />
               </Row>
 
-              <Row label="Confession / Dénomination">
+              <Row label="Confession / Dénomination" locked={!canUseAdvanced}>
                 <Chips
                   options={(options?.denominations ?? []).map(d => ({
                     value: d.valeur, label: `${d.valeur} (${d.n})`,
@@ -244,25 +265,36 @@ export function FilterSheet({
                 />
               </Row>
 
-              <Row label="Fréquentation de l'église">
+              <Row label="Fréquentation de l'église" locked={!canUseAdvanced}>
                 <Chips
-                  options={(options?.frequentation ?? []).map(v => ({ value: v, label: v }))}
+                  options={(options?.frequentation ?? []).map(v => ({
+                    value: v.valeur, label: v.valeur, n: v.n,
+                  }))}
                   selected={draft.attendance}
                   onToggle={v => canUseAdvanced ? toggleIn("attendance", v) : upsell()}
                 />
               </Row>
 
-              <Row label="Intention de mariage">
+              <Row label="Intention de mariage" locked={!canUseAdvanced}>
                 <Chips
-                  options={(options?.intentions ?? []).map(v => ({ value: v, label: v }))}
+                  options={(options?.intentions ?? []).map(v => ({
+                    value: v.valeur, label: v.valeur, n: v.n,
+                  }))}
                   selected={draft.intent}
                   onToggle={v => canUseAdvanced ? toggleIn("intent", v) : upsell()}
                 />
               </Row>
 
-              <Row label="Niveau d'études">
+              {/* Liste fermée : les neuf niveaux du formulaire « Mon profil »
+                  sont tous proposés, y compris ceux que personne n'a encore
+                  renseignés. N'afficher que les valeurs présentes en base
+                  laisserait croire qu'un critère a disparu. */}
+              <Row label="Niveau d'études" locked={!canUseAdvanced}>
                 <Chips
-                  options={(options?.etudes ?? []).map(v => ({ value: v, label: v }))}
+                  options={mergeWithCanonical(
+                    EDUCATION_LEVELS.map(l => ({ value: l, label: l })),
+                    options?.etudes,
+                  )}
                   selected={draft.education}
                   onToggle={v => canUseAdvanced ? toggleIn("education", v) : upsell()}
                 />
@@ -274,6 +306,7 @@ export function FilterSheet({
                     ? `Taille · ${formatHeight(draft.heightMin ?? 140)} à ${formatHeight(draft.heightMax ?? 210)}`
                     : "Taille · indifférent"
                 }
+                locked={!canUseAdvanced}
               >
                 <div className="flex items-center gap-3">
                   <input
@@ -337,10 +370,17 @@ function Section({ title, badge, children }: {
   );
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+function Row({ label, locked, children }: {
+  label: string; locked?: boolean; children: React.ReactNode;
+}) {
   return (
     <div>
-      <p className="text-sm font-medium mb-2">{label}</p>
+      {/* Un petit cadenas près du libellé remplace le voile : il signale la
+          restriction sans empêcher de lire le critère ni ses options. */}
+      <p className="text-sm font-medium mb-2 flex items-center gap-1.5">
+        {label}
+        {locked && <Lock className="w-3.5 h-3.5 text-gold shrink-0" />}
+      </p>
       {children}
     </div>
   );
@@ -354,32 +394,54 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
  * de remplacer — c'est ce qu'on attend d'un filtre de rencontre.
  */
 function Chips({ options, selected, onToggle }: {
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; n?: number }[];
   selected: string[];
   onToggle: (v: string) => void;
 }) {
   if (options.length === 0) {
     return <p className="text-[11px] text-muted-foreground italic">Aucune valeur renseignée pour l'instant.</p>;
   }
+
+  const vides = options.filter(o => o.n === 0).length;
+
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {options.map(o => {
-        const on = selected.includes(o.value);
-        return (
-          <button
-            key={o.value}
-            onClick={() => onToggle(o.value)}
-            className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-              on
-                ? "bg-primary text-primary-foreground border-primary"
-                : "border-border text-muted-foreground hover:border-primary/50"
-            }`}
-          >
-            {on && <Check className="w-3 h-3" />}
-            {o.label}
-          </button>
-        );
-      })}
+    <div>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map(o => {
+          const on = selected.includes(o.value);
+          // Une option sans membre reste sélectionnable : les inscriptions
+          // arrivent, et un critère grisé aujourd'hui redeviendra pertinent
+          // demain. Elle est simplement atténuée pour éviter la déception
+          // d'un filtre qui ne renvoie rien.
+          const vide = o.n === 0;
+          return (
+            <button
+              key={o.value}
+              onClick={() => onToggle(o.value)}
+              title={vide ? "Aucun membre pour l'instant" : undefined}
+              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                on
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : vide
+                    ? "border-border/60 text-muted-foreground/50 hover:border-primary/40"
+                    : "border-border text-muted-foreground hover:border-primary/50"
+              }`}
+            >
+              {on && <Check className="w-3 h-3" />}
+              {o.label}
+              {typeof o.n === "number" && (
+                <span className={on ? "opacity-80" : "opacity-60"}>({o.n})</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {vides > 0 && (
+        <p className="text-[11px] text-muted-foreground mt-1.5">
+          Les options atténuées ne comptent aucun membre pour l'instant.
+        </p>
+      )}
     </div>
   );
 }

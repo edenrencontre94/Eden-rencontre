@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { useDailyContent } from "@/hooks/useDailyContent";
 import { useSubscription } from "@/lib/subscription";
 import { useNavigate } from "@tanstack/react-router";
+import { PlanBadge } from "@/components/app/PlanBadge";
 
 export const Route = createFileRoute("/_app/communaute")({
   head: () => ({
@@ -64,6 +65,7 @@ type CommunityPost = {
     city: string | null;
     photos: string[] | null;
     is_verified: boolean | null;
+    public_plan?: string | null;
     premium_until: string | null;
     is_founder: boolean | null;
   } | null;
@@ -83,16 +85,9 @@ type Comment = {
   } | null;
 };
 
-/**
- * Badge Premium visible par les autres membres.
- * On compare une DATE plutot que de lire un booleen : sans tache planifiee,
- * un booleen resterait vrai apres l'expiration de l'abonnement.
- */
-function isPremiumMember(profile?: { premium_until?: string | null; is_founder?: boolean | null } | null): boolean {
-  if (!profile) return false;
-  if (profile.is_founder) return true;
-  return Boolean(profile.premium_until) && new Date(profile.premium_until as string).getTime() > Date.now();
-}
+// Le badge est désormais rendu par <PlanBadge /> : il distingue Premium et
+// VIP, là où cette fonction renvoyait un booléen unique qui affichait la
+// même couronne pour les deux offres.
 
 function timeAgo(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -414,7 +409,7 @@ function CommunityPage() {
         setCurrentUserId(user.id);
         let { data: p } = await supabase
           .from("profiles")
-          .select("first_name, city, photos, premium_until, is_founder")
+          .select("first_name, city, photos, public_plan, premium_until, is_founder")
           .eq("id", user.id)
           .single();
         if (!p) {
@@ -440,7 +435,7 @@ function CommunityPage() {
         // le jeu de colonnes minimal garanti plutôt que de tout perdre.
         const COLS_FULL =
           "id, user_id, category, text, image_url, video_url, likes_count, comments_count, created_at, edited_at, " +
-          "profiles!community_posts_user_id_fkey(id, first_name, city, photos, is_verified, premium_until, is_founder)";
+          "profiles!community_posts_user_id_fkey(id, first_name, city, photos, is_verified, public_plan, premium_until, is_founder)";
         const COLS_MIN =
           "id, user_id, category, text, image_url, video_url, likes_count, comments_count, created_at, " +
           "profiles!community_posts_user_id_fkey(id, first_name, city, photos)";
@@ -1157,7 +1152,7 @@ function CommunityPage() {
                   <div className="flex items-center gap-1.5">
                     <span className="font-semibold text-sm truncate">{p.profile?.first_name || "Membre"}</span>
                     {p.profile?.is_verified && <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />}
-                    {isPremiumMember(p.profile) && <Crown className="w-3.5 h-3.5 text-gold shrink-0" />}
+                    <PlanBadge profile={p.profile} compact />
                   </div>
                   <div className="text-[11px] text-muted-foreground">
                     {timeAgo(p.created_at)} · {p.profile?.city || ""}

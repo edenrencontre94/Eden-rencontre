@@ -83,13 +83,38 @@ export async function fetchDeck(f: Filters, limit = 100) {
   return { rows: (data ?? []) as any[], error: null };
 }
 
+export type Counted = { valeur: string; n: number };
+
 export type FilterOptions = {
-  pays: { valeur: string; n: number }[];
-  denominations: { valeur: string; n: number }[];
-  frequentation: string[];
-  etudes: string[];
-  intentions: string[];
+  pays: Counted[];
+  denominations: Counted[];
+  frequentation: Counted[];
+  etudes: Counted[];
+  intentions: Counted[];
+  situations: Counted[];
 };
+
+/**
+ * Complète une liste FERMÉE — définie par l'application — avec les
+ * effectifs réels, en conservant l'ordre du formulaire.
+ *
+ * Les niveaux d'études et les situations matrimoniales doivent apparaître
+ * en entier dans les filtres : n'afficher que les valeurs déjà présentes
+ * en base laisse croire qu'un critère visible dans « Mon profil » a
+ * disparu. Le compte à côté évite l'autre écueil — cocher un critère qui
+ * ne renverra rien.
+ *
+ * Pays et dénominations restent tirés des données : ce sont des listes
+ * ouvertes, et proposer 195 pays dont 191 vides noierait les quatre qui
+ * comptent.
+ */
+export function mergeWithCanonical(
+  canonical: { value: string; label: string }[],
+  counted: Counted[] | undefined,
+): { value: string; label: string; n: number }[] {
+  const counts = new Map((counted ?? []).map(c => [c.valeur, c.n]));
+  return canonical.map(c => ({ ...c, n: counts.get(c.value) ?? 0 }));
+}
 
 /**
  * Options tirées des données réelles.
@@ -101,7 +126,10 @@ export async function fetchFilterOptions(): Promise<FilterOptions> {
   const { data, error } = await supabase.rpc("filter_options");
   if (error || !data) {
     console.error("[filtres] options:", error);
-    return { pays: [], denominations: [], frequentation: [], etudes: [], intentions: [] };
+    return {
+      pays: [], denominations: [], frequentation: [],
+      etudes: [], intentions: [], situations: [],
+    };
   }
   return data as FilterOptions;
 }

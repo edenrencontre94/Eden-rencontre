@@ -7,6 +7,10 @@ export type Profile = {
   maritalStatus?: string;
   /** Distance en km, calculée en base. NULL si l'un des deux ne partage pas sa position. */
   distanceKm?: number | null;
+  /** Offre publique — sert au badge. `planUntil` en décide l'expiration. */
+  plan?: string | null;
+  planUntil?: string | null;
+  isFounder?: boolean;
   marriageVisionText?: string;
   lookingFor?: string;
   educationLevel?: string;
