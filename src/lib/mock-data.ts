@@ -1,6 +1,19 @@
 export type Profile = {
   id: string;
   firstName: string;
+  /** Peut être vide : le nom n'est pas obligatoire à l'inscription. */
+  lastName?: string;
+  /** Champs complémentaires, remplis après l'inscription (migrations 39-40). */
+  maritalStatus?: string;
+  /** Distance en km, calculée en base. NULL si l'un des deux ne partage pas sa position. */
+  distanceKm?: number | null;
+  marriageVisionText?: string;
+  lookingFor?: string;
+  educationLevel?: string;
+  heightCm?: number | null;
+  qualities?: string[];
+  flaws?: string[];
+  dealbreakers?: string[];
   age: number;
   city: string;
   country: string;

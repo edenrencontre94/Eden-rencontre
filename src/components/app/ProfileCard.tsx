@@ -1,6 +1,6 @@
 import { CheckCircle2, Crown, MapPin, Circle, Rocket } from "lucide-react";
 import type { Profile } from "@/lib/mock-data";
-import { getCountryCode } from "@/lib/utils";
+import { getCountryCode, displayName } from "@/lib/utils";
 import { isBoosted } from "@/lib/matching";
 
 export function ProfileCard({ profile, size = "md" }: { profile: Profile; size?: "sm" | "md" | "lg" }) {
@@ -44,11 +44,14 @@ export function ProfileCard({ profile, size = "md" }: { profile: Profile; size?:
 
         {/* Bottom info */}
         <div className="absolute inset-x-0 bottom-0 p-3 text-white">
+          {/* `min-w-0` sur le conteneur du nom, sinon `truncate` reste sans
+              effet dans un flex : l'élément refuserait de rétrécir et l'âge
+              serait poussé hors de la carte. */}
           <div className="flex items-baseline gap-1.5">
-            <span className="font-serif text-lg font-semibold leading-tight">
-              {profile.firstName}
+            <span className="font-serif text-lg font-semibold leading-tight truncate min-w-0">
+              {displayName(profile.firstName, profile.lastName)}
             </span>
-            <span className="text-sm opacity-90">{profile.age}</span>
+            <span className="text-sm opacity-90 shrink-0">{profile.age}</span>
           </div>
           <div className="flex items-center gap-1 text-[11px] opacity-90 mt-0.5">
             <MapPin className="w-3 h-3" />

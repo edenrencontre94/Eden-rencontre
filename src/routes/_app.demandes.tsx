@@ -17,12 +17,13 @@ import { supabase } from "@/lib/supabase";
 import { getCurrentUser } from "@/lib/auth";
 import { toast } from "sonner";
 import { useSubscription } from "@/lib/subscription";
+import { displayName } from "@/lib/utils";
+import { ReportDialog } from "@/components/app/ReportDialog";
 import {
   blockUser,
   dismissLike,
   fetchBlockedIds,
   fetchDismissedIds,
-  reportUser,
 } from "@/lib/moderation";
 
 export const Route = createFileRoute("/_app/demandes")({
@@ -44,6 +45,7 @@ type LikeEntry = {
   profile: {
     id: string;
     first_name: string;
+    last_name: string | null;
     birth_date: string | null;
     city: string | null;
     photos: string[] | null;
@@ -56,6 +58,7 @@ type MatchEntry = {
   other: {
     id: string;
     first_name: string;
+    last_name: string | null;
     birth_date: string | null;
     city: string | null;
     photos: string[] | null;
@@ -68,6 +71,7 @@ type VisitEntry = {
   visitor: {
     id: string;
     first_name: string;
+    last_name: string | null;
     birth_date: string | null;
     city: string | null;
     photos: string[] | null;
@@ -122,6 +126,7 @@ function CardPhoto({ src, name }: { src: string | null | undefined; name: string
 
 function RequestsPage() {
   const [active, setActive] = useState<TabId>("match");
+  const [reportTarget, setReportTarget] = useState<{ id: string; name?: string } | null>(null);
   const [likes, setLikes] = useState<LikeEntry[]>([]);
   const [superlikes, setSuperlikes] = useState<LikeEntry[]>([]);
   const [matches, setMatches] = useState<MatchEntry[]>([]);
@@ -148,7 +153,7 @@ function RequestsPage() {
         const [{ data: swipesData }, blockedIds, dismissedIds] = await Promise.all([
           supabase
             .from("swipes")
-            .select("id, swiper_id, action, created_at, profiles!swipes_swiper_id_fkey(id, first_name, birth_date, city, photos)")
+            .select("id, swiper_id, action, created_at, profiles!swipes_swiper_id_fkey(id, first_name, last_name, birth_date, city, photos)")
             .eq("target_id", user.id)
             .in("action", ["like", "superlike"])
             .order("created_at", { ascending: false }),
@@ -184,7 +189,7 @@ function RequestsPage() {
           );
           const { data: profilesData } = await supabase
             .from("profiles")
-            .select("id, first_name, birth_date, city, photos")
+            .select("id, first_name, last_name, birth_date, city, photos")
             .in("id", otherIds);
 
           const profileMap = new Map(profilesData?.map((p: any) => [p.id, p]));
@@ -210,7 +215,7 @@ function RequestsPage() {
           const visitorIds = visibleVisits.map((v: any) => v.visitor_id);
           const { data: visitorProfiles } = await supabase
             .from("profiles")
-            .select("id, first_name, birth_date, city, photos")
+            .select("id, first_name, last_name, birth_date, city, photos")
             .in("id", visitorIds);
 
           const visitorMap = new Map(visitorProfiles?.map((p: any) => [p.id, p]));
@@ -271,10 +276,13 @@ function RequestsPage() {
     else toast.error("Le blocage n'a pas pu être enregistré");
   };
 
-  const handleReport = async (entry: LikeEntry) => {
-    const ok = await reportUser(entry.swiper_id, "profile");
-    if (ok) toast.success("Signalement envoyé à notre équipe");
-    else toast.error("Le signalement n'a pas pu être envoyé");
+  // Le signalement passe désormais par un dialogue : sans motif, la
+  // modération ne savait ni quoi vérifier ni quelle urgence accorder.
+  const handleReport = (entry: LikeEntry) => {
+    setReportTarget({
+      id: entry.swiper_id,
+      name: entry.profile?.first_name ?? undefined,
+    });
   };
 
   const currentList = active === "like" ? likes : active === "superlike" ? superlikes : [];
@@ -344,8 +352,11 @@ function RequestsPage() {
                     <Eye className="w-3 h-3" /> {timeAgo(v.created_at)}
                   </span>
                   <div className="absolute inset-x-0 bottom-0 p-2.5 text-white">
-                    <div className="font-serif text-base font-semibold leading-none">
-                      {v.visitor?.first_name || "Membre"}
+                    {/* `truncate` plutôt qu'un retour à la ligne : ces
+                        vignettes font deux par ligne sur mobile, un nom
+                        composé y tiendrait sur trois lignes. */}
+                    <div className="font-serif text-base font-semibold leading-tight truncate">
+                      {displayName(v.visitor?.first_name, v.visitor?.last_name)}
                       {getAge(v.visitor?.birth_date || null) > 0 && `, ${getAge(v.visitor?.birth_date || null)}`}
                     </div>
                     <div className="text-[10px] opacity-90 mt-0.5">{v.visitor?.city}</div>
@@ -376,8 +387,8 @@ function RequestsPage() {
                     <Sparkles className="w-3 h-3" /> Match !
                   </span>
                   <div className="absolute inset-x-0 bottom-0 p-2.5 text-white">
-                    <div className="font-serif text-base font-semibold leading-none">
-                      {m.other?.first_name}
+                    <div className="font-serif text-base font-semibold leading-tight truncate">
+                      {displayName(m.other?.first_name, m.other?.last_name)}
                       {getAge(m.other?.birth_date || null) > 0 && `, ${getAge(m.other?.birth_date || null)}`}
                     </div>
                     <div className="text-[10px] opacity-90 mt-0.5">{m.other?.city}</div>
@@ -409,6 +420,14 @@ function RequestsPage() {
           ))}
         </div>
       )}
+
+      <ReportDialog
+        open={!!reportTarget}
+        onOpenChange={o => !o && setReportTarget(null)}
+        reportedId={reportTarget?.id ?? ""}
+        reportedName={reportTarget?.name}
+        context="profile"
+      />
     </div>
   );
 }
@@ -449,8 +468,8 @@ function LikeCard({
           </div>
         )}
         <div className="absolute inset-x-0 bottom-0 p-2.5 text-white">
-          <div className="font-serif text-base font-semibold leading-none">
-            {entry.profile?.first_name}
+          <div className="font-serif text-base font-semibold leading-tight truncate">
+            {displayName(entry.profile?.first_name, entry.profile?.last_name)}
             {getAge(entry.profile?.birth_date || null) > 0 && `, ${getAge(entry.profile?.birth_date || null)}`}
           </div>
           <div className="text-[10px] opacity-90 mt-0.5">{entry.profile?.city}</div>

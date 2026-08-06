@@ -16,7 +16,8 @@ const CallView = lazy(() =>
   import("@/components/app/CallView").then(m => ({ default: m.CallView })),
 );
 import { createCall } from "@/lib/calls";
-import { blockUser, fetchBlockedIds, reportUser } from "@/lib/moderation";
+import { blockUser, fetchBlockedIds } from "@/lib/moderation";
+import { ReportDialog } from "@/components/app/ReportDialog";
 import { useSubscription } from "@/lib/subscription";
 import { fetchQuotas, quotaErrorMessage, type Quotas } from "@/lib/quotas";
 import { useNavigate } from "@tanstack/react-router";
@@ -727,6 +728,7 @@ function ChatView({
   const [recording, setRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [callState, setCallState] = useState<{ type: "audio" | "video"; callId: string } | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
   const [startingCall, setStartingCall] = useState(false);
   const { features } = useSubscription();
   const navigate = useNavigate();
@@ -1081,11 +1083,7 @@ function ChatView({
                   {
                     l: "Signaler",
                     i: Flag,
-                    action: async () => {
-                      const ok = await reportUser(chat.profile.id, "message");
-                      if (ok) toast.success("Signalement envoyé à notre équipe");
-                      else toast.error("Le signalement n'a pas pu être envoyé");
-                    },
+                    action: () => setReportOpen(true),
                   },
                   {
                     l: "Bloquer",
@@ -1290,6 +1288,14 @@ function ChatView({
           </button>
         )}
       </div>
+
+      <ReportDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        reportedId={chat.profile.id}
+        reportedName={chat.profile.firstName}
+        context="message"
+      />
     </div>
   );
 }

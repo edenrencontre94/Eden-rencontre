@@ -6,7 +6,8 @@ import { ProfileCard } from "@/components/app/ProfileCard";
 import { supabase } from "@/lib/supabase";
 import { getCurrentUser } from "@/lib/auth";
 import { type Profile } from "@/lib/mock-data";
-import { getCountryCode } from "@/lib/utils";
+import { getCountryCode, displayName } from "@/lib/utils";
+import { ProfileExtrasBlocks } from "@/components/app/ProfileExtras";
 import { useDailyContent } from "@/hooks/useDailyContent";
 import { excludePaused, fetchAdmirerIds, filterByVisibility } from "@/lib/visibility";
 import { compatibilityScore, rankProfiles } from "@/lib/matching";
@@ -59,19 +60,15 @@ function HomePage() {
         if (currentUserData) {
           setCurrentUser(currentUserData);
           
-          // Calculate profile completion
-          const fields = [
-            currentUserData.first_name, currentUserData.last_name, currentUserData.bio,
-            currentUserData.city, currentUserData.country, currentUserData.birth_date,
-            currentUserData.gender, currentUserData.denomination, currentUserData.practice_level,
-            currentUserData.baptized, currentUserData.church_attendance, currentUserData.seeking_gender,
-            currentUserData.marriage_intent, currentUserData.has_children, currentUserData.wants_children
-          ];
-          const filled = fields.filter(f => f && f.toString().trim() !== '' && f !== 'all').length;
-          const photoBonus = (currentUserData.photos && currentUserData.photos.length > 0) ? 2 : 0;
-          const totalFields = fields.length + 2;
-          
-          setCompletionScore(Math.round(((filled + photoBonus) / totalFields) * 100));
+          // Le taux de complétion est calculé EN BASE, pas ici. L'ancienne
+          // version comptait chaque champ pour un, si bien qu'une photo
+          // pesait autant que « seeking_gender » — et elle ignorait les
+          // huit champs complémentaires. Surtout, deux calculs séparés
+          // auraient fini par afficher deux pourcentages différents sur
+          // deux pages de la même application.
+          supabase.rpc("my_profile_completion").then(({ data: pct }: any) => {
+            if (typeof pct === "number") setCompletionScore(pct);
+          });
           if (currentUserData.visibility) {
             setVisibility(currentUserData.visibility as any);
           }
@@ -83,9 +80,11 @@ function HomePage() {
         let query = supabase
           .from('profiles')
           .select(
-            'id, first_name, birth_date, city, country, denomination, photos, bio, ' +
+            'id, first_name, last_name, birth_date, city, country, denomination, photos, bio, ' +
             'is_verified, boosted_until, practice_level, church_attendance, ' +
-            'marriage_intent, wants_children, gender',
+            'marriage_intent, wants_children, gender, ' +
+            'marital_status, marriage_vision, looking_for, education, height_cm, ' +
+            'interests, qualities, flaws, dealbreakers',
           )
           .neq('id', user.id)
           .order('boosted_until', { ascending: false, nullsFirst: false })
@@ -112,6 +111,15 @@ function HomePage() {
           const formatted: Profile[] = visible.map((p: any) => ({
             id: p.id,
             firstName: p.first_name || "Membre",
+            lastName: p.last_name || "",
+            maritalStatus: p.marital_status || "",
+            marriageVisionText: p.marriage_vision || "",
+            lookingFor: p.looking_for || "",
+            educationLevel: p.education || "",
+            heightCm: p.height_cm ?? null,
+            qualities: p.qualities || [],
+            flaws: p.flaws || [],
+            dealbreakers: p.dealbreakers || [],
             age: p.birth_date ? new Date().getFullYear() - new Date(p.birth_date).getFullYear() : 25,
             city: p.city || "Ville inconnue",
             country: p.country || "",
@@ -130,7 +138,7 @@ function HomePage() {
             education: "Études",
             height: "1m70",
             languages: ["Français"],
-            interests: [],
+            interests: p.interests || [],
             passions: [],
             marriageVision: p.marriage_intent || "",
             favoriteVerse: "",
@@ -571,8 +579,10 @@ function ProfileDetailModal({ profile, onClose }: { profile: Profile; onClose: (
           </button>
           <div className="absolute bottom-0 inset-x-0 p-6 pb-2">
             <h2 className="font-serif text-4xl font-bold flex items-center gap-2">
-              {profile.firstName}, {profile.age}
-              {profile.verified && <CheckCircle2 className="w-6 h-6 text-blue-500" />}
+              <span className="truncate min-w-0">
+                {displayName(profile.firstName, profile.lastName)}, {profile.age}
+              </span>
+              {profile.verified && <CheckCircle2 className="w-6 h-6 text-blue-500 shrink-0" />}
             </h2>
             <div className="flex items-center gap-2 text-muted-foreground mt-1 text-sm font-medium">
               <span>{profile.city}{profile.country ? `, ${profile.country}` : ""}</span>
@@ -634,17 +644,24 @@ function ProfileDetailModal({ profile, onClose }: { profile: Profile; onClose: (
             </div>
           </section>
 
-          {/* Interests */}
-          {profile.interests && profile.interests.length > 0 && (
-            <section>
-              <h3 className="font-serif text-lg font-semibold mb-3">Intérêts</h3>
-              <div className="flex flex-wrap gap-2">
-                {profile.interests.map((tag) => (
-                  <span key={tag} className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">{tag}</span>
-                ))}
-              </div>
-            </section>
-          )}
+          {/* Champs complémentaires — mêmes blocs que sur /decouvrir, via
+              le même composant : deux mises en page différentes pour les
+              mêmes données finiraient par se contredire. */}
+          <div className="-mx-6">
+            <ProfileExtrasBlocks
+              p={{
+                marital_status: profile.maritalStatus,
+                marriage_vision: profile.marriageVisionText,
+                looking_for: profile.lookingFor,
+                education: profile.educationLevel,
+                height_cm: profile.heightCm,
+                interests: profile.interests,
+                qualities: profile.qualities,
+                flaws: profile.flaws,
+                dealbreakers: profile.dealbreakers,
+              }}
+            />
+          </div>
 
           {/* CTA */}
           <Link

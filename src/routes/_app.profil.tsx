@@ -6,6 +6,12 @@ import { Save, Camera, X, Upload, Trash2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { TagPicker } from "@/components/app/TagPicker";
+import {
+  EMPTY_EXTRAS, EDUCATION_LEVELS, INTEREST_SUGGESTIONS, QUALITY_SUGGESTIONS,
+  FLAW_SUGGESTIONS, DEALBREAKER_SUGGESTIONS, LIST_LIMITS, formatHeight,
+  MARITAL_STATUSES,
+} from "@/lib/profilChamps";
 
 export const Route = createFileRoute("/_app/profil")({
   head: () => ({
@@ -19,6 +25,7 @@ function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [completion, setCompletion] = useState<number | null>(null);
 
   const [form, setForm] = useState({
     first_name: "",
@@ -37,6 +44,8 @@ function ProfilePage() {
     has_children: "",
     wants_children: "",
     photos: [] as string[],
+    // Champs complémentaires — remplis après l'inscription
+    ...EMPTY_EXTRAS,
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -69,8 +78,20 @@ function ProfilePage() {
           has_children: data.has_children || "",
           wants_children: data.wants_children || "",
           photos: data.photos || [],
+          marital_status: data.marital_status || "",
+          marriage_vision: data.marriage_vision || "",
+          looking_for: data.looking_for || "",
+          education: data.education || "",
+          height_cm: data.height_cm ?? null,
+          interests: data.interests || [],
+          qualities: data.qualities || [],
+          flaws: data.flaws || [],
+          dealbreakers: data.dealbreakers || [],
         });
       }
+      const { data: pct } = await supabase.rpc("my_profile_completion");
+      if (typeof pct === "number") setCompletion(pct);
+
       setLoading(false);
     }
     load();
@@ -98,9 +119,24 @@ function ProfilePage() {
         has_children: form.has_children,
         wants_children: form.wants_children,
         photos: form.photos,
+        marital_status: form.marital_status || null,
+        marriage_vision: form.marriage_vision.trim() || null,
+        looking_for: form.looking_for.trim() || null,
+        education: form.education || null,
+        height_cm: form.height_cm || null,
+        interests: form.interests,
+        qualities: form.qualities,
+        flaws: form.flaws,
+        dealbreakers: form.dealbreakers,
       }).eq('id', userId);
 
       if (error) throw error;
+
+      // Le pourcentage vient de la base, pas d'un calcul local : c'est la
+      // même définition que sur la page d'accueil, donc le même chiffre.
+      const { data: pct } = await supabase.rpc("my_profile_completion");
+      if (typeof pct === "number") setCompletion(pct);
+
       toast.success("Profil mis à jour !");
     } catch (err) {
       console.error(err);
@@ -178,7 +214,36 @@ function ProfilePage() {
         </button>
         <h1 className="font-serif text-2xl font-semibold">Mon Profil</h1>
       </div>
-      
+
+      {/* Le pourcentage est affiché ICI, là où l'on peut agir dessus. Sur
+          la page d'accueil il informe ; sur cette page il motive. */}
+      {completion !== null && (
+        <div className="mb-6 rounded-2xl border border-border bg-card p-4">
+          <div className="flex items-baseline justify-between">
+            <span className="text-sm font-medium">Profil complété</span>
+            <span className={`font-serif text-xl font-bold ${
+              completion >= 80 ? "text-emerald-600" : completion >= 50 ? "text-gold" : "text-muted-foreground"
+            }`}>
+              {completion} %
+            </span>
+          </div>
+          <div className="mt-2 h-2 rounded-full bg-secondary overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                completion >= 80 ? "bg-emerald-500" : "bg-primary"
+              }`}
+              style={{ width: `${completion}%` }}
+            />
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
+            {completion >= 80
+              ? "Votre profil est complet. Il inspire confiance au premier regard."
+              : "Les profils complets reçoivent nettement plus de réponses. Les trois blocs en bas de page comptent pour un tiers du total."}
+          </p>
+        </div>
+      )}
+
+
       {/* PHOTOS SECTION */}
       <div className="mb-8">
         <h2 className="text-lg font-semibold mb-3">Mes Photos</h2>
@@ -427,6 +492,144 @@ function ProfilePage() {
           </div>
         </div>
 
+        {/* ── Mon chemin vers le mariage ───────────────────────── */}
+        <GroupSection
+          title="Mon chemin vers le mariage"
+          hint="Où vous en êtes, ce qui vous met en marche, et ce sur quoi vous ne transigerez pas."
+        >
+          <Field
+            label="Situation matrimoniale"
+            hint="AgapeMeet s'adresse aux personnes libres de se marier."
+          >
+            <select
+              value={form.marital_status}
+              onChange={(e) => setForm({ ...form, marital_status: e.target.value })}
+              className="w-full h-12 px-3 rounded-xl bg-background border border-border text-sm"
+            >
+              <option value="">Non précisé</option>
+              {MARITAL_STATUSES.map((s) => (
+                <option key={s.key} value={s.key}>
+                  {s.label}{s.hint ? ` — ${s.hint}` : ""}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field label="Ma vision du mariage">
+            <Textarea
+              value={form.marriage_vision}
+              onChange={(e) => setForm({ ...form, marriage_vision: e.target.value })}
+              rows={4}
+              maxLength={600}
+              placeholder="Ce que représente le mariage pour vous, la place de la foi dans votre couple…"
+              className="rounded-xl"
+            />
+            <Counter value={form.marriage_vision} max={600} />
+          </Field>
+
+          <Field label="Ce que je recherche">
+            <Textarea
+              value={form.looking_for}
+              onChange={(e) => setForm({ ...form, looking_for: e.target.value })}
+              rows={4}
+              maxLength={600}
+              placeholder="La personne que vous espérez rencontrer, ce qui compte le plus à vos yeux…"
+              className="rounded-xl"
+            />
+            <Counter value={form.looking_for} max={600} />
+          </Field>
+
+          <Field
+            label="Ce que je n'accepte pas"
+            hint="Dit d'emblée, cela évite des conversations qui n'auraient pas abouti."
+          >
+            <TagPicker
+              value={form.dealbreakers}
+              onChange={(v) => setForm({ ...form, dealbreakers: v })}
+              suggestions={DEALBREAKER_SUGGESTIONS}
+              max={LIST_LIMITS.dealbreakers}
+              placeholder="Autre chose…"
+            />
+          </Field>
+        </GroupSection>
+
+        {/* ── Qui je suis ──────────────────────────────────────── */}
+        <GroupSection
+          title="Qui je suis"
+          hint="De quoi engager une conversation autrement que par « ça va ? »."
+        >
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Niveau d'études">
+              <select
+                value={form.education}
+                onChange={(e) => setForm({ ...form, education: e.target.value })}
+                className="w-full h-12 px-3 rounded-xl bg-background border border-border text-sm"
+              >
+                <option value="">Non précisé</option>
+                {EDUCATION_LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </Field>
+
+            <Field label="Taille">
+              <div className="relative">
+                <Input
+                  type="number"
+                  min={120}
+                  max={250}
+                  value={form.height_cm ?? ""}
+                  onChange={(e) =>
+                    setForm({ ...form, height_cm: e.target.value ? Number(e.target.value) : null })
+                  }
+                  placeholder="170"
+                  className="h-12 rounded-xl pr-10"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                  cm
+                </span>
+              </div>
+              {form.height_cm ? (
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {formatHeight(form.height_cm)}
+                </p>
+              ) : null}
+            </Field>
+          </div>
+
+          <Field label="Centres d'intérêt">
+            <TagPicker
+              value={form.interests}
+              onChange={(v) => setForm({ ...form, interests: v })}
+              suggestions={INTEREST_SUGGESTIONS}
+              max={LIST_LIMITS.interests}
+              placeholder="Une passion à vous…"
+            />
+          </Field>
+        </GroupSection>
+
+        {/* ── En toute sincérité ───────────────────────────────── */}
+        <GroupSection
+          title="En toute sincérité"
+          hint="Reconnaître ses défauts inspire plus confiance qu'une liste de qualités."
+        >
+          <Field label="Mes qualités">
+            <TagPicker
+              value={form.qualities}
+              onChange={(v) => setForm({ ...form, qualities: v })}
+              suggestions={QUALITY_SUGGESTIONS}
+              max={LIST_LIMITS.qualities}
+            />
+          </Field>
+
+          <Field label="Mes défauts">
+            <TagPicker
+              value={form.flaws}
+              onChange={(v) => setForm({ ...form, flaws: v })}
+              suggestions={FLAW_SUGGESTIONS}
+              max={LIST_LIMITS.flaws}
+            />
+          </Field>
+        </GroupSection>
+
       </div>
 
       <div className="sticky bottom-20 z-10 pt-2 pb-4 bg-gradient-to-t from-background via-background to-transparent">
@@ -441,5 +644,42 @@ function ProfilePage() {
       </div>
 
     </div>
+  );
+}
+
+// ─── Blocs du formulaire ──────────────────────────────────────────────────────
+function GroupSection({ title, hint, children }: {
+  title: string; hint: string; children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 space-y-5">
+      <div>
+        <h2 className="font-serif text-lg font-semibold">{title}</h2>
+        <p className="text-xs text-muted-foreground mt-1">{hint}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, hint, children }: {
+  label: string; hint?: string; children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+        {label}
+      </label>
+      {hint && <p className="text-[11px] text-muted-foreground mb-1.5 -mt-1">{hint}</p>}
+      {children}
+    </div>
+  );
+}
+
+function Counter({ value, max }: { value: string; max: number }) {
+  return (
+    <p className="text-[11px] text-muted-foreground mt-1 text-right">
+      {value.length}/{max}
+    </p>
   );
 }

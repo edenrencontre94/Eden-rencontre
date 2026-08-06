@@ -5,8 +5,16 @@ import {
   Heart, MessageCircle, Share2, Bookmark, Flag, BookOpen, Flame,
   Sparkles, Image as ImageIcon, Send, CheckCircle2, Crown, X,
   AlertTriangle, ChevronDown, ChevronUp, Video, Play, Loader2,
-  UploadCloud,
+  UploadCloud, Lock, MoreHorizontal, Pencil, Trash2,
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
 import { getCurrentUser } from "@/lib/auth";
 import { coupleTestimonials } from "@/lib/mock-data";
@@ -48,6 +56,8 @@ type CommunityPost = {
   likes_count: number;
   comments_count: number;
   created_at: string;
+  /** Posé par la base à chaque modification du contenu. */
+  edited_at?: string | null;
   profile: {
     id: string;
     first_name: string;
@@ -365,6 +375,16 @@ function CommunityPage() {
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState<CategoryType>("Tous");
   const [sort, setSort] = useState<(typeof sorts)[number]>("Récentes");
+  // Portée, pas catégorie : « Mes publications » n'est pas un thème de plus
+  // dans la liste, c'est un autre point de vue sur le même fil.
+  const [scope, setScope] = useState<"tous" | "moi">("tous");
+  const [editing, setEditing] = useState<CommunityPost | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editCategory, setEditCategory] = useState("Réflexion");
+  const [editRemoveMedia, setEditRemoveMedia] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<CommunityPost | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [composer, setComposer] = useState("");
   const [composerCategory, setComposerCategory] = useState("Réflexion");
   const [publishing, setPublishing] = useState(false);
@@ -419,7 +439,7 @@ function CommunityPage() {
         // C'est ce qui s'est produit avec `is_premium`. On retente donc avec
         // le jeu de colonnes minimal garanti plutôt que de tout perdre.
         const COLS_FULL =
-          "id, user_id, category, text, image_url, video_url, likes_count, comments_count, created_at, " +
+          "id, user_id, category, text, image_url, video_url, likes_count, comments_count, created_at, edited_at, " +
           "profiles!community_posts_user_id_fkey(id, first_name, city, photos, is_verified, premium_until, is_founder)";
         const COLS_MIN =
           "id, user_id, category, text, image_url, video_url, likes_count, comments_count, created_at, " +
@@ -472,6 +492,64 @@ function CommunityPage() {
     }
     loadPosts();
   }, [currentUserId]);
+
+  // ─ Mes publications : chargement dédié ────────────────────────────────────
+  // Le fil général s'arrête à 50 publications. Sans cette requête, un membre
+  // actif ne verrait pas ses plus anciennes dans son propre onglet — et
+  // croirait qu'elles ont été supprimées.
+  useEffect(() => {
+    if (scope !== "moi" || !currentUserId) return;
+
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("community_posts")
+        .select(
+          "id, user_id, category, text, image_url, video_url, likes_count, " +
+          "comments_count, created_at, edited_at",
+        )
+        .eq("user_id", currentUserId)
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+      if (cancelled || error || !data) {
+        if (error) console.error("[communauté] mes publications:", error);
+        return;
+      }
+
+      // Fusion par identifiant : celles déjà présentes gardent leur état
+      // local (liked, saved, profil joint), les manquantes sont ajoutées.
+      setPosts(prev => {
+        const known = new Set(prev.map(p => p.id));
+        const missing = data
+          .filter((p: any) => !known.has(p.id))
+          .map((p: any) => ({
+            ...p,
+            profile: currentUserProfile
+              ? {
+                  id: currentUserId,
+                  first_name: currentUserProfile.first_name ?? "Moi",
+                  city: currentUserProfile.city ?? null,
+                  photos: currentUserProfile.photos ?? null,
+                  is_verified: currentUserProfile.is_verified ?? false,
+                  premium_until: currentUserProfile.premium_until ?? null,
+                  is_founder: currentUserProfile.is_founder ?? false,
+                }
+              : null,
+            liked: false,
+            saved: false,
+            comments_count: p.comments_count || 0,
+          })) as CommunityPost[];
+
+        if (missing.length === 0) return prev;
+        return [...prev, ...missing].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+      });
+    })();
+
+    return () => { cancelled = true; };
+  }, [scope, currentUserId, currentUserProfile]);
 
   // ─ Media cleanup ─────────────────────────────────────────────────────────
   const clearMedia = () => {
@@ -636,6 +714,15 @@ function CommunityPage() {
 
       if (composerMedia) {
         mediaUrls = await uploadMedia();
+
+        // Un média a été choisi mais n'a pas pu être joint — formule
+        // insuffisante, ou échec du téléversement. Publier quand même
+        // enverrait un texte amputé de ce qui en faisait le sens, après
+        // un message d'erreur : on interrompt.
+        if (!mediaUrls.image_url && !mediaUrls.video_url) {
+          setPublishing(false);
+          return;
+        }
       }
 
       const { data, error } = await supabase.from("community_posts").insert({
@@ -680,10 +767,93 @@ function CommunityPage() {
 
   const visible = useMemo(() => {
     let list = posts;
+    if (scope === "moi") list = list.filter(p => p.user_id === currentUserId);
     if (category !== "Tous") list = list.filter(p => p.category === category);
     if (sort === "Populaires") list = [...list].sort((a, b) => b.likes_count - a.likes_count);
     return list;
-  }, [posts, category, sort]);
+  }, [posts, category, sort, scope, currentUserId]);
+
+  /** Bilan affiché en tête de « Mes publications ». */
+  const myStats = useMemo(() => {
+    const mine = posts.filter(p => p.user_id === currentUserId);
+    return {
+      count: mine.length,
+      likes: mine.reduce((s, p) => s + (p.likes_count || 0), 0),
+      comments: mine.reduce((s, p) => s + (p.comments_count || 0), 0),
+    };
+  }, [posts, currentUserId]);
+
+  const openEdit = (post: CommunityPost) => {
+    setEditing(post);
+    setEditText(post.text);
+    setEditCategory(post.category);
+    setEditRemoveMedia(false);
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+
+    const keptMedia = !editRemoveMedia && (editing.image_url || editing.video_url);
+    if (!editText.trim() && !keptMedia) {
+      toast.error("Une publication ne peut pas être entièrement vide");
+      return;
+    }
+
+    setSavingEdit(true);
+    try {
+      const patch: Record<string, any> = {
+        text: editText.trim(),
+        category: editCategory,
+      };
+      if (editRemoveMedia) {
+        patch.image_url = null;
+        patch.video_url = null;
+      }
+
+      const { data, error } = await supabase
+        .from("community_posts")
+        .update(patch)
+        .eq("id", editing.id)
+        .select("id, text, category, image_url, video_url, edited_at")
+        .single();
+
+      if (error) throw error;
+
+      // On reprend `edited_at` renvoyé par la base plutôt que d'en fabriquer
+      // un côté client : c'est le serveur qui fait foi, et un décalage
+      // d'horloge afficherait une date de modification incohérente.
+      setPosts(prev => prev.map(p => (p.id === editing.id ? { ...p, ...data } : p)));
+      setEditing(null);
+      toast.success("Publication modifiée");
+    } catch (err: any) {
+      console.error("[communauté] modification:", err);
+      toast.error(err?.message ?? "La modification a échoué");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const removePost = async () => {
+    if (!confirmDelete) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("community_posts")
+        .delete()
+        .eq("id", confirmDelete.id);
+
+      if (error) throw error;
+
+      setPosts(prev => prev.filter(p => p.id !== confirmDelete.id));
+      setConfirmDelete(null);
+      toast.success("Publication supprimée");
+    } catch (err: any) {
+      console.error("[communauté] suppression:", err);
+      toast.error("La suppression a échoué");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="px-4 pt-4 pb-24">
@@ -798,35 +968,66 @@ function CommunityPage() {
           </select>
 
           <div className="flex items-center gap-2">
-            {/* Image button */}
+            {/* Image — la restriction s'annonce AVANT le choix du fichier.
+                Laisser sélectionner une photo, afficher l'aperçu, puis
+                refuser à la publication, c'est faire porter l'effort à
+                l'utilisateur pour lui répondre non ensuite. */}
             <button
               id="composer-image-btn"
-              onClick={() => imageInputRef.current?.click()}
+              onClick={() => {
+                if (!features.communityMedia) {
+                  toast.error("Publier une photo est réservé aux membres Premium", {
+                    action: { label: "Voir les formules", onClick: () => navigate({ to: "/abonnement" }) },
+                  });
+                  return;
+                }
+                imageInputRef.current?.click();
+              }}
               disabled={uploadingMedia || publishing}
-              title="Ajouter une image (max 5 MB)"
+              title={features.communityMedia
+                ? "Ajouter une image (max 5 MB)"
+                : "Réservé aux membres Premium"}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all disabled:opacity-40 ${
                 composerMediaType === "image"
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:border-primary/40 hover:text-primary"
+                  : !features.communityMedia
+                    ? "border-border text-muted-foreground/60"
+                    : "border-border text-muted-foreground hover:border-primary/40 hover:text-primary"
               }`}
             >
-              <ImageIcon className="w-3.5 h-3.5" />
+              {features.communityMedia
+                ? <ImageIcon className="w-3.5 h-3.5" />
+                : <Lock className="w-3.5 h-3.5" />}
               <span className="hidden sm:inline">Image</span>
             </button>
 
-            {/* Video button */}
+            {/* Vidéo */}
             <button
               id="composer-video-btn"
-              onClick={() => videoInputRef.current?.click()}
+              onClick={() => {
+                if (!features.communityVideo) {
+                  toast.error("Publier une vidéo est réservé aux membres VIP", {
+                    action: { label: "Voir les formules", onClick: () => navigate({ to: "/abonnement" }) },
+                  });
+                  return;
+                }
+                videoInputRef.current?.click();
+              }}
               disabled={uploadingMedia || publishing}
-              title="Ajouter une vidéo (max 25 MB)"
+              title={features.communityVideo
+                ? "Ajouter une vidéo (max 25 MB)"
+                : "Réservé aux membres VIP"}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all disabled:opacity-40 ${
                 composerMediaType === "video"
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:border-primary/40 hover:text-primary"
+                  : !features.communityVideo
+                    ? "border-border text-muted-foreground/60"
+                    : "border-border text-muted-foreground hover:border-primary/40 hover:text-primary"
               }`}
             >
-              <Video className="w-3.5 h-3.5" />
+              {features.communityVideo
+                ? <Video className="w-3.5 h-3.5" />
+                : <Lock className="w-3.5 h-3.5" />}
               <span className="hidden sm:inline">Vidéo</span>
             </button>
 
@@ -877,6 +1078,38 @@ function CommunityPage() {
         }}
       />
 
+      {/* Portée : le fil de tous, ou le sien */}
+      <div className="flex rounded-2xl border border-border bg-card p-1 mb-3">
+        {([
+          { key: "tous", label: "La communauté" },
+          { key: "moi", label: "Mes publications" },
+        ] as const).map(t => (
+          <button
+            key={t.key}
+            onClick={() => setScope(t.key)}
+            className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-colors ${
+              scope === t.key
+                ? "bg-primary text-primary-foreground shadow-soft"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label}
+            {t.key === "moi" && myStats.count > 0 && (
+              <span className="ml-1.5 text-xs opacity-80">({myStats.count})</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Bilan personnel — visible seulement sur son propre fil */}
+      {scope === "moi" && myStats.count > 0 && (
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          <MiniStat label="Publications" value={myStats.count} />
+          <MiniStat label="J'aime reçus" value={myStats.likes} />
+          <MiniStat label="Commentaires" value={myStats.comments} />
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 mb-3 scrollbar-none">
         {categories.map(c => (
@@ -902,8 +1135,14 @@ function CommunityPage() {
           {[1,2,3].map(i => <div key={i} className="rounded-2xl bg-secondary/40 animate-pulse h-36" />)}
         </div>
       ) : visible.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border py-14 text-center text-sm text-muted-foreground">
-          Aucune publication pour l'instant. Soyez le premier à partager !
+        <div className="rounded-2xl border border-dashed border-border py-14 px-6 text-center text-sm text-muted-foreground">
+          {scope === "moi"
+            ? category !== "Tous"
+              // Distinguer « rien publié » de « rien dans cette catégorie »
+              // évite de croire qu'une publication a disparu.
+              ? `Vous n'avez rien publié dans « ${category} ».`
+              : "Vous n'avez pas encore publié. Partagez un témoignage, une prière ou un verset qui vous porte."
+            : "Aucune publication pour l'instant. Soyez le premier à partager !"}
         </div>
       ) : (
         <div className="space-y-4">
@@ -920,11 +1159,53 @@ function CommunityPage() {
                     {p.profile?.is_verified && <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />}
                     {isPremiumMember(p.profile) && <Crown className="w-3.5 h-3.5 text-gold shrink-0" />}
                   </div>
-                  <div className="text-[11px] text-muted-foreground">{timeAgo(p.created_at)} · {p.profile?.city || ""}</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {timeAgo(p.created_at)} · {p.profile?.city || ""}
+                    {p.edited_at && (
+                      <span title={`Modifiée le ${new Date(p.edited_at).toLocaleString("fr-FR")}`}>
+                        {" "}· modifiée
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-secondary text-primary font-semibold">
                   {p.category}
                 </span>
+
+                {/* Actions réservées à l'auteur. Le test porte sur `user_id`
+                    et non sur la portée affichée : ses publications
+                    apparaissent aussi dans le fil général, où il doit
+                    pouvoir les corriger sans changer d'onglet. */}
+                {p.user_id === currentUserId && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                        aria-label="Actions sur ma publication"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="rounded-xl w-48">
+                      <DropdownMenuItem onSelect={() => openEdit(p)} className="cursor-pointer gap-2">
+                        <Pencil className="w-4 h-4" /> Modifier
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() => sharePost(p.id)}
+                        className="cursor-pointer gap-2"
+                      >
+                        <Share2 className="w-4 h-4" /> Partager
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onSelect={() => setConfirmDelete(p)}
+                        className="cursor-pointer gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
+                      >
+                        <Trash2 className="w-4 h-4" /> Supprimer
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </header>
 
               {/* Body text */}
@@ -998,6 +1279,131 @@ function CommunityPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── Modification ───────────────────────────────────────── */}
+      <Dialog open={!!editing} onOpenChange={o => !o && setEditing(null)}>
+        <DialogContent className="rounded-2xl max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-serif">Modifier ma publication</DialogTitle>
+            <DialogDescription>
+              La mention « modifiée » apparaîtra sous votre nom.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Catégorie
+              </label>
+              <select
+                value={editCategory}
+                onChange={e => setEditCategory(e.target.value)}
+                className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm"
+              >
+                {categories.filter(c => c !== "Tous").map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Texte
+              </label>
+              <textarea
+                value={editText}
+                onChange={e => setEditText(e.target.value)}
+                rows={6}
+                className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+            </div>
+
+            {/* Le média se retire, mais ne se remplace pas ici : téléverser
+                un nouveau fichier demanderait de rejouer tout le contrôle de
+                formule et de taille du composeur. Mieux vaut inviter à
+                republier que proposer un chemin à demi fiable. */}
+            {(editing?.image_url || editing?.video_url) && (
+              <label className="flex items-start gap-2.5 rounded-xl border border-border p-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editRemoveMedia}
+                  onChange={e => setEditRemoveMedia(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <span className="text-sm">
+                  Retirer {editing?.video_url ? "la vidéo" : "la photo"}
+                  <span className="block text-[11px] text-muted-foreground mt-0.5">
+                    Pour en joindre une autre, supprimez cette publication et republiez.
+                  </span>
+                </span>
+              </label>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <button
+              onClick={() => setEditing(null)}
+              className="px-4 py-2 rounded-xl border border-border text-sm hover:bg-secondary"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={saveEdit}
+              disabled={savingEdit}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50"
+            >
+              {savingEdit && <Loader2 className="w-4 h-4 animate-spin" />}
+              Enregistrer
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Suppression ────────────────────────────────────────── */}
+      <Dialog open={!!confirmDelete} onOpenChange={o => !o && setConfirmDelete(null)}>
+        <DialogContent className="rounded-2xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-serif">Supprimer cette publication ?</DialogTitle>
+            <DialogDescription>
+              Elle disparaîtra du fil, avec ses commentaires et ses « j'aime ».
+              Cette action est définitive.
+            </DialogDescription>
+          </DialogHeader>
+
+          {confirmDelete && (
+            <p className="text-sm text-muted-foreground line-clamp-3 rounded-xl bg-secondary/50 p-3 italic">
+              « {confirmDelete.text} »
+            </p>
+          )}
+
+          <DialogFooter className="gap-2">
+            <button
+              onClick={() => setConfirmDelete(null)}
+              className="px-4 py-2 rounded-xl border border-border text-sm hover:bg-secondary"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={removePost}
+              disabled={deleting}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-destructive text-destructive-foreground text-sm font-semibold disabled:opacity-50"
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              Supprimer
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ─── Statistique compacte ─────────────────────────────────────────────────────
+function MiniStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl bg-secondary/50 py-2.5 text-center">
+      <div className="font-serif text-lg font-bold leading-none">{value}</div>
+      <div className="text-[10px] text-muted-foreground mt-1">{label}</div>
     </div>
   );
 }

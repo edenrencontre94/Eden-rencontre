@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "motion/react";
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { getCurrentUser } from "@/lib/auth";
 import {
@@ -25,15 +25,17 @@ import {
 import { type Profile } from "@/lib/mock-data";
 import { toast } from "sonner";
 import { useSubscription } from "@/lib/subscription";
-import { fetchBlockedIds } from "@/lib/moderation";
-import { excludePaused, fetchAdmirerIds, filterByVisibility } from "@/lib/visibility";
 import { compatibilityScore, rankProfiles } from "@/lib/matching";
+import { DEFAULT_FILTERS, fetchDeck, countActiveFilters, type Filters } from "@/lib/filtres";
+import { FilterSheet } from "@/components/app/FilterSheet";
 import { BOOST_DURATION_MIN, boostErrorMessage, fetchBoostStatus, startBoost, type BoostStatus } from "@/lib/boost";
 import { BoostPicker } from "@/components/app/BoostPicker";
 import { daysUntilSuperLike, fetchQuotas, quotaErrorMessage, type Quotas } from "@/lib/quotas";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+
+
+
+import { displayName } from "@/lib/utils";
+import { ProfileExtrasBlocks } from "@/components/app/ProfileExtras";
 
 export const Route = createFileRoute("/_app/decouvrir")({
   head: () => ({
@@ -55,13 +57,8 @@ function DiscoverPage() {
   
   // Filtres
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    onlineOnly: false,
-    verifiedOnly: false,
-    distance: 50,
-    city: "",
-    denomination: "",
-  });
+  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const [locationShared, setLocationShared] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
 
   const navigate = useNavigate();
@@ -94,73 +91,39 @@ function DiscoverPage() {
           return;
         }
 
-        // Profil, swipes, blocages et admirateurs sont indépendants :
-        // une seule ronde réseau
-        const [{ data: currentUserData }, { data: swipesData }, blockedIds, admirerIds] =
-          await Promise.all([
-            supabase
-              .from('profiles')
-              .select('seeking_gender, visibility, birth_date, city, country, denomination, practice_level, church_attendance, marriage_intent, wants_children')
-              .eq('id', user.id)
-              .single(),
-            supabase.from('swipes').select('target_id').eq('swiper_id', user.id),
-            fetchBlockedIds(),
-            fetchAdmirerIds(user.id),
-          ]);
-
-        const admirers = new Set(admirerIds);
+        const { data: currentUserData } = await supabase
+          .from('profiles')
+          .select('seeking_gender, visibility, birth_date, city, country, denomination, ' +
+                  'practice_level, church_attendance, marriage_intent, wants_children, share_location')
+          .eq('id', user.id)
+          .single();
 
         if (currentUserData) {
           setUserProfile(currentUserData);
+          setLocationShared(Boolean(currentUserData.share_location));
         }
 
-        const swipedIds = swipesData?.map((s: any) => s.target_id) || [];
-
-        // Les personnes bloquées ne doivent plus jamais réapparaître dans le deck
-        const excludedIds = [...new Set([...swipedIds, ...blockedIds])];
-
-        // Colonnes ciblées plutôt que `*` : le deck charge 100 profils, et
-        // tirer chaque colonne inutile se paie sur la bande passante mobile.
-        let query = supabase
-          .from('profiles')
-          .select(
-            'id, first_name, birth_date, city, country, denomination, photos, bio, ' +
-            'is_verified, boosted_until, practice_level, church_attendance, ' +
-            'marriage_intent, wants_children, last_seen',
-          )
-          .neq('id', user.id)
-          // Tri CÔTÉ SERVEUR : les profils boostés entrent forcément dans les
-          // 100 récupérés. Un tri purement local ne les aurait remontés que
-          // s'ils s'y trouvaient déjà par hasard — le Boost aurait été inopérant
-          // dès que la base dépasse la centaine de membres.
-          .order('boosted_until', { ascending: false, nullsFirst: false })
-          .limit(100);
-
-        // Les profils « En pause » sont écartés dès la requête
-        query = excludePaused(query);
-
-        if (excludedIds.length > 0) {
-          query = query.not('id', 'in', `(${excludedIds.join(',')})`);
-        }
-        
-        // Sexe recherché de base
-        if (currentUserData && currentUserData.seeking_gender && currentUserData.seeking_gender !== "all") {
-          query = query.eq('gender', currentUserData.seeking_gender);
-        }
-
-        const { data, error } = await query;
+        // Tout est filtré EN BASE : visibilité, blocages, profils déjà vus,
+        // sexe recherché, pays, âge et critères avancés. L'ancienne version
+        // chargeait 100 profils puis filtrait dans le navigateur — filtrer
+        // sur un pays ne cherchait donc pas dans la base, mais seulement
+        // parmi les 100 déjà tirés.
+        const { rows, error } = await fetchDeck(filters, 100);
         if (error) throw error;
 
-        if (data) {
-          // « Sur demande » : ces profils ne s'affichent que pour les
-          // personnes qu'ils ont eux-mêmes choisies.
-          // Puis les profils boostés passent devant — c'est ce qui donne
-          // sa valeur au Boost.
-          const visible = filterByVisibility(data as any[], admirers);
-
-          const formatted: Profile[] = visible.map((p: any) => ({
+        {
+          const formatted: Profile[] = rows.map((p: any) => ({
             id: p.id,
             firstName: p.first_name || "Membre",
+            lastName: p.last_name || "",
+            maritalStatus: p.marital_status || "",
+            marriageVisionText: p.marriage_vision || "",
+            lookingFor: p.looking_for || "",
+            educationLevel: p.education || "",
+            heightCm: p.height_cm ?? null,
+            qualities: p.qualities || [],
+            flaws: p.flaws || [],
+            dealbreakers: p.dealbreakers || [],
             age: p.birth_date ? new Date().getFullYear() - new Date(p.birth_date).getFullYear() : 25,
             city: p.city || "Ville inconnue",
             country: p.country || "",
@@ -179,27 +142,33 @@ function DiscoverPage() {
             education: "Études",
             height: "1m70",
             languages: ["Français"],
-            interests: [],
+            interests: p.interests || [],
             passions: [],
             marriageVision: p.marriage_intent || "",
             favoriteVerse: "",
             church: p.church_attendance || "",
             faithImportance: p.practice_level || "",
-            // No mock online status
+            // Renvoyé par la base quand les deux personnes partagent leur
+            // position ; NULL sinon.
+            distanceKm: p.distance_km ?? null,
             online: false
           }));
 
           // Boostés d'abord, puis par compatibilité décroissante
           setDeck(rankProfiles(formatted));
+          setIndex(0);
         }
       } catch (err) {
         console.error("Erreur chargement profils:", err);
+        toast.error("Impossible de charger les profils");
       } finally {
         setLoading(false);
       }
     }
     loadProfiles();
-  }, []);
+    // Un changement de filtre relance la requête : c'est le serveur qui
+    // sélectionne, pas un tri local sur un lot déjà chargé.
+  }, [filters]);
 
   // Un boost peut expirer pendant que l'utilisateur swipe : ce tick fait
   // retomber l'étiquette et le classement à la seconde près, sans refetch.
@@ -209,21 +178,16 @@ function DiscoverPage() {
     return () => clearInterval(t);
   }, []);
 
-  // Application des filtres côté client
-  const filteredDeck = useMemo(() => {
-    void boostTick; // recalcule le classement à l'expiration d'un boost
-    return rankProfiles(deck, boostTick).filter(p => {
-      if (filters.onlineOnly && !(p as any).online) return false;
-      if (filters.verifiedOnly && !p.verified) return false;
-      if (filters.city && !p.city.toLowerCase().includes(filters.city.toLowerCase())) return false;
-      if (filters.denomination && p.denomination.toLowerCase() !== filters.denomination.toLowerCase()) return false;
-      // Distance is mocked visually for now
-      return true;
-    });
-  }, [deck, filters, boostTick]);
+  // Le deck arrive déjà filtré par la base. Il ne reste qu'à reclasser
+  // localement à l'expiration d'un Boost, sans repasser par le réseau.
+  const filteredDeck = useMemo(
+    () => rankProfiles(deck, boostTick),
+    [deck, boostTick],
+  );
 
   const currentFiltered = filteredDeck[index];
   const nextFiltered = filteredDeck[index + 1];
+  const activeFilters = countActiveFilters(filters);
 
   useEffect(() => {
     async function logVisit() {
@@ -410,11 +374,20 @@ function DiscoverPage() {
           <h1 className="font-serif text-2xl font-semibold">Découvrir</h1>
           <p className="text-xs text-muted-foreground">Trouvez votre âme sœur</p>
         </div>
-        <button 
+        {/* La pastille indique combien de critères sont actifs : sans elle,
+            un deck vide fait croire à une panne alors qu'un filtre oublié
+            en est la cause. */}
+        <button
           onClick={() => setShowFilters(true)}
-          className="w-10 h-10 rounded-full bg-secondary text-foreground flex items-center justify-center hover:bg-secondary/80 transition-colors shadow-sm"
+          className="relative w-10 h-10 rounded-full bg-secondary text-foreground flex items-center justify-center hover:bg-secondary/80 transition-colors shadow-sm"
+          aria-label="Filtres"
         >
           <SlidersHorizontal className="w-5 h-5" />
+          {activeFilters > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+              {activeFilters}
+            </span>
+          )}
         </button>
       </div>
       
@@ -573,11 +546,16 @@ function DiscoverPage() {
             <div className="flex items-start justify-between">
               <div>
                 <h2 className="font-serif text-xl font-semibold">
-                  {currentFiltered.firstName}, {currentFiltered.age}
+                  {displayName(currentFiltered.firstName, currentFiltered.lastName)}, {currentFiltered.age}
                 </h2>
                 <div className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground">
                   <MapPin className="w-3.5 h-3.5" />
                   <span>{currentFiltered.city}{currentFiltered.country ? `, ${currentFiltered.country}` : ""}</span>
+                  {typeof currentFiltered.distanceKm === "number" && (
+                    <span className="text-primary font-medium">
+                      · à {Math.round(currentFiltered.distanceKm)} km
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1.5">
@@ -632,17 +610,24 @@ function DiscoverPage() {
             </div>
           </div>
 
-          {/* Passions / intérêts */}
-          {currentFiltered.interests && currentFiltered.interests.length > 0 && (
-            <div className="px-5 py-4 border-t border-border/40">
-              <div className="text-[10px] text-muted-foreground mb-2 font-medium uppercase tracking-wide">Intérêts</div>
-              <div className="flex flex-wrap gap-1.5">
-                {currentFiltered.interests.slice(0, 6).map((tag: string) => (
-                  <span key={tag} className="px-2.5 py-1 rounded-full bg-primary/8 text-primary text-[11px] font-medium border border-primary/20">{tag}</span>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Champs complémentaires, regroupés en trois blocs.
+              Ils remplacent l'ancienne ligne « Intérêts », qui n'affichait
+              qu'un des huit champs désormais renseignables. */}
+          <div className="border-t border-border/40">
+            <ProfileExtrasBlocks
+              p={{
+                marital_status: currentFiltered.maritalStatus,
+                marriage_vision: currentFiltered.marriageVisionText,
+                looking_for: currentFiltered.lookingFor,
+                education: currentFiltered.educationLevel,
+                height_cm: currentFiltered.heightCm,
+                interests: currentFiltered.interests,
+                qualities: currentFiltered.qualities,
+                flaws: currentFiltered.flaws,
+                dealbreakers: currentFiltered.dealbreakers,
+              }}
+            />
+          </div>
 
           {/* View full profile */}
           <div className="px-5 pb-5 pt-3">
@@ -722,98 +707,14 @@ function DiscoverPage() {
       {/* FILTRES DRAWER */}
       <AnimatePresence>
         {showFilters && (
-          <>
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
-              className="fixed inset-0 bg-black/60 z-50 backdrop-blur-sm"
-              onClick={() => setShowFilters(false)}
-            />
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed inset-x-0 bottom-0 z-50 bg-background rounded-t-[32px] p-6 max-h-[90vh] overflow-y-auto shadow-[0_-10px_40px_rgba(0,0,0,0.1)]"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-serif text-2xl font-semibold">Filtres</h3>
-                <button onClick={() => setShowFilters(false)} className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="online" className="text-base cursor-pointer">En ligne actuellement</Label>
-                  <Switch 
-                    id="online" 
-                    checked={filters.onlineOnly} 
-                    onCheckedChange={(c) => setFilters(f => ({ ...f, onlineOnly: c }))} 
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="verified" className="text-base flex items-center gap-2 cursor-pointer">
-                    Profils vérifiés <CheckCircle2 className="w-4 h-4 text-blue-500" />
-                  </Label>
-                  <Switch 
-                    id="verified" 
-                    checked={filters.verifiedOnly} 
-                    onCheckedChange={(c) => setFilters(f => ({ ...f, verifiedOnly: c }))} 
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-base">Distance maximale (km)</Label>
-                    <span className="font-bold text-primary">{filters.distance} km</span>
-                  </div>
-                  <input 
-                    type="range" 
-                    min="1" 
-                    max="100" 
-                    value={filters.distance} 
-                    onChange={(e) => setFilters(f => ({ ...f, distance: parseInt(e.target.value) }))}
-                    className="w-full accent-primary" 
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-base">Ville</Label>
-                  <Input 
-                    placeholder="Ex: Paris" 
-                    value={filters.city} 
-                    onChange={(e) => setFilters(f => ({ ...f, city: e.target.value }))} 
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-base">Confession / Dénomination</Label>
-                  <select 
-                    value={filters.denomination} 
-                    onChange={(e) => setFilters(f => ({ ...f, denomination: e.target.value }))}
-                    className="w-full h-11 px-3 py-2 rounded-xl border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-transparent transition-all"
-                  >
-                    <option value="">Toutes les confessions</option>
-                    <option value="catholique">Catholique</option>
-                    <option value="protestant">Protestant</option>
-                    <option value="evangelique">Évangélique</option>
-                    <option value="orthodoxe">Orthodoxe</option>
-                    <option value="autre">Autre</option>
-                  </select>
-                </div>
-                
-                <button 
-                  onClick={() => setShowFilters(false)}
-                  className="w-full py-3.5 rounded-full bg-primary text-primary-foreground font-semibold shadow-elegant mt-4 hover:bg-primary/90 transition-colors"
-                >
-                  Appliquer les filtres
-                </button>
-              </div>
-            </motion.div>
-          </>
+          <FilterSheet
+            filters={filters}
+            onApply={setFilters}
+            onClose={() => setShowFilters(false)}
+            canUseAdvanced={features.advancedFilters}
+            locationShared={locationShared}
+            onLocationChange={setLocationShared}
+          />
         )}
       </AnimatePresence>
     </div>
@@ -899,7 +800,8 @@ function SwipeCard({
           )}
         </div>
         <h2 className="font-serif text-3xl font-bold flex items-baseline gap-2 text-shadow-sm">
-          {profile.firstName}, {profile.age}
+          <span className="truncate min-w-0">{displayName(profile.firstName, profile.lastName)}</span>
+          <span className="shrink-0">, {profile.age}</span>
         </h2>
         <div className="flex flex-col gap-1 mt-2 text-sm opacity-90 text-shadow-sm">
           <div className="flex items-center gap-1.5">
@@ -945,8 +847,10 @@ function ProfileDetailModal({ profile, onClose }: { profile: Profile; onClose: (
           
           <div className="absolute bottom-0 inset-x-0 p-6 pb-2">
             <h2 className="font-serif text-4xl font-bold flex items-center gap-2">
-              {profile.firstName}, {profile.age}
-              {profile.verified && <CheckCircle2 className="w-6 h-6 text-blue-500" />}
+              <span className="truncate min-w-0">
+                {displayName(profile.firstName, profile.lastName)}, {profile.age}
+              </span>
+              {profile.verified && <CheckCircle2 className="w-6 h-6 text-blue-500 shrink-0" />}
             </h2>
             <div className="flex items-center gap-2 text-muted-foreground mt-1 text-sm font-medium">
               <span>{profile.city}</span>

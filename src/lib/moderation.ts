@@ -56,26 +56,37 @@ export async function fetchBlockedIds(): Promise<string[]> {
   return (data ?? []).map((b: any) => b.blocked_id);
 }
 
+/**
+ * Signalement avec motif obligatoire.
+ *
+ * L'insertion directe dans `reports` a été remplacée par un appel à
+ * `submit_report` : elle acceptait `reason` comme paramètre FACULTATIF, et
+ * les deux appelants l'omettaient. La modération recevait des signalements
+ * sans motif, impossibles à hiérarchiser.
+ *
+ * La fonction en base impose le motif, refuse l'auto-signalement et bloque
+ * les doublons en attente d'examen.
+ *
+ * Préférez `<ReportDialog />`, qui recueille le motif dans l'interface.
+ */
 export async function reportUser(
   reportedId: string,
+  reason: string,
+  details?: string,
   context: ReportContext = "profile",
-  reason?: string,
-): Promise<boolean> {
-  const userId = await getCurrentUserId();
-  if (!userId) return false;
-
-  const { error } = await supabase.from("reports").insert({
-    reporter_id: userId,
-    reported_id: reportedId,
-    context,
-    reason: reason ?? null,
+): Promise<{ ok: boolean; error?: any }> {
+  const { error } = await supabase.rpc("submit_report", {
+    p_reported_id: reportedId,
+    p_reason: reason,
+    p_details: details?.trim() || null,
+    p_context: context,
   });
 
   if (error) {
     console.error("[moderation] signalement:", error);
-    return false;
+    return { ok: false, error };
   }
-  return true;
+  return { ok: true };
 }
 
 /** Masque définitivement un like reçu. */

@@ -39,9 +39,10 @@ import { Input } from "@/components/ui/input";
 import { usePresence } from "@/hooks/usePresence";
 import { IncomingCallListener } from "@/components/app/IncomingCallListener";
 import { BoostPicker } from "@/components/app/BoostPicker";
-import { getCurrentUser, useIsAdmin } from "@/lib/auth";
+import { useIsAdmin } from "@/lib/auth";
 import { useSetting } from "@/lib/appSettings";
 import { MaintenanceScreen } from "@/components/MaintenanceScreen";
+import { DELETION_REASONS, motifErrorMessage, type DeletionReason } from "@/lib/motifs";
 
 export const Route = createFileRoute("/_app")({
   // No beforeLoad — auth is checked client-side only to avoid SSR logout on refresh
@@ -147,29 +148,48 @@ function AppLayout() {
   const [authed, setAuthed] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleteReason, setDeleteReason] = useState<DeletionReason | null>(null);
+  const [deleteDetails, setDeleteDetails] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleDeleteAccount = async () => {
+    if (!deleteReason) {
+      toast.error("Indiquez ce qui vous fait partir.");
+      return;
+    }
+    if (deleteReason === "autre" && deleteDetails.trim().length < 10) {
+      toast.error("Précisez votre raison en quelques mots.");
+      return;
+    }
     if (deleteConfirm !== "SUPPRIMER") {
       toast.error("Veuillez taper SUPPRIMER pour confirmer.");
       return;
     }
+
     setIsDeleting(true);
     try {
-      const user = await getCurrentUser();
-      if (user) {
-        // Optionnel : Vous pouvez appeler une fonction RPC Supabase ici 
-        // pour supprimer les données associées ou le compte auth.
-        // ex: await supabase.rpc('delete_user_data');
-        await supabase.from('profiles').delete().eq('id', user.id);
-      }
+      // Une seule transaction côté base : enregistrement du motif PUIS
+      // suppression. En deux requêtes depuis le navigateur, une coupure
+      // entre les deux — ou l'onglet fermé aussitôt — laisserait un compte
+      // supprimé sans la moindre explication.
+      const { error } = await supabase.rpc("delete_my_account", {
+        p_reason: deleteReason,
+        p_details: deleteDetails.trim() || null,
+      });
+      if (error) throw error;
+
       await supabase.auth.signOut();
       navigate({ to: "/login" });
-      toast.success("Compte supprimé avec succès.");
-    } catch (e) {
-      toast.error("Erreur lors de la suppression.");
+      toast.success(
+        deleteReason === "trouve_partenaire"
+          ? "Compte supprimé. Que Dieu bénisse votre union 🙏"
+          : "Compte supprimé. Merci pour votre retour.",
+      );
+    } catch (e: any) {
+      console.error("[suppression compte]", e);
+      toast.error(motifErrorMessage(e));
     } finally {
       setIsDeleting(false);
     }
@@ -449,32 +469,76 @@ function AppLayout() {
                 <AlertDialogContent className="w-[90vw] max-w-md rounded-3xl">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
-                    <AlertDialogDescription className="space-y-3">
-                      <p>
-                        Cette action est irréversible. Elle supprimera définitivement votre compte, 
-                        vos photos, vos matchs et vos messages.
-                      </p>
-                      <p className="font-medium text-foreground">
-                        Veuillez taper <strong className="text-destructive">SUPPRIMER</strong> pour confirmer.
-                      </p>
-                      <Input 
-                        value={deleteConfirm}
-                        onChange={(e) => setDeleteConfirm(e.target.value)}
-                        placeholder="SUPPRIMER"
-                        className="mt-2"
-                      />
+                    <AlertDialogDescription asChild>
+                      <div className="space-y-3">
+                        <p>
+                          Cette action est irréversible. Elle supprimera définitivement votre compte,
+                          vos photos, vos matchs et vos messages.
+                        </p>
+
+                        {/* Le motif est demandé AVANT la confirmation : posé
+                            après, il serait ignoré par quelqu'un dont la
+                            décision est déjà exécutée. C'est la seule
+                            information qu'on ne peut pas reconstituer
+                            ensuite — le compte n'existe plus. */}
+                        <div className="text-left">
+                          <p className="font-medium text-foreground mb-2">
+                            Qu'est-ce qui vous fait partir ?
+                          </p>
+                          <div className="max-h-44 overflow-y-auto space-y-1.5 pr-1">
+                            {DELETION_REASONS.map(r => (
+                              <button
+                                key={r.key}
+                                type="button"
+                                onClick={() => setDeleteReason(r.key)}
+                                className={`w-full text-left rounded-xl border px-3 py-2 transition-colors ${
+                                  deleteReason === r.key
+                                    ? "border-primary bg-primary/5"
+                                    : "border-border hover:bg-secondary/50"
+                                }`}
+                              >
+                                <span className="text-sm font-medium text-foreground">{r.label}</span>
+                                {r.hint && (
+                                  <span className="block text-[11px] text-muted-foreground mt-0.5">
+                                    {r.hint}
+                                  </span>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+
+                          <textarea
+                            value={deleteDetails}
+                            onChange={(e) => setDeleteDetails(e.target.value)}
+                            rows={2}
+                            maxLength={500}
+                            placeholder={
+                              deleteReason === "autre"
+                                ? "Dites-nous en quelques mots (obligatoire)"
+                                : "Un mot de plus, si vous le souhaitez"
+                            }
+                            className="mt-2 w-full px-3 py-2 rounded-xl bg-background border border-border text-sm resize-y text-foreground"
+                          />
+                        </div>
+
+                        <p className="font-medium text-foreground">
+                          Veuillez taper <strong className="text-destructive">SUPPRIMER</strong> pour confirmer.
+                        </p>
+                        <Input
+                          value={deleteConfirm}
+                          onChange={(e) => setDeleteConfirm(e.target.value)}
+                          placeholder="SUPPRIMER"
+                          className="mt-2"
+                        />
+                      </div>
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter className="mt-4 gap-2 sm:gap-0">
                     <AlertDialogCancel className="rounded-xl">Annuler</AlertDialogCancel>
-                    <AlertDialogAction 
+                    <AlertDialogAction
                       onClick={(e) => {
-                        if (deleteConfirm !== "SUPPRIMER") {
-                          e.preventDefault();
-                          toast.error("Veuillez taper SUPPRIMER pour confirmer.");
-                        } else {
-                          handleDeleteAccount();
-                        }
+                        e.preventDefault();
+                        handleDeleteAccount();
                       }}
                       className="rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                       disabled={isDeleting}
