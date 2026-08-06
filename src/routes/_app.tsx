@@ -42,6 +42,7 @@ import { BoostPicker } from "@/components/app/BoostPicker";
 import { useIsAdmin } from "@/lib/auth";
 import { useSetting } from "@/lib/appSettings";
 import { MaintenanceScreen } from "@/components/MaintenanceScreen";
+import { SuspendedScreen } from "@/components/SuspendedScreen";
 import { DELETION_REASONS, motifErrorMessage, type DeletionReason } from "@/lib/motifs";
 
 export const Route = createFileRoute("/_app")({
@@ -144,6 +145,9 @@ function AppLayout() {
   
   const isAdmin = useIsAdmin();
   const maintenance = useSetting<boolean>("maintenance_mode", false);
+  const [suspension, setSuspension] = useState<{
+    suspended: boolean; until?: string; reason?: string; permanent?: boolean;
+  } | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -209,6 +213,14 @@ function AppLayout() {
         } else {
           setAuthed(true);
           setAuthChecked(true);
+
+          // Vérifié à chaque ouverture : une suspension prononcée pendant
+          // qu'une session est ouverte doit prendre effet au rechargement,
+          // sans attendre l'expiration du jeton.
+          supabase.rpc("my_suspension").then(({ data }: any) => {
+            if (!cancelled && data) setSuspension(data);
+          });
+
           // Fetch user avatar
           supabase
             .from("profiles")
@@ -247,6 +259,19 @@ function AppLayout() {
       unsub?.();
     };
   }, [navigate]);
+
+  // Compte suspendu : l'écran remplace toute l'application. Il passe AVANT
+  // le mode maintenance — un membre suspendu doit lire pourquoi, pas un
+  // message d'indisponibilité qui l'enverrait ouvrir un ticket.
+  if (suspension?.suspended) {
+    return (
+      <SuspendedScreen
+        until={suspension.until}
+        reason={suspension.reason}
+        permanent={suspension.permanent}
+      />
+    );
+  }
 
   // Mode maintenance : l'application est fermée aux membres, mais reste
   // ouverte aux administrateurs — sinon celui qui l'active se verrouillerait
