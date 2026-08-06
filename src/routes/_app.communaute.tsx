@@ -810,9 +810,21 @@ function CommunityPage() {
         .update(patch)
         .eq("id", editing.id)
         .select("id, text, category, image_url, video_url, edited_at")
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+
+      // Même piège que pour la suppression : une modification refusée par
+      // RLS ne renvoie pas d'erreur, elle ne touche simplement aucune
+      // ligne. `.single()` aurait levé une erreur illisible ; `maybeSingle`
+      // permet de dire ce qui s'est réellement passé.
+      if (!data) {
+        toast.error("Modification refusée", {
+          description: "Vous n'avez pas les droits sur cette publication.",
+        });
+        setSavingEdit(false);
+        return;
+      }
 
       // On reprend `edited_at` renvoyé par la base plutôt que d'en fabriquer
       // un côté client : c'est le serveur qui fait foi, et un décalage
@@ -832,19 +844,35 @@ function CommunityPage() {
     if (!confirmDelete) return;
     setDeleting(true);
     try {
-      const { error } = await supabase
+      // `.select()` est indispensable ici. Sans lui, une suppression
+      // refusée par une politique RLS ne renvoie AUCUNE erreur : la
+      // requête réussit et n'efface simplement rien. C'est exactement ce
+      // qui se passait — la publication réapparaissait au rechargement,
+      // sans le moindre message.
+      const { data, error } = await supabase
         .from("community_posts")
         .delete()
-        .eq("id", confirmDelete.id);
+        .eq("id", confirmDelete.id)
+        .select("id");
 
       if (error) throw error;
+
+      if (!data || data.length === 0) {
+        toast.error("Suppression refusée", {
+          description: "Vous n'avez pas les droits sur cette publication, ou elle a déjà été supprimée.",
+        });
+        setDeleting(false);
+        return;
+      }
 
       setPosts(prev => prev.filter(p => p.id !== confirmDelete.id));
       setConfirmDelete(null);
       toast.success("Publication supprimée");
     } catch (err: any) {
       console.error("[communauté] suppression:", err);
-      toast.error("La suppression a échoué");
+      // Le message de la base est affiché tel quel : « la suppression a
+      // échoué » n'apprenait rien, ni à vous ni à moi.
+      toast.error(err?.message ?? "La suppression a échoué");
     } finally {
       setDeleting(false);
     }

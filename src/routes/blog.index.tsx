@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PublicLayout, SITE_URL } from "@/components/public/PublicLayout";
-import { ARTICLES } from "@/content/articles";
+import { useEffect, useState } from "react";
+import { ARTICLES, type Article } from "@/content/articles";
+import { fetchArticles } from "@/lib/blog";
 import { Clock, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/blog/")({
@@ -22,7 +24,17 @@ export const Route = createFileRoute("/blog/")({
 });
 
 function BlogIndex() {
-  const sorted = [...ARTICLES].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+  // Les articles du code s'affichent IMMÉDIATEMENT — ils sont rendus côté
+  // serveur, donc indexables sans attendre. Ceux de la base viennent s'y
+  // ajouter au chargement. L'inverse aurait produit une page vide au
+  // premier rendu, exactement ce qu'un moteur de recherche retiendrait.
+  const [articles, setArticles] = useState<Article[]>(
+    [...ARTICLES].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)),
+  );
+
+  useEffect(() => { fetchArticles().then(setArticles); }, []);
+
+  const sorted = articles;
 
   return (
     <PublicLayout

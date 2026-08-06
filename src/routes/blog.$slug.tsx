@@ -1,13 +1,22 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { PublicLayout, SITE_URL } from "@/components/public/PublicLayout";
 import { ARTICLES, getArticle } from "@/content/articles";
+import { fetchArticle } from "@/lib/blog";
 import { ArrowRight, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/blog/$slug")({
   // Résolu avant le rendu : le contenu part avec le HTML, donc Google le
   // lit sans avoir à exécuter le JavaScript.
-  loader: ({ params }) => {
-    const article = getArticle(params.slug);
+  loader: async ({ params }) => {
+    // L'article du code est résolu d'abord, sans réseau : les quatre
+    // existants restent servis instantanément même si la base est
+    // indisponible. Un nouvel article écrit depuis le back-office passe
+    // par la requête, mais toujours DANS le loader — donc rendu côté
+    // serveur, donc indexable sans exécution de JavaScript.
+    const statique = getArticle(params.slug);
+    if (statique) return statique;
+
+    const article = await fetchArticle(params.slug);
     if (!article) throw notFound();
     return article;
   },
