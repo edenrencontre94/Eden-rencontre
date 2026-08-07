@@ -39,7 +39,7 @@ const SECTIONS = [
     p: [
       "Votre profil n'est visible que des membres connectés. Il est exclu de l'indexation par les moteurs de recherche : votre nom ne remontera pas dans une recherche Google.",
       "Vous contrôlez votre visibilité : accessible à tous, réservée aux personnes que vous avez likées, ou profil entièrement en pause.",
-      "Vos conversations ne sont accessibles qu'à vous et à votre interlocuteur. Elles peuvent être consultées par notre équipe de modération dans le seul cas d'un signalement.",
+      "Vos conversations ne sont visibles d'aucun autre membre. Elles peuvent en revanche être consultées par notre équipe de modération, afin de protéger les membres contre le harcèlement, les tentatives d'escroquerie et les usages contraires à nos conditions.",
     ],
   },
   {

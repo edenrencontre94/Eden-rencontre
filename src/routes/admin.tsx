@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, ShieldAlert, CreditCard, Megaphone, Settings, LogOut, BarChart3, LifeBuoy, FileText } from "lucide-react";
+import { LayoutDashboard, Users, ShieldAlert, CreditCard, Megaphone, Settings, LogOut, BarChart3, LifeBuoy, FileText, UsersRound } from "lucide-react";
+import { fetchMyPermissions, ROLE_LABELS, type MyPermissions, type Permission } from "@/lib/permissions";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/lib/supabase";
 import { getCurrentUser } from "@/lib/auth";
@@ -9,25 +10,35 @@ export const Route = createFileRoute("/admin")({
   component: AdminLayout,
 });
 
-const adminMenus = [
+// Chaque entrée porte la permission qu'elle exige. Le menu ne fait que
+// refléter les droits : chaque fonction serveur les revérifie de son côté,
+// masquer un lien n'ayant jamais empêché personne d'appeler l'API.
+//
+// « Vue d'ensemble » n'exige rien : elle est le point d'entrée de toute
+// l'équipe. Ses chiffres financiers restent servis par des fonctions qui,
+// elles, exigent le rôle administrateur.
+const adminMenus: {
+  to: string; label: string; icon: any; exact?: boolean; perm?: Permission;
+}[] = [
   { to: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard, exact: true },
-  { to: "/admin/utilisateurs", label: "Utilisateurs", icon: Users },
-  { to: "/admin/moderation", label: "Modération", icon: ShieldAlert },
-  { to: "/admin/abonnements", label: "Abonnements", icon: CreditCard },
-  { to: "/admin/contenus", label: "Contenus", icon: FileText },
-  { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/admin/support", label: "Support", icon: LifeBuoy },
-  { to: "/admin/marketing", label: "Marketing", icon: Megaphone },
-  { to: "/admin/parametres", label: "Paramètres", icon: Settings },
+  { to: "/admin/utilisateurs", label: "Utilisateurs", icon: Users, perm: "membres" },
+  { to: "/admin/moderation", label: "Modération", icon: ShieldAlert, perm: "moderation" },
+  { to: "/admin/abonnements", label: "Abonnements", icon: CreditCard, perm: "finances" },
+  { to: "/admin/contenus", label: "Contenus", icon: FileText, perm: "contenus" },
+  { to: "/admin/analytics", label: "Analytics", icon: BarChart3, perm: "finances" },
+  { to: "/admin/support", label: "Support", icon: LifeBuoy, perm: "support" },
+  { to: "/admin/marketing", label: "Marketing", icon: Megaphone, perm: "reglages" },
+  { to: "/admin/equipe", label: "Équipe", icon: UsersRound, perm: "equipe" },
+  { to: "/admin/parametres", label: "Paramètres", icon: Settings, perm: "reglages" },
 ];
 
 function AdminLayout() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [perms, setPerms] = useState<MyPermissions | null>(null);
 
   useEffect(() => {
-    async function checkAdmin() {
+    async function checkStaff() {
       const user = await getCurrentUser();
 
       // Pas de compte → on l'oriente vers l'inscription.
@@ -38,20 +49,14 @@ function AdminLayout() {
         return;
       }
 
-      // Le rôle est décidé EN BASE, jamais ici. `is_admin()` lit
-      // profiles.role pour auth.uid(), et un trigger empêche quiconque
-      // de modifier son propre rôle. Cet écran ne fait que refléter
-      // une décision serveur : même contourné, il ne donnerait accès
-      // à rien, les policies RLS refusant les données.
-      const { data, error } = await supabase.rpc("is_admin");
+      // Les droits sont décidés EN BASE, jamais ici. `my_permissions()` lit
+      // profiles.role pour auth.uid(), et un trigger empêche quiconque de
+      // modifier son propre rôle. Cet écran ne fait que refléter une
+      // décision serveur : même contourné, il ne donnerait accès à rien,
+      // chaque fonction revérifiant la permission qu'elle exige.
+      const p = await fetchMyPermissions();
 
-      if (error) {
-        console.error("[admin] vérification du rôle:", error);
-        navigate({ to: "/accueil", replace: true });
-        return;
-      }
-
-      if (!data) {
+      if (!p.is_staff) {
         // Membre connecté sans droits : renvoyé à l'accueil sans un mot.
         // Un message du type « accès refusé » confirmerait qu'un
         // back-office existe à cette adresse, ce qui inviterait à insister.
@@ -59,15 +64,17 @@ function AdminLayout() {
         return;
       }
 
-      setIsAdmin(true);
+      setPerms(p);
     }
-    checkAdmin();
+    checkStaff();
   }, [navigate]);
+
+  const menus = adminMenus.filter(m => !m.perm || perms?.permissions.includes(m.perm));
 
   // Tant que le rôle n'est pas tranché — et pendant la redirection des
   // non-autorisés — on n'affiche qu'un écran neutre. Il ne doit rien
   // laisser deviner du contenu qui se trouve derrière.
-  if (!isAdmin) {
+  if (!perms) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
         Chargement…
@@ -81,10 +88,19 @@ function AdminLayout() {
       <aside className="w-64 bg-card border-r border-border flex flex-col hidden md:flex">
         <div className="p-6 flex items-center gap-3">
           <img src={logo} alt="AgapeMeet Admin" className="w-8 h-8 object-contain" />
-          <span className="font-serif text-xl font-bold text-primary">AgapeAdmin</span>
+          <div className="min-w-0">
+            <span className="font-serif text-xl font-bold text-primary block leading-none">
+              AgapeAdmin
+            </span>
+            {/* Le rôle est affiché : un agent doit savoir à quel titre il
+                agit, et pourquoi certaines sections lui sont absentes. */}
+            <span className="text-[11px] text-muted-foreground">
+              {ROLE_LABELS[perms.role]}
+            </span>
+          </div>
         </div>
         <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto">
-          {adminMenus.map((item) => {
+          {menus.map((item) => {
             const Icon = item.icon;
             const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
             return (

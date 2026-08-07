@@ -1,0 +1,30 @@
+# En-têtes de cache — Cloudflare Pages / Workers
+#
+# ATTENTION : Nitro AJOUTE sa propre règle `/assets/*` à la fin de ce
+# fichier au moment du build — il ne le remplace pas. La déclarer ici
+# aussi produirait deux règles identiques sur le même chemin, donc un
+# en-tête `cache-control` dupliqué que certains navigateurs refusent.
+# Les fichiers hachés de `/assets/` sont donc volontairement absents.
+
+# Icônes : le nom, lui, est fixe. `immutable` interdirait toute mise à
+# jour pendant un an — un changement de logo resterait invisible. Une
+# journée suffit : personne ne change de favicon deux fois par jour, et
+# le navigateur cesse de le revalider à chaque page.
+/favicon.ico
+  cache-control: public, max-age=86400
+/favicon-*.png
+  cache-control: public, max-age=86400
+/apple-touch-icon.png
+  cache-control: public, max-age=86400
+/icon-*.png
+  cache-control: public, max-age=86400
+/site.webmanifest
+  cache-control: public, max-age=86400
+
+# Fichiers de référencement : une heure. Assez pour épargner des requêtes,
+# assez court pour qu'une correction du sitemap soit prise en compte le
+# jour même plutôt qu'à la prochaine visite de Google.
+/robots.txt
+  cache-control: public, max-age=3600
+/sitemap.xml
+  cache-control: public, max-age=3600

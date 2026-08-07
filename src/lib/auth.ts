@@ -86,7 +86,10 @@ export function useIsAdmin(): boolean | undefined {
         return;
       }
 
-      const { data, error } = await supabase.rpc("is_admin");
+      // `is_staff` et non `is_admin` : un modérateur ou un agent de support
+      // doit lui aussi trouver le bouton qui mène au back-office. Ce qu'il
+      // y verra dépend ensuite de ses permissions.
+      const { data, error } = await supabase.rpc("is_staff");
       if (cancelled) return;
 
       if (error) {

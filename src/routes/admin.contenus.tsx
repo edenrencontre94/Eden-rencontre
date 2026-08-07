@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   FileText, ShieldCheck, MessagesSquare, Plus, Trash2, Eye, EyeOff,
-  Loader2, AlertTriangle, RefreshCw, Check, X, Lock, ArrowLeft, Save,
+  Loader2, AlertTriangle, RefreshCw, Check, X, Lock, ArrowLeft, Save, Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -28,7 +28,7 @@ function AdminContenus() {
       <div>
         <h1 className="text-3xl font-serif font-bold">Gestion de contenus</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Articles de blog, approbation des publications et conversations signalées.
+          Articles de blog, approbation des publications et conversations privées.
         </p>
       </div>
 
@@ -670,55 +670,127 @@ function ModerationTab() {
 // ─── Conversations signalées ─────────────────────────────────────────────────
 
 function ConversationsTab() {
-  const [convs, setConvs] = useState<any[]>([]);
+  const [data, setData] = useState<any>(null);
+  const [filtre, setFiltre] = useState<"active" | "flagged" | "all">("active");
+  const [recherche, setRecherche] = useState("");
   const [ouvert, setOuvert] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
+  const [journal, setJournal] = useState<any>(null);
+  const [vueJournal, setVueJournal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
-    const { data, error: err } = await supabase.rpc("admin_flagged_conversations", { p_limit: 100 });
-    if (err || (data as any)?.error) {
-      setError("Lecture impossible. La migration 47 a-t-elle été exécutée ?");
+    const { data: d, error: err } = await supabase.rpc("admin_conversations", {
+      p_filter: filtre,
+      p_search: recherche.trim() || null,
+      p_limit: 100,
+      p_offset: 0,
+    });
+
+    if (err || (d as any)?.error) {
+      setError("Lecture impossible. La migration 49 a-t-elle été exécutée ?");
       setLoading(false);
       return;
     }
-    setConvs((data ?? []) as any[]);
+    setData(d);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  // La recherche est temporisée : sans cela, chaque frappe relancerait
+  // une requête sur toutes les conversations.
+  useEffect(() => {
+    const t = setTimeout(load, recherche ? 350 : 0);
+    return () => clearTimeout(t);
+  }, [filtre, recherche]);
+
+  const ouvrirJournal = async () => {
+    const { data: j } = await supabase.rpc("admin_access_history", { p_limit: 200 });
+    if (j && !(j as any).error) setJournal(j);
+    setVueJournal(true);
+  };
 
   const ouvrir = async (c: any) => {
     const motif = prompt(
-      "Motif de la consultation — il sera inscrit au journal d'accès :",
-      c.motif ? `Signalement : ${c.motif}` : "",
+      "Motif de la consultation — il sera inscrit au journal :",
+      c.signalee ? `Signalement : ${c.motif}` : "",
     );
     if (!motif || motif.trim().length < 5) {
       toast.error("Un motif d'au moins 5 caractères est requis");
       return;
     }
 
-    const { data, error: err } = await supabase.rpc("admin_read_conversation", {
+    const { data: res, error: err } = await supabase.rpc("admin_read_conversation", {
       p_match_id: c.match_id, p_motif: motif.trim(),
     });
 
-    if (err || (data as any)?.error) {
-      const raison = (data as any)?.error;
-      toast.error(
-        raison === "hors_perimetre"
-          ? "Cette conversation ne fait l'objet d'aucun signalement en cours."
-          : "Consultation impossible",
-      );
+    if (err || (res as any)?.error) {
+      toast.error("Consultation impossible");
       return;
     }
 
     setOuvert(c);
-    setMessages((data as any).messages ?? []);
+    setMessages((res as any).messages ?? []);
   };
 
   if (error) return <Erreur message={error} />;
 
+  // ── Journal des accès ──
+  if (vueJournal) {
+    return (
+      <div className="space-y-4">
+        <button
+          onClick={() => setVueJournal(false)}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="w-4 h-4" /> Retour aux conversations
+        </button>
+
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <h3 className="font-serif text-lg font-semibold">Journal des consultations</h3>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed max-w-2xl">
+            Un membre finira par demander qui a lu ses messages. « Je ne sais
+            pas » est la pire réponse possible — c'est à cela que sert ce
+            journal, autant qu'au contrôle interne.
+          </p>
+          <div className="flex gap-6 mt-4">
+            <div>
+              <div className="text-2xl font-serif font-bold">{journal?.total ?? "—"}</div>
+              <div className="text-xs text-muted-foreground">consultations au total</div>
+            </div>
+            <div>
+              <div className="text-2xl font-serif font-bold">{journal?.total_30j ?? "—"}</div>
+              <div className="text-xs text-muted-foreground">sur 30 jours</div>
+            </div>
+          </div>
+        </div>
+
+        {!journal?.acces?.length ? (
+          <div className="rounded-2xl border border-dashed border-border py-14 text-center">
+            <p className="text-sm text-muted-foreground">Aucune consultation enregistrée.</p>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-border bg-card divide-y divide-border overflow-hidden">
+            {journal.acces.map((a: any) => (
+              <div key={a.id} className="px-5 py-3.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-sm font-medium">{a.participants ?? "Conversation supprimée"}</span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {new Date(a.created_at).toLocaleString("fr-FR")}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Par <strong className="text-foreground">{a.admin}</strong> — {a.motif}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Conversation ouverte ──
   if (ouvert) {
     return (
       <div className="space-y-4">
@@ -732,7 +804,7 @@ function ConversationsTab() {
         <div className="rounded-2xl border border-gold/50 bg-gold/10 p-3.5 flex gap-2.5">
           <Lock className="w-4 h-4 text-gold shrink-0 mt-0.5" />
           <p className="text-xs leading-relaxed">
-            Consultation enregistrée au journal d'accès, avec votre identité,
+            Consultation enregistrée au journal, avec votre identité,
             l'horodatage et le motif saisi.
           </p>
         </div>
@@ -742,65 +814,108 @@ function ConversationsTab() {
           <span className="text-muted-foreground font-normal"> · {messages.length} message(s)</span>
         </p>
 
-        <div className="space-y-2">
-          {messages.map(m => (
-            <div key={m.id} className={`flex ${m.sender_id === ouvert.user1?.id ? "justify-start" : "justify-end"}`}>
-              <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
-                m.sender_id === ouvert.user1?.id
-                  ? "bg-card border border-border"
-                  : "bg-primary/10 border border-primary/20"
-              }`}>
-                <p className="text-[11px] font-semibold opacity-70 mb-0.5">{m.auteur}</p>
-                {m.media_type && m.media_type !== "text" ? (
-                  <p className="text-sm italic text-muted-foreground">
-                    [{m.media_type}] {m.content}
+        {messages.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-10">
+            Aucun message échangé dans cette conversation.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {messages.map(m => (
+              <div key={m.id} className={`flex ${m.sender_id === ouvert.user1?.id ? "justify-start" : "justify-end"}`}>
+                <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
+                  m.sender_id === ouvert.user1?.id
+                    ? "bg-card border border-border"
+                    : "bg-primary/10 border border-primary/20"
+                }`}>
+                  <p className="text-[11px] font-semibold opacity-70 mb-0.5">{m.auteur}</p>
+                  {m.media_type && m.media_type !== "text" ? (
+                    <p className="text-sm italic text-muted-foreground">
+                      [{m.media_type}] {m.content}
+                    </p>
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.content}</p>
+                  )}
+                  <p className="text-[10px] opacity-60 mt-1">
+                    {new Date(m.created_at).toLocaleString("fr-FR")}
+                    {m.read_at && " · lu"}
                   </p>
-                ) : (
-                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.content}</p>
-                )}
-                <p className="text-[10px] opacity-60 mt-1">
-                  {new Date(m.created_at).toLocaleString("fr-FR")}
-                </p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
 
+  // ── Liste ──
+  const convs = data?.conversations ?? [];
+
   return (
     <div className="space-y-4">
-      {/* Le périmètre est rappelé ici, pas enfoui dans une politique que
-          personne ne relit. */}
       <div className="rounded-2xl border border-border bg-secondary/40 p-4 flex gap-3">
         <Lock className="w-5 h-5 text-primary shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-semibold">Périmètre de consultation</p>
+          <p className="text-sm font-semibold">Toutes les conversations</p>
           <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-            Seules apparaissent ici les conversations dont un participant fait
-            l'objet d'un signalement en cours ou d'un ticket de support ouvert.
-            C'est exactement ce que promet votre politique de confidentialité :
-            « consultées par notre équipe de modération dans le seul cas d'un
-            signalement ». Chaque ouverture exige un motif et laisse une trace.
+            Chaque ouverture exige un motif et laisse une trace nominative.
+            Votre politique de confidentialité a été mise à jour pour
+            annoncer cette pratique aux membres — une consultation qui
+            contredirait vos engagements écrits serait le vrai risque.
           </p>
+          <button
+            onClick={ouvrirJournal}
+            className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+          >
+            <Eye className="w-3.5 h-3.5" /> Voir le journal des consultations
+          </button>
         </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {([
+          ["active", "Avec messages"],
+          ["flagged", `Signalées${data?.signalees ? ` (${data.signalees})` : ""}`],
+          ["all", `Toutes${data?.total ? ` (${data.total})` : ""}`],
+        ] as const).map(([k, label]) => (
+          <button
+            key={k}
+            onClick={() => setFiltre(k as any)}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              filtre === k
+                ? "bg-primary text-primary-foreground"
+                : "bg-card border border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <input
+          value={recherche}
+          onChange={e => setRecherche(e.target.value)}
+          placeholder="Rechercher un participant par prénom, nom ou ville…"
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+        />
       </div>
 
       {loading ? (
         <div className="space-y-2">
-          {[...Array(3)].map((_, i) => <div key={i} className="h-16 rounded-2xl bg-secondary animate-pulse" />)}
+          {[...Array(4)].map((_, i) => <div key={i} className="h-16 rounded-2xl bg-secondary animate-pulse" />)}
         </div>
       ) : convs.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border py-14 text-center">
-          <ShieldCheck className="w-10 h-10 text-emerald-500 mx-auto" />
+          <MessagesSquare className="w-10 h-10 text-muted-foreground/30 mx-auto" />
           <p className="text-sm text-muted-foreground mt-3">
-            Aucune conversation signalée.
+            {recherche ? "Aucun résultat pour cette recherche." : "Aucune conversation."}
           </p>
         </div>
       ) : (
         <div className="rounded-2xl border border-border bg-card divide-y divide-border overflow-hidden">
-          {convs.map(c => (
+          {convs.map((c: any) => (
             <button
               key={c.match_id}
               onClick={() => ouvrir(c)}
@@ -813,13 +928,18 @@ function ConversationsTab() {
                 <p className="text-[11px] text-muted-foreground mt-0.5">
                   {c.nb_messages} message(s)
                   {c.dernier && ` · dernier le ${new Date(c.dernier).toLocaleDateString("fr-FR")}`}
+                  {/* Une conversation déjà consultée plusieurs fois doit se
+                      remarquer — y compris quand c'est vous qui l'ouvrez. */}
+                  {c.consultations > 0 && ` · consultée ${c.consultations} fois`}
                 </p>
               </div>
-              {c.motif && (
-                <span className="px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-[11px] font-semibold shrink-0">
-                  {c.motif}
-                </span>
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {c.signalee && (
+                  <span className="px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-[11px] font-semibold">
+                    {c.motif || "Signalée"}
+                  </span>
+                )}
+              </div>
             </button>
           ))}
         </div>
