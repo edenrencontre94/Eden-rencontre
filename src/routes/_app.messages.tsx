@@ -8,7 +8,7 @@ import {
   Search, ArrowLeft, Send, Smile, Mic,
   Image as ImageIcon, Video as VideoIcon, Phone, Sticker,
   Check, CheckCheck, MoreVertical, Archive, Flag, Ban,
-  X, GalleryHorizontal, Loader2, Play, Pause, BadgeCheck, Lock,
+  X, GalleryHorizontal, Loader2, Play, Pause, BadgeCheck, Lock, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 // Le SDK Agora (~1,5 Mo) n'est téléchargé qu'au lancement d'un appel
@@ -117,6 +117,17 @@ function formatLastSeen(isoString: string | null, now = Date.now()): { text: str
 function normalize(s: string) {
   return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
+
+/**
+ * Durée maximale d'un message vocal, en secondes.
+ *
+ * Deux minutes : au-delà, plus personne n'écoute jusqu'au bout, et un
+ * enregistrement laissé ouvert par inadvertance remplirait le stockage.
+ */
+const DUREE_VOCAL_MAX = 120;
+
+const formatDuree = (s: number) =>
+  `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 const MEDIA_LABELS: Record<string, string> = {
   image: "📷 Photo",
@@ -726,6 +737,7 @@ function ChatView({
   const [showMedia, setShowMedia] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [duree, setDuree] = useState(0);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [callState, setCallState] = useState<{ type: "audio" | "video"; callId: string } | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
@@ -750,7 +762,7 @@ function ChatView({
       return;
     }
     setStartingCall(true);
-    const call = await createCall({
+    const { call, error } = await createCall({
       matchId: chat.id,
       callerId: currentUserId,
       calleeId: chat.profile.id,
@@ -759,7 +771,33 @@ function ChatView({
     setStartingCall(false);
 
     if (!call) {
-      toast.error("Impossible de lancer l'appel");
+      // Dire POURQUOI. « Impossible de lancer l'appel » laissait le
+      // membre sans recours, et nous sans diagnostic.
+      const raw = String(error?.message ?? "");
+
+      // La suspension AVANT le traducteur de quotas : proposer « Voir les
+      // formules » à un compte suspendu lui ferait payer un abonnement
+      // qui ne débloquerait rien.
+      if (raw.includes("ACCOUNT_SUSPENDED")) {
+        toast.error("Votre compte est suspendu", {
+          description: "Les appels sont désactivés le temps de la suspension.",
+        });
+        return;
+      }
+
+      const connu = quotaErrorMessage(error);
+      if (connu) {
+        requirePlan(connu);
+      } else if (error?.code === "42501" || raw.includes("row-level security")) {
+        toast.error("Cet appel a été refusé", {
+          description: "Vous n'avez peut-être plus de match actif avec cette personne.",
+        });
+      } else {
+        toast.error("Impossible de lancer l'appel", {
+          description: raw || "Erreur inconnue. Réessayez dans un instant.",
+          duration: 8000,
+        });
+      }
       return;
     }
     setCallState({ type, callId: call.id });
@@ -773,6 +811,17 @@ function ChatView({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const audioChunks = useRef<Blob[]>([]);
+  /** Décide, dans `onstop`, s'il faut envoyer ou jeter. */
+  const envoyerAuStop = useRef(false);
+  const dureeTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Quitter la conversation pendant un enregistrement laisserait le micro
+  // ouvert et la pastille rouge allumée dans l'onglet.
+  useEffect(() => {
+    return () => {
+      if (dureeTimer.current) clearInterval(dureeTimer.current);
+    };
+  }, []);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
@@ -841,10 +890,31 @@ function ChatView({
   // ── Helpers ──
   const uploadMedia = async (file: File, folder: string): Promise<string | null> => {
     const ext = file.name.split(".").pop();
-    const path = `${currentUserId}/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("chat-media").upload(`${folder}/${path}`, file);
-    if (error) { toast.error("Erreur upload"); return null; }
-    const { data } = supabase.storage.from("chat-media").getPublicUrl(`${folder}/${path}`);
+    const path = `${folder}/${currentUserId}/${Date.now()}.${ext}`;
+
+    // `contentType` explicite : sans lui, Supabase déduit le type de
+    // l'extension. Un vocal Safari est un .m4a servi en
+    // `application/octet-stream`, que le lecteur <audio> refuse de lire.
+    const { error } = await supabase.storage
+      .from("chat-media")
+      .upload(path, file, { contentType: file.type || undefined });
+
+    if (error) {
+      // « Erreur upload » n'apprenait rien — ni au membre, ni à nous.
+      console.error("[chat-media] envoi:", error);
+      const raw = String((error as any)?.message ?? "");
+      toast.error("Envoi impossible", {
+        description: raw.includes("exceeded the maximum allowed size")
+          ? "Ce fichier est trop volumineux."
+          : raw.includes("Bucket not found")
+            ? "Le stockage des médias n'est pas configuré. Prévenez l'assistance."
+            : raw || "Réessayez dans un instant.",
+        duration: 7000,
+      });
+      return null;
+    }
+
+    const { data } = supabase.storage.from("chat-media").getPublicUrl(path);
     return data.publicUrl;
   };
 
@@ -904,36 +974,142 @@ function ChatView({
     e.target.value = "";
   };
 
-  // ── Voice recording ──
+  /* ── Messages vocaux ──────────────────────────────────────────
+   *
+   * L'ancienne version enregistrait tant que le doigt restait appuyé :
+   * `onPointerDown={startRecording}` / `onPointerUp={stopRecording}`.
+   * Elle ne pouvait pas fonctionner.
+   *
+   * `startRecording` est asynchrone — `getUserMedia` ouvre la demande
+   * d'autorisation du navigateur. Le temps qu'elle se résolve, le doigt
+   * est déjà relevé : `onPointerUp` s'est exécuté avec `mediaRecorder`
+   * encore à `null`, donc `.stop()` sur rien. Aucun son capté, aucun
+   * envoi, aucune erreur affichée.
+   *
+   * Désormais : un appui démarre, un bouton d'envoi apparaît. Le geste
+   * est aussi plus accessible — maintenir un bouton plusieurs dizaines de
+   * secondes exclut une partie des utilisateurs.
+   */
+
+  /** Le format dépend du navigateur : Safari ne produit pas de WebM. */
+  const formatAudio = (): { mime: string; ext: string } => {
+    if (typeof MediaRecorder === "undefined") return { mime: "", ext: "webm" };
+    const candidats = [
+      { mime: "audio/webm;codecs=opus", ext: "webm" },
+      { mime: "audio/webm", ext: "webm" },
+      { mime: "audio/mp4", ext: "m4a" },
+      { mime: "audio/ogg;codecs=opus", ext: "ogg" },
+    ];
+    for (const c of candidats) {
+      if (MediaRecorder.isTypeSupported(c.mime)) return c;
+    }
+    // Aucun format déclaré : on laisse le navigateur choisir le sien.
+    return { mime: "", ext: "webm" };
+  };
+
   const startRecording = async () => {
+    if (recording || uploading) return;
     if (!features.voiceMessages) {
       requirePlan("Les messages vocaux sont réservés aux membres Premium");
       return;
     }
+
+    let stream: MediaStream;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err: any) {
+      // Distinguer le refus de l'absence de micro : la marche à suivre
+      // n'est pas la même.
+      toast.error(
+        err?.name === "NotAllowedError"
+          ? "Micro refusé"
+          : err?.name === "NotFoundError"
+            ? "Aucun micro détecté"
+            : "Micro indisponible",
+        {
+          description:
+            err?.name === "NotAllowedError"
+              ? "Autorisez l'accès au microphone dans les réglages de votre navigateur."
+              : "Vérifiez qu'un microphone est branché et qu'aucune autre application ne l'utilise.",
+          duration: 7000,
+        },
+      );
+      return;
+    }
+
+    const { mime, ext } = formatAudio();
+    const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+
+    audioChunks.current = [];
+    envoyerAuStop.current = false;
+
+    mr.ondataavailable = e => {
+      if (e.data.size > 0) audioChunks.current.push(e.data);
+    };
+
+    mr.onstop = async () => {
+      // Toujours libérer le micro, même si l'enregistrement est annulé :
+      // sinon la pastille d'enregistrement reste allumée dans l'onglet.
+      stream.getTracks().forEach(t => t.stop());
+      setRecording(false);
+      setMediaRecorder(null);
+      if (dureeTimer.current) clearInterval(dureeTimer.current);
+
+      if (!envoyerAuStop.current) {
+        audioChunks.current = [];
+        return;
+      }
+
+      // `mr.mimeType` et non la constante : le navigateur peut avoir
+      // retenu un format différent de celui demandé.
+      const type = mr.mimeType || mime || "audio/webm";
+      const blob = new Blob(audioChunks.current, { type });
       audioChunks.current = [];
-      mr.ondataavailable = e => audioChunks.current.push(e.data);
-      mr.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop());
-        const blob = new Blob(audioChunks.current, { type: "audio/webm" });
-        const file = new File([blob], "vocal.webm", { type: "audio/webm" });
-        setUploading(true);
-        const url = await uploadMedia(file, "audio");
-        if (url) await sendMessage({ media_url: url, media_type: "audio" });
-        setUploading(false);
-      };
-      mr.start();
-      setMediaRecorder(mr);
-      setRecording(true);
-    } catch { toast.error("Autorisez l'accès au microphone"); }
+
+      if (blob.size < 1024) {
+        toast.error("Enregistrement trop court", {
+          description: "Maintenez quelques instants avant d'envoyer.",
+        });
+        return;
+      }
+
+      setUploading(true);
+      const file = new File([blob], `vocal.${ext}`, { type });
+      const url = await uploadMedia(file, "audio");
+      if (url) await sendMessage({ media_url: url, media_type: "audio" });
+      setUploading(false);
+    };
+
+    mr.start();
+    setMediaRecorder(mr);
+    setRecording(true);
+    setDuree(0);
+    dureeTimer.current = setInterval(() => {
+      setDuree(d => {
+        // Coupure automatique : un enregistrement oublié remplirait le
+        // stockage et serait inécoutable.
+        if (d + 1 >= DUREE_VOCAL_MAX) {
+          envoyerAuStop.current = true;
+          mr.stop();
+        }
+        return d + 1;
+      });
+    }, 1000);
   };
 
+  /** Termine l'enregistrement et envoie. */
   const stopRecording = () => {
-    mediaRecorder?.stop();
-    setRecording(false);
-    setMediaRecorder(null);
+    if (!mediaRecorder) return;
+    envoyerAuStop.current = true;
+    mediaRecorder.stop();
+  };
+
+  /** Termine l'enregistrement et jette. */
+  const cancelRecording = () => {
+    if (!mediaRecorder) return;
+    envoyerAuStop.current = false;
+    mediaRecorder.stop();
+    toast.info("Enregistrement annulé");
   };
 
   // ── GIF & Sticker send ──
@@ -1171,12 +1347,11 @@ function ChatView({
               <span className="text-[10px] font-medium">Sticker</span>
             </button>
             <button
-              onPointerDown={startRecording}
-              onPointerUp={stopRecording}
-              className={`flex flex-col items-center gap-1 p-3 rounded-2xl transition-colors ${recording ? "bg-red-500/20" : "bg-primary/10 hover:bg-primary/20"}`}
+              onClick={() => { setShowMedia(false); startRecording(); }}
+              className="flex flex-col items-center gap-1 p-3 rounded-2xl transition-colors bg-primary/10 hover:bg-primary/20"
             >
-              <Mic className={`w-6 h-6 ${recording ? "text-red-500 animate-pulse" : "text-primary"}`} />
-              <span className="text-[10px] font-medium">{recording ? "●Rec" : "Vocal"}</span>
+              <Mic className="w-6 h-6 text-primary" />
+              <span className="text-[10px] font-medium">Vocal</span>
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={e => handleFileUpload(e, "image")} />
             <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={e => handleFileUpload(e, "video")} />
@@ -1239,7 +1414,54 @@ function ChatView({
         </div>
       )}
 
-      {/* Composer */}
+      {/* Composer
+          Pendant l'enregistrement, la barre entière est remplacée : garder
+          le champ de texte et les médias inviterait à écrire alors qu'un
+          vocal est en cours, et les deux ne peuvent pas partir ensemble. */}
+      {recording ? (
+        <div className="border-t border-border/50 bg-background p-2 flex items-center gap-2">
+          <button
+            onClick={cancelRecording}
+            aria-label="Annuler l'enregistrement"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
+
+          <div className="flex-1 flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-destructive/10 border border-destructive/25 min-w-0">
+            <span className="w-2.5 h-2.5 rounded-full bg-destructive animate-pulse shrink-0" />
+            <span className="font-mono text-sm tabular-nums shrink-0">
+              {formatDuree(duree)}
+            </span>
+            {/* Repère visuel du son capté. Sans lui, rien ne distingue un
+                micro qui enregistre d'un micro muet. */}
+            <span className="flex items-end gap-[3px] h-4 flex-1 overflow-hidden">
+              {[...Array(14)].map((_, i) => (
+                <span
+                  key={i}
+                  className="w-[3px] bg-destructive/60 rounded-full animate-pulse"
+                  style={{
+                    height: `${30 + ((i * 37) % 70)}%`,
+                    animationDelay: `${i * 90}ms`,
+                    animationDuration: "900ms",
+                  }}
+                />
+              ))}
+            </span>
+            <span className="text-[10px] text-muted-foreground shrink-0">
+              {formatDuree(DUREE_VOCAL_MAX)} max
+            </span>
+          </div>
+
+          <button
+            onClick={stopRecording}
+            aria-label="Envoyer le vocal"
+            className="w-11 h-11 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex items-center justify-center shadow-elegant active:scale-95 transition-transform shrink-0"
+          >
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
+      ) : (
       <div className="border-t border-border/50 bg-background p-2 flex items-center gap-1.5">
         {/* + Media button */}
         <button
@@ -1279,15 +1501,15 @@ function ChatView({
           </button>
         ) : (
           <button
-            onPointerDown={startRecording}
-            onPointerUp={stopRecording}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${recording ? "bg-red-500 text-white animate-pulse" : "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground"}`}
-            aria-label="Message vocal"
+            onClick={startRecording}
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-all bg-gradient-to-br from-primary to-primary/80 text-primary-foreground"
+            aria-label="Enregistrer un message vocal"
           >
             <Mic className="w-4 h-4" />
           </button>
         )}
       </div>
+      )}
 
       <ReportDialog
         open={reportOpen}

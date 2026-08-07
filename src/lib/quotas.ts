@@ -70,6 +70,11 @@ export function quotaErrorMessage(error: unknown): string | null {
     return "Les appels sont réservés aux membres Premium";
   if (raw.includes("FREE_NO_MEDIA_POST"))
     return "Les publications avec photo ou vidéo sont réservées aux membres Premium";
+  // Levé par `block_if_suspended()` (migration 45) sur messages, swipes,
+  // appels et publications. Sans cette ligne, un membre suspendu voyait
+  // l'erreur brute de PostgreSQL.
+  if (raw.includes("ACCOUNT_SUSPENDED"))
+    return "Votre compte est suspendu";
 
   return null;
 }

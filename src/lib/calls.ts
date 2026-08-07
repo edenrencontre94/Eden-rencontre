@@ -28,7 +28,7 @@ export async function createCall(params: {
   callerId: string;
   calleeId: string;
   callType: CallType;
-}): Promise<CallRow | null> {
+}): Promise<{ call: CallRow | null; error: any }> {
   const { data, error } = await supabase
     .from("calls")
     .insert({
@@ -42,10 +42,14 @@ export async function createCall(params: {
     .single();
 
   if (error) {
+    // L'erreur est REMONTÉE, plus seulement journalisée. Elle était
+    // jetée ici : l'appelant ne recevait qu'un `null` et affichait
+    // « Impossible de lancer l'appel », sans jamais dire pourquoi —
+    // formule insuffisante, compte suspendu ou politique RLS.
     console.error("[calls] création:", error);
-    return null;
+    return { call: null, error };
   }
-  return data as CallRow;
+  return { call: data as CallRow, error: null };
 }
 
 export async function setCallStatus(callId: string, status: CallStatus) {
