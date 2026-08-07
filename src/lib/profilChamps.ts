@@ -49,6 +49,34 @@ export const MARITAL_LABELS: Record<string, string> = Object.fromEntries(
   MARITAL_STATUSES.map(s => [s.key, s.label]),
 );
 
+/**
+ * Confessions proposées.
+ *
+ * Liste unique, partagée par l'inscription et la page profil. Les deux
+ * divergeaient : l'onboarding enregistrait « Protestant Évangélique »,
+ * la page profil « evangelique » — si bien qu'ouvrir son profil et
+ * enregistrer réécrivait la confession dans un autre format, et qu'un
+ * pentecôtiste ne retrouvait pas la sienne dans la liste.
+ *
+ * Ces valeurs sont stockées telles quelles : ce sont elles que le filtre
+ * par dénomination regroupe.
+ */
+export const DENOMINATIONS_CONNUES = [
+  "Catholique",
+  "Protestant Évangélique",
+  "Pentecôtiste",
+  "Baptiste",
+  "Méthodiste",
+  "Adventiste",
+  "Orthodoxe",
+  "Non-dénominationnel",
+];
+
+/** Vrai si la confession a été saisie librement plutôt que choisie. */
+export function estDenominationLibre(valeur?: string | null): boolean {
+  return Boolean(valeur) && !DENOMINATIONS_CONNUES.includes(valeur as string);
+}
+
 export const EDUCATION_LEVELS = [
   "Sans diplôme",
   "Certificat / BEPC",

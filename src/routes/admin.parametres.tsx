@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   Settings, Shield, Wrench, Save, AlertTriangle, Rocket, Mail, Loader2,
-  MessageSquare, Phone, Users2, Info, RotateCcw, LifeBuoy,
+  MessageSquare, Phone, Users2, Info, RotateCcw, LifeBuoy, Users, ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -409,6 +409,72 @@ function AdminParametres() {
             />
             <p className="text-[11px] text-muted-foreground mt-1">
               À confronter au délai réel, visible sur la page Support.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Communauté WhatsApp ───────────────────────────────── */}
+      <section className="rounded-2xl border border-border bg-card p-5">
+        <h2 className="font-serif text-lg font-semibold flex items-center gap-2">
+          <Users className="w-5 h-5 text-primary" /> Communauté WhatsApp
+        </h2>
+        <p className="text-xs text-muted-foreground mt-1 max-w-2xl">
+          Le canal proposé aux membres depuis la page Guide. Laisser le lien
+          vide masque toute la section : un bouton « Rejoindre » menant vers un
+          canal supprimé ferait croire à une panne de l'application.
+        </p>
+
+        <div className="mt-5 space-y-4">
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Lien du canal
+            </label>
+            <input
+              type="url"
+              value={settings.community_whatsapp ?? ""}
+              onChange={e => setValue("community_whatsapp", e.target.value.trim())}
+              placeholder="https://whatsapp.com/channel/…"
+              className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            {/* Une URL mal formée n'échoue qu'au clic, chez le membre —
+                donc jamais sous vos yeux. */}
+            {settings.community_whatsapp &&
+              !/^https:\/\/(chat\.)?whatsapp\.com\//.test(String(settings.community_whatsapp)) && (
+                <p className="text-[11px] text-destructive mt-1">
+                  Ce lien ne pointe pas vers WhatsApp. Attendu :{" "}
+                  <code className="px-1 rounded bg-secondary">https://whatsapp.com/channel/…</code>
+                  {" "}ou{" "}
+                  <code className="px-1 rounded bg-secondary">https://chat.whatsapp.com/…</code>
+                </p>
+              )}
+            {settings.community_whatsapp && (
+              <a
+                href={String(settings.community_whatsapp)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[11px] text-primary hover:underline mt-1.5"
+              >
+                <ExternalLink className="w-3 h-3" /> Tester le lien
+              </a>
+            )}
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Texte de présentation
+            </label>
+            <textarea
+              rows={3}
+              maxLength={280}
+              value={settings.community_whatsapp_pitch ?? ""}
+              onChange={e => setValue("community_whatsapp_pitch", e.target.value)}
+              placeholder="Enseignements, témoignages de couples, temps de prière et annonces…"
+              className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Ce qu'on y trouve, en une ou deux phrases. Suivi automatiquement
+              de « Vous y êtes accompagné, pas seulement inscrit. »
             </p>
           </div>
         </div>

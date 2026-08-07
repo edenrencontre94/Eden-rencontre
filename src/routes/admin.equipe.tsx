@@ -5,6 +5,7 @@ import {
   Check, UserPlus, X, Eye,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Avatar } from "@/components/app/Avatar";
 import { supabase } from "@/lib/supabase";
 import {
   ROLE_LABELS, ROLE_DESCRIPTIONS, PERMISSION_LABELS,
@@ -148,10 +149,7 @@ function AdminEquipe() {
             {resultats.map(m => (
               <div key={m.id} className="rounded-xl border border-border p-3 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <img
-                    src={m.photo || `https://api.dicebear.com/7.x/initials/svg?seed=${m.nom}`}
-                    alt="" className="w-9 h-9 rounded-full object-cover"
-                  />
+                  <Avatar src={m.photo} name={m.nom} className="w-9 h-9 text-sm" />
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">{m.nom}</p>
                     <p className="text-[11px] text-muted-foreground">{m.ville || "—"}</p>
@@ -204,10 +202,7 @@ function AdminEquipe() {
               <div key={m.id} className="rounded-2xl border border-border bg-card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <img
-                      src={m.photo || `https://api.dicebear.com/7.x/initials/svg?seed=${m.nom}`}
-                      alt="" className="w-11 h-11 rounded-full object-cover"
-                    />
+                    <Avatar src={m.photo} name={m.nom} className="w-11 h-11 text-base" />
                     <div className="min-w-0">
                       <p className="font-semibold text-sm truncate">{m.nom}</p>
                       <p className="text-[11px] text-muted-foreground">

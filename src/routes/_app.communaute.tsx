@@ -23,6 +23,7 @@ import { useDailyContent } from "@/hooks/useDailyContent";
 import { useSubscription } from "@/lib/subscription";
 import { useNavigate } from "@tanstack/react-router";
 import { PlanBadge } from "@/components/app/PlanBadge";
+import { Avatar } from "@/components/app/Avatar";
 
 export const Route = createFileRoute("/_app/communaute")({
   head: () => ({
@@ -227,10 +228,10 @@ function CommentsSection({ postId, currentUserId, currentUserProfile, commentsCo
         <div className="space-y-3 mb-3">
           {comments.map(c => (
             <div key={c.id} className="flex gap-2 items-start">
-              <img
-                src={(c.profiles as any)?.photos?.[0] || `https://api.dicebear.com/7.x/initials/svg?seed=${(c.profiles as any)?.first_name}`}
-                className="w-7 h-7 rounded-full object-cover shrink-0 mt-0.5"
-                alt={(c.profiles as any)?.first_name}
+              <Avatar
+                src={(c.profiles as any)?.photos?.[0]}
+                name={(c.profiles as any)?.first_name}
+                className="w-7 h-7 text-[11px] shrink-0 mt-0.5"
               />
               <div className="flex-1 bg-background rounded-xl px-3 py-2 text-sm">
                 <span className="font-semibold text-xs">{(c.profiles as any)?.first_name || "Membre"} </span>
@@ -250,10 +251,10 @@ function CommentsSection({ postId, currentUserId, currentUserProfile, commentsCo
       )}
 
       <div className="flex gap-2 items-center">
-        <img
-          src={currentUserProfile?.photos?.[0] || "https://placehold.co/100/1a1a2e/gold?text=😊"}
-          className="w-8 h-8 rounded-full object-cover shrink-0"
-          alt="Moi"
+        <Avatar
+          src={currentUserProfile?.photos?.[0]}
+          name={currentUserProfile?.first_name}
+          className="w-8 h-8 text-xs shrink-0"
         />
         <div className="flex-1 flex items-center gap-2 bg-background border border-border rounded-xl px-3 py-1.5">
           <input
@@ -950,10 +951,10 @@ function CommunityPage() {
       {/* ═══════════ Composer ═══════════ */}
       <div className="rounded-2xl bg-card border border-border/50 p-3 mb-4 shadow-soft">
         <div className="flex items-start gap-3">
-          <img
-            src={currentUserProfile?.photos?.[0] || "https://placehold.co/100/1a1a2e/gold?text=😊"}
-            alt="Moi"
-            className="w-9 h-9 rounded-full object-cover flex-shrink-0 mt-1"
+          <Avatar
+            src={currentUserProfile?.photos?.[0]}
+            name={currentUserProfile?.first_name}
+            className="w-9 h-9 text-sm flex-shrink-0 mt-1"
           />
           <div className="flex-1">
             <textarea
@@ -1174,8 +1175,11 @@ function CommunityPage() {
               className="rounded-2xl bg-card border border-border/50 shadow-soft overflow-hidden">
               {/* Header */}
               <header className="flex items-center gap-3 p-3">
-                <img src={p.profile?.photos?.[0] || "https://placehold.co/100/1a1a2e/gold?text=😊"}
-                  alt={p.profile?.first_name || "Membre"} className="w-10 h-10 rounded-full object-cover" />
+                <Avatar
+                  src={p.profile?.photos?.[0]}
+                  name={p.profile?.first_name}
+                  className="w-10 h-10 text-sm"
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="font-semibold text-sm truncate">{p.profile?.first_name || "Membre"}</span>

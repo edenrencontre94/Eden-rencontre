@@ -1,31 +1,60 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { PAYS, normaliser } from "@/content/pays";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const getCountryCode = (countryName: string) => {
-  if (!countryName) return null;
-  const map: Record<string, string> = {
-    "côte d'ivoire": "ci",
-    "sénégal": "sn",
-    "cameroun": "cm",
-    "bénin": "bj",
-    "togo": "tg",
-    "mali": "ml",
-    "burkina faso": "bf",
-    "gabon": "ga",
-    "congo": "cg",
+/**
+ * Code ISO d'un pays, à partir de son nom stocké en base.
+ *
+ * Deux tables codées en dur coexistaient — seize entrées ici, vingt-huit
+ * dans `_app.decouvrir.tsx` — et aucune ne contenait « Congo (RDC) », la
+ * valeur que l'inscription enregistre depuis l'ouverture du sélecteur à
+ * 195 pays. Résultat : pas de drapeau, en silence, pour ce pays et pour
+ * les 177 absents des deux listes.
+ *
+ * La source est désormais unique : `src/content/pays.ts`, celle-là même
+ * que le sélecteur d'inscription utilise. Tout pays sélectionnable a donc
+ * nécessairement son drapeau.
+ */
+const CODES_PAR_NOM: Record<string, string> = (() => {
+  const m: Record<string, string> = {};
+  for (const p of PAYS) m[normaliser(p.nom)] = p.code.toLowerCase();
+
+  // Valeurs héritées des anciennes listes, encore présentes sur les
+  // profils créés avant le sélecteur complet.
+  const alias: Record<string, string> = {
     "rdc": "cd",
-    "guinée": "gn",
-    "madagascar": "mg",
-    "france": "fr",
-    "belgique": "be",
-    "suisse": "ch",
-    "canada": "ca",
+    "rd congo": "cd",
+    "republique democratique du congo": "cd",
+    "congo brazzaville": "cg",
+    "congo kinshasa": "cd",
+    "centrafrique": "cf",
+    "cap vert": "cv",
+    "etats unis": "us",
+    "usa": "us",
+    "angleterre": "gb",
+    "grande bretagne": "gb",
+    "birmanie": "mm",
+    "swaziland": "sz",
+    "macedoine": "mk",
+    "coree du sud": "kr",
+    "republique tcheque": "cz",
+    "tchequie": "cz",
+    "vietnam": "vn",
+    "ile maurice": "mu",
+    "sao tome et principe": "st",
   };
-  return map[countryName.toLowerCase()] || null;
+  for (const [nom, code] of Object.entries(alias)) m[normaliser(nom)] = code;
+
+  return m;
+})();
+
+export const getCountryCode = (countryName?: string | null): string | null => {
+  if (!countryName) return null;
+  return CODES_PAR_NOM[normaliser(countryName)] ?? null;
 };
 
 /**

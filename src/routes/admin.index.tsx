@@ -7,6 +7,7 @@ import {
   ArrowUpRight, ArrowDownRight, BarChart3, PieChart, Clock, Shield
 } from "lucide-react";
 import { formatPrice } from "@/lib/plans";
+import { Avatar } from "@/components/app/Avatar";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
@@ -706,10 +707,10 @@ export default function AdminDashboard() {
             ) : (
               recentUsers.map(u => (
                 <div key={u.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-secondary/50 transition-colors">
-                  <img
-                    src={u.photos?.[0] || `https://api.dicebear.com/7.x/initials/svg?seed=${u.first_name || "A"}`}
-                    className="w-10 h-10 rounded-full object-cover border border-border shrink-0"
-                    alt={u.first_name}
+                  <Avatar
+                    src={u.photos?.[0]}
+                    name={u.first_name}
+                    className="w-10 h-10 text-sm border border-border shrink-0"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">

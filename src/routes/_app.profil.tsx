@@ -2,16 +2,27 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { getCurrentUser } from "@/lib/auth";
-import { Save, Camera, X, Upload, Trash2, ArrowLeft } from "lucide-react";
+import { Save, Camera, X, Upload, Trash2, ArrowLeft, Lock, Crown, Video } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import { PaysSelect, VilleSelect } from "@/components/app/PaysVilleSelect";
+import { publicPlanOf, type PublicPlan } from "@/lib/badges";
 import { Textarea } from "@/components/ui/textarea";
 import { TagPicker } from "@/components/app/TagPicker";
 import {
   EMPTY_EXTRAS, EDUCATION_LEVELS, INTEREST_SUGGESTIONS, QUALITY_SUGGESTIONS,
   FLAW_SUGGESTIONS, DEALBREAKER_SUGGESTIONS, LIST_LIMITS, formatHeight,
-  MARITAL_STATUSES,
+  MARITAL_STATUSES, DENOMINATIONS_CONNUES, estDenominationLibre,
 } from "@/lib/profilChamps";
+
+/**
+ * Combien de photos par formule.
+ *
+ * Ces valeurs reprennent ce que l'inscription annonce depuis toujours :
+ * une photo en Gratuit, cinq en Premium.
+ */
+const PHOTOS_GRATUIT = 1;
+const PHOTOS_PREMIUM = 5;
 
 export const Route = createFileRoute("/_app/profil")({
   head: () => ({
@@ -51,6 +62,16 @@ function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  /**
+   * Nombre de photos autorisé.
+   *
+   * L'ancienne limite était `< 6` en dur, identique pour tous — alors que
+   * l'inscription annonçait « Passez Premium pour plus de photos ». La
+   * promesse payante ne correspondait donc à aucune restriction réelle.
+   */
+  const [plan, setPlan] = useState<PublicPlan>(null);
+  const maxPhotos = plan === null ? PHOTOS_GRATUIT : PHOTOS_PREMIUM;
+
   useEffect(() => {
     async function load() {
       const user = await getCurrentUser();
@@ -89,6 +110,10 @@ function ProfilePage() {
           dealbreakers: data.dealbreakers || [],
         });
       }
+      // Le badge dit QUOI, la date dit JUSQU'À QUAND : un abonnement
+      // expiré ne doit pas laisser six emplacements ouverts.
+      if (data) setPlan(publicPlanOf(data));
+
       const { data: pct } = await supabase.rpc("my_profile_completion");
       if (typeof pct === "number") setCompletion(pct);
 
@@ -110,7 +135,7 @@ function ProfilePage() {
         country: form.country,
         birth_date: form.birth_date,
         gender: form.gender,
-        denomination: form.denomination,
+        denomination: form.denomination.trim(),
         practice_level: form.practice_level,
         baptized: form.baptized,
         church_attendance: form.church_attendance,
@@ -149,13 +174,20 @@ function ProfilePage() {
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0 || !userId) return;
     const file = e.target.files[0];
-    
+
     // Quick validation
     if (!file.type.startsWith('image/')) {
       toast.error("Veuillez sélectionner une image valide.");
       return;
     }
-    
+
+    // Vérifié ici aussi, et pas seulement en masquant le bouton : rien
+    // n'empêche d'atteindre ce point autrement.
+    if (form.photos.length >= maxPhotos) {
+      toast.error(`Vous avez atteint ${maxPhotos} photo${maxPhotos > 1 ? "s" : ""}.`);
+      return;
+    }
+
     setUploadingImage(true);
     toast.info("Upload en cours...", { id: "uploading" });
     
@@ -186,6 +218,29 @@ function ProfilePage() {
       setUploadingImage(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  /** Promeut une photo en principale, sans avoir à tout réenvoyer. */
+  const setMainPhoto = async (index: number) => {
+    if (!userId || index === 0) return;
+    const reordered = [...form.photos];
+    const [choisie] = reordered.splice(index, 1);
+    reordered.unshift(choisie);
+    setForm({ ...form, photos: reordered });
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ photos: reordered })
+      .eq("id", userId);
+
+    if (error) {
+      // Remettre l'ordre précédent : laisser l'affichage montrer un
+      // changement que la base a refusé serait pire que l'erreur.
+      setForm({ ...form });
+      toast.error("La photo principale n'a pas pu être changée");
+      return;
+    }
+    toast.success("Photo principale mise à jour");
   };
 
   const removePhoto = async (index: number) => {
@@ -244,28 +299,50 @@ function ProfilePage() {
       )}
 
 
-      {/* PHOTOS SECTION */}
+      {/* PHOTOS SECTION
+          La galerie complète vit ici, plus à l'inscription : l'étape 4
+          ne demande qu'une photo, et tout le reste — photos
+          supplémentaires, choix de la principale, vidéo — se gère une
+          fois le compte créé. */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-3">Mes Photos</h2>
+        <div className="flex items-baseline justify-between mb-3">
+          <h2 className="text-lg font-semibold">Mes Photos</h2>
+          <span className="text-xs text-muted-foreground">
+            {form.photos.length}/{maxPhotos}
+          </span>
+        </div>
+
         <div className="grid grid-cols-3 gap-2">
           {form.photos.map((photo, idx) => (
-            <div key={idx} className="relative aspect-[3/4] rounded-xl overflow-hidden bg-secondary">
+            <div key={photo} className="relative aspect-[3/4] rounded-xl overflow-hidden bg-secondary group">
               <img src={photo} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
-              {idx === 0 && (
+              {idx === 0 ? (
                 <div className="absolute bottom-1 left-1 bg-primary/90 text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm">
                   PROFIL
                 </div>
+              ) : (
+                /* « La première photo est votre photo principale » était
+                   affiché sans aucun moyen de la changer : il fallait
+                   supprimer les précédentes et tout réenvoyer. */
+                <button
+                  onClick={() => setMainPhoto(idx)}
+                  className="absolute bottom-1 left-1 right-1 bg-background/85 backdrop-blur-sm text-[10px] font-semibold py-1 rounded hover:bg-background transition"
+                >
+                  Définir principale
+                </button>
               )}
-              <button 
+              <button
                 onClick={() => removePhoto(idx)}
+                aria-label={`Supprimer la photo ${idx + 1}`}
                 className="absolute top-1 right-1 w-6 h-6 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-destructive transition-colors backdrop-blur-sm"
               >
                 <X className="w-3 h-3" />
               </button>
             </div>
           ))}
-          {form.photos.length < 6 && (
-            <button 
+
+          {form.photos.length < maxPhotos && (
+            <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingImage}
               className="aspect-[3/4] rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 hover:bg-secondary/50 hover:border-primary/50 transition-all text-muted-foreground"
@@ -274,15 +351,98 @@ function ProfilePage() {
               <span className="text-xs font-medium">Ajouter</span>
             </button>
           )}
+
+          {/* Emplacements verrouillés : c'est ici que la proposition
+              Premium a du sens — devant une galerie qu'on remplit — et
+              non à l'inscription, avant même d'avoir vu l'application. */}
+          {plan === null &&
+            Array.from({ length: Math.max(0, PHOTOS_PREMIUM - maxPhotos) }).map((_, i) => (
+              <button
+                key={`verrou-${i}`}
+                onClick={() =>
+                  toast.info(`Passez Premium pour ajouter jusqu'à ${PHOTOS_PREMIUM} photos`, {
+                    description: "Un profil avec plusieurs photos reçoit nettement plus de visites.",
+                    action: { label: "Voir les offres", onClick: () => navigate({ to: "/abonnement" }) },
+                  })
+                }
+                className="aspect-[3/4] rounded-xl border border-border bg-secondary/20 flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:bg-secondary/40 transition group"
+              >
+                <Lock className="w-4 h-4 group-hover:text-gold transition" />
+                <span className="text-[10px] font-medium">Photo {maxPhotos + i + 1}</span>
+                <span className="inline-flex items-center gap-0.5 text-[9px] text-gold font-bold bg-gold/10 px-1.5 py-0.5 rounded-full">
+                  <Crown className="w-2.5 h-2.5" /> Premium
+                </span>
+              </button>
+            ))}
         </div>
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          onChange={handlePhotoUpload} 
-          accept="image/*" 
-          className="hidden" 
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handlePhotoUpload}
+          accept="image/*"
+          className="hidden"
         />
-        <p className="text-xs text-muted-foreground mt-2">La première photo est votre photo principale.</p>
+
+        <p className="text-xs text-muted-foreground mt-2">
+          La première photo est votre photo principale — c'est elle que les
+          autres membres voient en premier.
+        </p>
+
+        {/* Vidéo de présentation — VIP.
+            Panneau pleine largeur plutôt qu'une case dans la grille : une
+            vidéo n'est pas une photo de plus, et la confondre avec les
+            emplacements photo brouillerait les deux offres. */}
+        <div
+          className={`mt-4 rounded-2xl border p-4 ${
+            plan === "vip"
+              ? "border-gold/40 bg-gold/5"
+              : "border-border bg-secondary/20"
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className={`w-11 h-11 rounded-xl shrink-0 flex items-center justify-center ${
+                plan === "vip" ? "bg-gold/15 text-gold" : "bg-secondary text-muted-foreground"
+              }`}
+            >
+              {plan === "vip" ? <Video className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-sm font-semibold">Vidéo de présentation</h3>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-gold bg-gold/10 border border-gold/25 px-2 py-0.5 rounded-full">
+                  <Crown className="w-3 h-3" /> VIP
+                </span>
+              </div>
+
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                Quelques secondes face caméra en disent plus qu'une longue
+                présentation écrite : votre voix, votre sourire, votre manière
+                de parler de votre foi.
+              </p>
+
+              {plan === "vip" ? (
+                /* Membre VIP : le droit est acquis, mais la fonction n'est
+                   pas encore livrée. Afficher un bouton d'envoi qui
+                   échouerait serait pire que l'annoncer. */
+                <p className="text-xs mt-2.5 font-medium text-gold">
+                  Inclus dans votre formule — disponible très prochainement.
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => navigate({ to: "/abonnement" })}
+                  className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-semibold text-gold hover:underline"
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                  Passer VIP pour l'activer
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-6 bg-card border border-border/50 rounded-3xl p-5 sm:p-6 mb-6 shadow-soft">
@@ -317,19 +477,30 @@ function ProfilePage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* Mêmes sélecteurs qu'à l'inscription. En saisie libre, « togo »
+              ou « Côte d'ivoire » ne correspondaient plus au pays choisi à
+              l'onboarding : plus de drapeau, et le filtre par pays cessait
+              de remonter le profil. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold mb-1.5 text-muted-foreground">Ville</label>
-              <Input 
-                value={form.city}
-                onChange={(e) => setForm({ ...form, city: e.target.value })}
+              <label className="block text-xs font-semibold mb-1.5 text-muted-foreground">Pays</label>
+              <PaysSelect
+                value={form.country}
+                onChange={(pays) =>
+                  setForm({
+                    ...form,
+                    country: pays,
+                    city: pays !== form.country ? "" : form.city,
+                  })
+                }
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold mb-1.5 text-muted-foreground">Pays</label>
-              <Input 
-                value={form.country}
-                onChange={(e) => setForm({ ...form, country: e.target.value })}
+              <label className="block text-xs font-semibold mb-1.5 text-muted-foreground">Ville</label>
+              <VilleSelect
+                value={form.city}
+                pays={form.country}
+                onChange={(v) => setForm({ ...form, city: v })}
               />
             </div>
           </div>
@@ -371,18 +542,36 @@ function ProfilePage() {
           
           <div>
             <label className="block text-xs font-semibold mb-1.5 text-muted-foreground">Confession / Dénomination</label>
-            <select 
-              value={form.denomination}
-              onChange={(e) => setForm({ ...form, denomination: e.target.value })}
+            <select
+              value={estDenominationLibre(form.denomination) ? "__autre__" : form.denomination}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  // « Autre » ouvre la saisie : on vide pour que le champ
+                  // libre parte vierge, sinon l'ancienne confession y
+                  // resterait affichée.
+                  denomination: e.target.value === "__autre__" ? " " : e.target.value,
+                })
+              }
               className="w-full h-10 px-3 py-2 rounded-xl border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="">Non précisé</option>
-              <option value="catholique">Catholique</option>
-              <option value="protestant">Protestant</option>
-              <option value="evangelique">Évangélique</option>
-              <option value="orthodoxe">Orthodoxe</option>
-              <option value="autre">Autre</option>
+              {DENOMINATIONS_CONNUES.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+              <option value="__autre__">Autre — préciser</option>
             </select>
+
+            {estDenominationLibre(form.denomination) && (
+              <Input
+                autoFocus
+                maxLength={60}
+                value={form.denomination.trimStart()}
+                onChange={(e) => setForm({ ...form, denomination: e.target.value })}
+                placeholder="Assemblées de Dieu, Église du Christ, Anglicane…"
+                className="mt-2"
+              />
+            )}
           </div>
 
           <div>

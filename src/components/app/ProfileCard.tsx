@@ -1,18 +1,20 @@
-import { CheckCircle2, MapPin, Circle, Rocket } from "lucide-react";
+import { CheckCircle2, MapPin, Circle, Rocket, Church } from "lucide-react";
 import { PlanBadge } from "@/components/app/PlanBadge";
+import { Avatar } from "@/components/app/Avatar";
 import type { Profile } from "@/lib/mock-data";
-import { getCountryCode, displayName } from "@/lib/utils";
+import { displayName } from "@/lib/utils";
+import { Drapeau } from "@/components/app/Drapeau";
 import { isBoosted } from "@/lib/matching";
 
 export function ProfileCard({ profile, size = "md" }: { profile: Profile; size?: "sm" | "md" | "lg" }) {
   return (
     <div className={`group relative rounded-2xl overflow-hidden shadow-soft hover:shadow-elegant transition-all bg-card ${size === "sm" ? "w-40" : size === "lg" ? "w-full" : "w-56"}`}>
       <div className={`relative ${size === "sm" ? "aspect-[3/4]" : "aspect-[4/5]"} overflow-hidden`}>
-        <img
+        <Avatar
           src={profile.photo}
-          alt={profile.firstName}
-          loading="lazy"
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          name={profile.firstName}
+          rounded=""
+          className="w-full h-full text-5xl group-hover:scale-105 transition-transform duration-500"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
@@ -61,16 +63,16 @@ export function ProfileCard({ profile, size = "md" }: { profile: Profile; size?:
           <div className="flex items-center gap-1 text-[11px] opacity-90 mt-0.5">
             <MapPin className="w-3 h-3" />
             <span>{profile.city}, {profile.country}</span>
-            {profile.country && getCountryCode(profile.country) && (
-              <img 
-                src={`https://flagcdn.com/w40/${getCountryCode(profile.country)}.png`} 
-                alt={profile.country} 
-                className="w-3 h-3 rounded-full object-cover ml-0.5 shadow-sm"
-              />
-            )}
+            <Drapeau pays={profile.country} className="w-3.5 h-3.5 ml-0.5" />
           </div>
-          <div className="flex items-center justify-between mt-1">
-            <span className="text-[10px] opacity-80">{profile.denomination}</span>
+          <div className="flex items-center justify-between mt-1 gap-2">
+            {/* Même repère que sur la carte de découverte : la confession
+                est l'information qui distingue cette application, elle ne
+                doit pas passer pour une ligne de texte parmi d'autres. */}
+            <span className="flex items-center gap-1 text-[10px] opacity-80 min-w-0">
+              <Church className="w-2.5 h-2.5 shrink-0" />
+              <span className="truncate">{profile.denomination}</span>
+            </span>
             <span className="flex items-center gap-1 text-[10px] opacity-80">
               <Circle className={`w-2 h-2 ${profile.lastActive === "En ligne" ? "fill-green-400 text-green-400" : "fill-white/50 text-white/50"}`} />
               {profile.lastActive}

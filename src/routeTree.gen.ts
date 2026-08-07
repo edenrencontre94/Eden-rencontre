@@ -27,6 +27,7 @@ import { Route as AppAideRouteImport } from './routes/_app.aide'
 import { Route as AppCommunauteRouteImport } from './routes/_app.communaute'
 import { Route as AppDecouvrirRouteImport } from './routes/_app.decouvrir'
 import { Route as AppDemandesRouteImport } from './routes/_app.demandes'
+import { Route as AppGuideRouteImport } from './routes/_app.guide'
 import { Route as AppMessagesRouteImport } from './routes/_app.messages'
 import { Route as AppProfilRouteImport } from './routes/_app.profil'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -134,6 +135,11 @@ const AppDecouvrirRoute = AppDecouvrirRouteImport.update({
 const AppDemandesRoute = AppDemandesRouteImport.update({
   id: '/demandes',
   path: '/demandes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGuideRoute = AppGuideRouteImport.update({
+  id: '/guide',
+  path: '/guide',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMessagesRoute = AppMessagesRouteImport.update({
@@ -251,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/communaute': typeof AppCommunauteRoute
   '/decouvrir': typeof AppDecouvrirRoute
   '/demandes': typeof AppDemandesRoute
+  '/guide': typeof AppGuideRoute
   '/messages': typeof AppMessagesRoute
   '/profil': typeof AppProfilRoute
   '/admin/abonnements': typeof AdminAbonnementsRoute
@@ -288,6 +295,7 @@ export interface FileRoutesByTo {
   '/communaute': typeof AppCommunauteRoute
   '/decouvrir': typeof AppDecouvrirRoute
   '/demandes': typeof AppDemandesRoute
+  '/guide': typeof AppGuideRoute
   '/messages': typeof AppMessagesRoute
   '/profil': typeof AppProfilRoute
   '/admin/abonnements': typeof AdminAbonnementsRoute
@@ -328,6 +336,7 @@ export interface FileRoutesById {
   '/_app/communaute': typeof AppCommunauteRoute
   '/_app/decouvrir': typeof AppDecouvrirRoute
   '/_app/demandes': typeof AppDemandesRoute
+  '/_app/guide': typeof AppGuideRoute
   '/_app/messages': typeof AppMessagesRoute
   '/_app/profil': typeof AppProfilRoute
   '/admin/abonnements': typeof AdminAbonnementsRoute
@@ -368,6 +377,7 @@ export interface FileRouteTypes {
     | '/communaute'
     | '/decouvrir'
     | '/demandes'
+    | '/guide'
     | '/messages'
     | '/profil'
     | '/admin/abonnements'
@@ -405,6 +415,7 @@ export interface FileRouteTypes {
     | '/communaute'
     | '/decouvrir'
     | '/demandes'
+    | '/guide'
     | '/messages'
     | '/profil'
     | '/admin/abonnements'
@@ -444,6 +455,7 @@ export interface FileRouteTypes {
     | '/_app/communaute'
     | '/_app/decouvrir'
     | '/_app/demandes'
+    | '/_app/guide'
     | '/_app/messages'
     | '/_app/profil'
     | '/admin/abonnements'
@@ -611,6 +623,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDemandesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/guide': {
+      id: '/_app/guide'
+      path: '/guide'
+      fullPath: '/guide'
+      preLoaderRoute: typeof AppGuideRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/messages': {
       id: '/_app/messages'
       path: '/messages'
@@ -754,6 +773,7 @@ interface AppRouteChildren {
   AppCommunauteRoute: typeof AppCommunauteRoute
   AppDecouvrirRoute: typeof AppDecouvrirRoute
   AppDemandesRoute: typeof AppDemandesRoute
+  AppGuideRoute: typeof AppGuideRoute
   AppMessagesRoute: typeof AppMessagesRoute
   AppProfilRoute: typeof AppProfilRoute
   AppParametresBloquesRoute: typeof AppParametresBloquesRoute
@@ -769,6 +789,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCommunauteRoute: AppCommunauteRoute,
   AppDecouvrirRoute: AppDecouvrirRoute,
   AppDemandesRoute: AppDemandesRoute,
+  AppGuideRoute: AppGuideRoute,
   AppMessagesRoute: AppMessagesRoute,
   AppProfilRoute: AppProfilRoute,
   AppParametresBloquesRoute: AppParametresBloquesRoute,

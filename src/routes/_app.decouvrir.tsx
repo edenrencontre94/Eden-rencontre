@@ -28,6 +28,7 @@ import { useSubscription } from "@/lib/subscription";
 import { compatibilityScore, rankProfiles } from "@/lib/matching";
 import { DEFAULT_FILTERS, fetchDeck, countActiveFilters, type Filters } from "@/lib/filtres";
 import { FilterSheet } from "@/components/app/FilterSheet";
+import { Drapeau } from "@/components/app/Drapeau";
 import { BOOST_DURATION_MIN, boostErrorMessage, fetchBoostStatus, startBoost, type BoostStatus } from "@/lib/boost";
 import { BoostPicker } from "@/components/app/BoostPicker";
 import { daysUntilSuperLike, fetchQuotas, quotaErrorMessage, type Quotas } from "@/lib/quotas";
@@ -138,7 +139,7 @@ function DiscoverPage() {
             isFounder: Boolean(p.is_founder),
             premium: false,
             lastActive: "Récemment",
-            photo: p.photos && p.photos.length > 0 ? p.photos[0] : 'https://placehold.co/400x600/1a1a2e/gold?text=😊',
+            photo: p.photos && p.photos.length > 0 ? p.photos[0] : '',
             photos: p.photos || [],
             bio: p.bio || "Pas de bio.",
             profession: "Profession non précisée",
@@ -724,18 +725,6 @@ function DiscoverPage() {
   );
 }
 
-const getCountryCode = (country: string) => {
-  const map: Record<string, string> = {
-    "cameroun": "cm", "côte d'ivoire": "ci", "cote d'ivoire": "ci", "sénégal": "sn", "senegal": "sn",
-    'france': 'fr', 'belgique': 'be', 'suisse': 'ch', 'canada': 'ca', 'congo': 'cg',
-    'république démocratique du congo': 'cd', 'rdc': 'cd', 'gabon': 'ga', 'mali': 'ml',
-    'togo': 'tg', 'bénin': 'bj', 'benin': 'bj', 'burkina faso': 'bf', 'madagascar': 'mg',
-    'guinée': 'gn', 'guinee': 'gn', 'rwanda': 'rw', 'burundi': 'bi', 'tchad': 'td',
-    'centrafrique': 'cf', 'maroc': 'ma', 'algérie': 'dz', 'algerie': 'dz', 'tunisie': 'tn'
-  };
-  return map[country?.toLowerCase()?.trim()] || null;
-};
-
 function SwipeCard({
   profile,
   active,
@@ -812,13 +801,7 @@ function SwipeCard({
             <span className="truncate max-w-[200px]">
               {profile.city}{profile.country ? `, ${profile.country}` : ""}
             </span>
-            {getCountryCode(profile.country) && (
-              <img 
-                src={`https://flagcdn.com/w40/${getCountryCode(profile.country)}.png`}
-                alt={profile.country}
-                className="w-4 h-4 rounded-full object-cover ml-0.5 shadow-sm border border-white/20 shrink-0"
-              />
-            )}
+            <Drapeau pays={profile.country} className="w-4 h-4 ml-0.5" />
           </div>
           <div className="flex items-center gap-1.5"><Church className="w-3.5 h-3.5" /> {profile.denomination}</div>
           <div className="flex items-center gap-1.5 opacity-80"><BookOpen className="w-3.5 h-3.5" /> {profile.bio.substring(0, 50)}...</div>

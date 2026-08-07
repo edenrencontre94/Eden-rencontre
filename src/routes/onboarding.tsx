@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect, useRef, useMemo, type ReactElement } from "react";
-import { Heart, Search, Camera, Church, ArrowRight, ArrowLeft, Upload, X, Sparkles, Check, Lock, Crown, Video } from "lucide-react";
+import { Heart, Search, Camera, Church, ArrowRight, ArrowLeft, Upload, X, Sparkles, Check } from "lucide-react";
 import { Music2, Instagram, Facebook, Youtube, Users, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logoAsset from "@/assets/logo.png";
@@ -15,6 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PaysSelect, VilleSelect } from "@/components/app/PaysVilleSelect";
+import { DENOMINATIONS_CONNUES, MARITAL_STATUSES } from "@/lib/profilChamps";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -104,6 +106,7 @@ type OnboardingData = {
   baptized: string;
   churchAttendance: string;
   seekingGender: string;
+  maritalStatus: string;
   marriageIntent: string;
   hasChildren: string;
   wantsChildren: string;
@@ -122,6 +125,7 @@ const initialData: OnboardingData = {
   baptized: "",
   churchAttendance: "",
   seekingGender: "",
+  maritalStatus: "",
   marriageIntent: "",
   hasChildren: "",
   wantsChildren: "",
@@ -220,7 +224,9 @@ function OnboardingPage() {
     }
     if (step === 2)
       return (
-        data.denomination !== "" &&
+        // .trim() : « Autre » ouvre un champ libre, et des espaces seuls
+        // laisseraient passer une confession vide.
+        data.denomination.trim() !== "" &&
         data.practiceLevel !== "" &&
         data.baptized !== "" &&
         data.churchAttendance !== ""
@@ -228,6 +234,7 @@ function OnboardingPage() {
     if (step === 3)
       return (
         data.seekingGender !== "" &&
+        data.maritalStatus !== "" &&
         data.marriageIntent !== "" &&
         data.hasChildren !== "" &&
         data.wantsChildren !== ""
@@ -284,24 +291,59 @@ function OnboardingPage() {
         toast.info("Enregistrement du profil en cours...", { id: "saving" });
 
         const uploadedPhotos = [];
+        let dernierEchec: string | null = null;
+
         for (const [index, photo] of data.photos.entries()) {
           try {
             const res = await fetch(photo.url);
             const blob = await res.blob();
             const ext = photo.name.split('.').pop() || 'jpg';
             const filePath = `${userId}/${Date.now()}-${index}.${ext}`;
-            
+
             const { error: uploadError } = await supabase.storage
               .from('photos')
               .upload(filePath, blob, { contentType: blob.type });
-              
-            if (!uploadError) {
-              const { data: publicUrlData } = supabase.storage.from('photos').getPublicUrl(filePath);
-              uploadedPhotos.push(publicUrlData.publicUrl);
+
+            if (uploadError) {
+              // L'erreur était SILENCIEUSEMENT ignorée : `if (!uploadError)`
+              // sans branche `else`. Un échec de stockage laissait donc
+              // l'inscription se terminer avec `photos: []`.
+              console.error("[onboarding] téléversement refusé :", uploadError);
+              dernierEchec = uploadError.message;
+              continue;
             }
-          } catch (e) {
-            console.error("Erreur lors de l'upload de la photo:", e);
+
+            const { data: publicUrlData } = supabase.storage.from('photos').getPublicUrl(filePath);
+            uploadedPhotos.push(publicUrlData.publicUrl);
+          } catch (e: any) {
+            console.error("[onboarding] téléversement impossible :", e);
+            dernierEchec = e?.message ?? "erreur réseau";
           }
+        }
+
+        // AUCUNE photo n'est passée : on interrompt au lieu de créer un
+        // profil vide. Sans cela, le membre termine son inscription
+        // convaincu d'avoir mis sa photo, ne comprend pas pourquoi
+        // personne ne le like, et repart au bout de quelques jours.
+        if (uploadedPhotos.length === 0) {
+          toast.dismiss("saving");
+          toast.error("Votre photo n'a pas pu être envoyée", {
+            description: dernierEchec
+              ? `${dernierEchec} — vérifiez votre connexion et réessayez.`
+              : "Vérifiez votre connexion et réessayez.",
+            duration: 8000,
+          });
+          // On reste à l'étape 4 : les fichiers sélectionnés sont toujours
+          // en mémoire, un second clic suffit à réessayer.
+          return;
+        }
+
+        // Certaines sont passées, d'autres non : on continue, mais on le dit.
+        if (uploadedPhotos.length < data.photos.length) {
+          toast.warning(
+            `${data.photos.length - uploadedPhotos.length} photo(s) n'ont pas pu être envoyées`,
+            { description: "Vous pourrez les ajouter depuis votre profil." },
+          );
         }
 
         const { error: profileError } = await supabase.from('profiles').insert({
@@ -313,11 +355,12 @@ function OnboardingPage() {
           city: data.city,
           country: data.country,
           bio: data.bio,
-          denomination: data.denomination,
+          denomination: data.denomination.trim(),
           practice_level: data.practiceLevel,
           baptized: data.baptized,
           church_attendance: data.churchAttendance,
           seeking_gender: data.seekingGender,
+          marital_status: data.maritalStatus,
           marriage_intent: data.marriageIntent,
           has_children: data.hasChildren,
           wants_children: data.wantsChildren,
@@ -544,45 +587,29 @@ function StepProfile({
             </div>
           </Field>
         </div>
-        <Field label="Ville" htmlFor="city">
-          <Input
-            id="city"
-            maxLength={80}
-            value={data.city}
-            onChange={(e) => update("city", e.target.value)}
-            placeholder="Abidjan"
+        {/* Pays d'abord : la liste des villes en dépend. L'ordre inverse
+            obligeait à saisir une ville « à l'aveugle », puis à changer de
+            pays — sans que la ville soit remise en cause. */}
+        <Field label="Pays" htmlFor="country">
+          <PaysSelect
+            id="country"
+            value={data.country}
+            onChange={(pays) => {
+              // Changer de pays invalide la ville : « Abidjan, Sénégal »
+              // n'a aucun sens, et le filtre par pays s'en trouverait
+              // faussé.
+              if (pays !== data.country) update("city", "");
+              update("country", pays);
+            }}
           />
         </Field>
-        <Field label="Pays" htmlFor="country">
-          <Select value={data.country} onValueChange={(v) => update("country", v)}>
-            <SelectTrigger id="country">
-              <SelectValue placeholder="Sélectionner" />
-            </SelectTrigger>
-            <SelectContent>
-              {[
-                "Côte d'Ivoire",
-                "Sénégal",
-                "Cameroun",
-                "Bénin",
-                "Togo",
-                "Mali",
-                "Burkina Faso",
-                "Gabon",
-                "Congo",
-                "RD Congo",
-                "Rwanda",
-                "France",
-                "Belgique",
-                "Canada",
-                "Suisse",
-                "Autre",
-              ].map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <Field label="Ville" htmlFor="city">
+          <VilleSelect
+            id="city"
+            value={data.city}
+            pays={data.country}
+            onChange={(v) => update("city", v)}
+          />
         </Field>
         <div className="sm:col-span-2">
           <Field label="Présentation" htmlFor="bio">
@@ -612,17 +639,17 @@ function StepFaith({
   data: OnboardingData;
   update: <K extends keyof OnboardingData>(k: K, v: OnboardingData[K]) => void;
 }) {
-  const denominations = [
-    "Catholique",
-    "Protestant Évangélique",
-    "Pentecôtiste",
-    "Baptiste",
-    "Méthodiste",
-    "Adventiste",
-    "Orthodoxe",
-    "Non-dénominationnel",
-    "Autre",
-  ];
+  // « Autre » n'est pas une confession : c'est l'aveu qu'on n'a pas su
+  // proposer la sienne. Un profil « Autre » ne dit rien à personne, et le
+  // filtre par dénomination le range dans un fourre-tout. Ce qui est
+  // enregistré est donc toujours la dénomination réelle.
+  const estAutre =
+    data.denomination !== "" && !DENOMINATIONS_CONNUES.includes(data.denomination);
+
+  // État séparé : à l'instant du clic sur « Autre », le champ est vide,
+  // donc `estAutre` est faux — la puce paraîtrait inactive.
+  const [autreOuvert, setAutreOuvert] = useState(estAutre);
+
   return (
     <div>
       <StepHeader
@@ -633,15 +660,45 @@ function StepFaith({
       <div className="grid gap-6 mt-8">
         <Field label="Confession / Dénomination">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {denominations.map((d) => (
+            {DENOMINATIONS_CONNUES.map((d) => (
               <ChoiceChip
                 key={d}
                 active={data.denomination === d}
-                onClick={() => update("denomination", d)}
+                onClick={() => {
+                  setAutreOuvert(false);
+                  update("denomination", d);
+                }}
                 label={d}
               />
             ))}
+            <ChoiceChip
+              active={autreOuvert || estAutre}
+              onClick={() => {
+                setAutreOuvert(true);
+                // Le choix précédent est effacé : le laisser afficherait
+                // « Baptiste » coché sous un champ libre en cours de saisie.
+                if (!estAutre) update("denomination", "");
+              }}
+              label="Autre"
+            />
           </div>
+
+          {(autreOuvert || estAutre) && (
+            <div className="mt-3">
+              <Input
+                autoFocus
+                maxLength={60}
+                value={estAutre ? data.denomination : ""}
+                onChange={(e) => update("denomination", e.target.value)}
+                placeholder="Assemblées de Dieu, Église du Christ, Anglicane…"
+              />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Écrivez le nom de votre église ou dénomination. Il apparaîtra
+                sur votre profil et permettra aux membres de la même confession
+                de vous trouver.
+              </p>
+            </div>
+          )}
         </Field>
 
         <Field label="Niveau de pratique">
@@ -734,6 +791,27 @@ function StepSearch({
           </div>
         </Field>
 
+        {/* Placée juste après « Je recherche » : c'est le premier critère
+            qu'un membre orienté vers le mariage vérifie, avant même
+            l'échéance. « Marié(e) » n'y figure pas — la contrainte CHECK
+            de la migration 40 le refuse aussi en base. */}
+        <Field label="Votre situation matrimoniale">
+          <div className="grid sm:grid-cols-3 gap-2">
+            {MARITAL_STATUSES.map((s) => (
+              <ChoiceChip
+                key={s.key}
+                active={data.maritalStatus === s.key}
+                onClick={() => update("maritalStatus", s.key)}
+                label={s.label}
+              />
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Séparé(e) signifie que l'union n'est pas encore dissoute ;
+            « mariage annulé » qu'une annulation religieuse a été prononcée.
+          </p>
+        </Field>
+
         <Field label="Intention par rapport au mariage">
           <div className="grid sm:grid-cols-3 gap-2">
             {[
@@ -797,151 +875,95 @@ function StepPhotos({
   update: <K extends keyof OnboardingData>(k: K, v: OnboardingData[K]) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const isPremium = false; // Sera géré dynamiquement selon l'état de l'utilisateur
-  const MAX = isPremium ? 5 : 1;
   const GenderAvatar =
     data.gender === "femme" ? WomanIcon : data.gender === "homme" ? ManIcon : null;
 
-  const handleFiles = (files: FileList | null) => {
-    if (!files) return;
-    const arr = Array.from(files);
-    const remaining = MAX - data.photos.length;
-    if (remaining <= 0) {
-      toast.error(`Vous ne pouvez ajouter que ${MAX} photos maximum.`);
+  const photo = data.photos[0] ?? null;
+
+  /**
+   * Une seule photo à l'inscription.
+   *
+   * L'étape affichait six emplacements dont cinq verrouillés : on
+   * demandait un effort en montrant surtout ce qui était refusé, juste
+   * avant la dernière validation. La galerie complète — photos
+   * supplémentaires et vidéo — vit dans « Mon profil », une fois le
+   * compte créé.
+   */
+  const handleFile = (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Ce fichier n'est pas une image.");
       return;
     }
-    const toAdd = arr.slice(0, remaining);
-    const readers = toAdd.map(
-      (file) =>
-        new Promise<Photo>((resolve, reject) => {
-          if (!file.type.startsWith("image/")) {
-            reject(new Error("Type de fichier invalide"));
-            return;
-          }
-          if (file.size > 8 * 1024 * 1024) {
-            reject(new Error("Fichier trop volumineux (max 8 Mo)"));
-            return;
-          }
-          const r = new FileReader();
-          r.onload = () =>
-            resolve({
-              id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-              url: String(r.result),
-              name: file.name,
-            });
-          r.onerror = () => reject(new Error("Lecture impossible"));
-          r.readAsDataURL(file);
-        }),
-    );
-    Promise.allSettled(readers).then((results) => {
-      const ok = results
-        .filter(
-          (r): r is PromiseFulfilledResult<Photo> => r.status === "fulfilled",
-        )
-        .map((r) => r.value);
-      const failed = results.filter((r) => r.status === "rejected");
-      if (ok.length) update("photos", [...data.photos, ...ok]);
-      if (failed.length) toast.error(`${failed.length} fichier(s) ignoré(s)`);
-    });
-  };
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Image trop volumineuse", {
+        description: "8 Mo maximum. Réduisez-la ou choisissez une autre photo.",
+      });
+      return;
+    }
 
-  const remove = (id: string) =>
-    update(
-      "photos",
-      data.photos.filter((p) => p.id !== id),
-    );
+    const r = new FileReader();
+    r.onload = () =>
+      update("photos", [
+        {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          url: String(r.result),
+          name: file.name,
+        },
+      ]);
+    r.onerror = () => toast.error("Cette image n'a pas pu être lue.");
+    r.readAsDataURL(file);
+  };
 
   return (
     <div>
       <StepHeader
         eyebrow="Étape 4"
-        title="Ajoutez vos photos"
-        description="Minimum 1 photo pour continuer. Passez Premium pour plus de photos et une vidéo."
+        title="Votre photo de profil"
+        description="Une seule photo suffit pour commencer. Vous en ajouterez d'autres depuis votre profil."
       />
 
-      <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {data.photos.length === 0 && GenderAvatar && (
-          <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-secondary/40 flex flex-col items-center justify-center gap-3">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center ring-4 ring-primary/10">
-              <GenderAvatar className="w-10 h-10 text-primary" />
-            </div>
-            <span className="text-xs font-medium text-primary/80">
-              Aperçu de profil
-            </span>
-            <span className="absolute top-2 left-2 text-[10px] font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary">
-              Placeholder
-            </span>
-          </div>
-        )}
-        {data.photos.map((p, i) => (
-          <div
-            key={p.id}
-            className="relative aspect-[3/4] rounded-2xl overflow-hidden group border border-border/60"
-          >
-            <img
-              src={p.url}
-              alt={`Photo ${i + 1}`}
-              className="w-full h-full object-cover"
-            />
-            {i === 0 && (
-              <div className="absolute top-2 left-2 text-xs font-semibold px-2 py-1 rounded-full bg-primary text-primary-foreground shadow-elegant">
-                Principale
-              </div>
-            )}
+      {/* Un seul emplacement, centré et large : c'est LA photo que les
+          autres membres verront en premier. */}
+      <div className="mt-8 max-w-[15rem] mx-auto">
+        {photo ? (
+          <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-border/60">
+            <img src={photo.url} alt="Votre photo de profil" className="w-full h-full object-cover" />
             <button
               type="button"
-              aria-label="Supprimer la photo"
-              onClick={() => remove(p.id)}
+              aria-label="Retirer la photo"
+              onClick={() => update("photos", [])}
               className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/90 hover:bg-background flex items-center justify-center shadow-soft transition"
             >
               <X className="w-4 h-4" />
             </button>
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="absolute inset-x-0 bottom-0 py-2.5 bg-background/90 backdrop-blur-sm text-sm font-medium hover:bg-background transition"
+            >
+              Changer de photo
+            </button>
           </div>
-        ))}
-
-        {data.photos.length < MAX && (
+        ) : (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="aspect-[3/4] rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-secondary/40 transition-all flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary"
+            className="w-full aspect-[3/4] rounded-2xl border-2 border-dashed border-border hover:border-primary hover:bg-secondary/40 transition-all flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary"
           >
-            <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
-              <Upload className="w-5 h-5" />
-            </div>
-            <span className="text-sm font-medium">Ajouter</span>
-            <span className="text-xs">{data.photos.length}/{MAX}</span>
-          </button>
-        )}
-
-        {/* Locked Premium Photos */}
-        {!isPremium && Array.from({ length: 4 }).map((_, i) => (
-          <button
-            key={`locked-photo-${i}`}
-            type="button"
-            onClick={() => toast.error("Devenez membre Premium pour ajouter jusqu'à 5 photos !")}
-            className="aspect-[3/4] rounded-2xl border border-border bg-secondary/20 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:bg-secondary/40 transition group"
-          >
-            <Lock className="w-5 h-5 text-muted-foreground group-hover:text-gold transition" />
-            <span className="text-xs font-medium">Photo {i + 2}</span>
-            <div className="flex items-center gap-1 text-[10px] text-gold font-bold bg-gold/10 px-2 py-0.5 rounded-full mt-1">
-              <Crown className="w-3 h-3" /> Premium
-            </div>
-          </button>
-        ))}
-
-        {/* Locked Premium Video */}
-        {!isPremium && (
-          <button
-            type="button"
-            onClick={() => toast.error("La vidéo de profil (jusqu'à 20 Mo) est réservée aux membres Premium !")}
-            className="aspect-[3/4] rounded-2xl border border-border bg-secondary/20 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:bg-secondary/40 transition group col-span-2 sm:col-span-1"
-          >
-            <Video className="w-6 h-6 text-muted-foreground group-hover:text-gold transition" />
-            <span className="text-sm font-medium">Vidéo</span>
-            <span className="text-xs text-center px-2">Présentez-vous en vidéo</span>
-            <div className="flex items-center gap-1 text-[10px] text-gold font-bold bg-gold/10 px-2 py-0.5 rounded-full mt-1">
-              <Crown className="w-3 h-3" /> Premium
-            </div>
+            {GenderAvatar ? (
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center ring-4 ring-primary/10">
+                <GenderAvatar className="w-10 h-10 text-primary" />
+              </div>
+            ) : (
+              <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center">
+                <Upload className="w-6 h-6" />
+              </div>
+            )}
+            <span className="text-sm font-semibold">Ajouter ma photo</span>
+            <span className="text-xs">JPG ou PNG · 8 Mo maximum</span>
           </button>
         )}
       </div>
@@ -950,22 +972,27 @@ function StepPhotos({
         ref={inputRef}
         type="file"
         accept="image/*"
-        multiple
         className="hidden"
         onChange={(e) => {
-          handleFiles(e.target.files);
+          handleFile(e.target.files);
           e.target.value = "";
         }}
       />
 
       <div className="mt-6 rounded-xl bg-secondary/50 border border-border/50 p-4 text-sm text-muted-foreground">
-        <p className="font-medium text-foreground mb-1">Conseils pour vos photos</p>
+        <p className="font-medium text-foreground mb-1">Une bonne photo principale</p>
         <ul className="list-disc pl-5 space-y-1">
-          <li>Un portrait clair et souriant en photo principale.</li>
-          <li>Des photos récentes qui vous ressemblent.</li>
-          <li>Pas de lunettes de soleil sur toutes vos photos.</li>
+          <li>Un portrait clair et souriant, votre visage bien visible.</li>
+          <li>Une photo récente, qui vous ressemble aujourd'hui.</li>
+          <li>Ni lunettes de soleil, ni photo de groupe.</li>
         </ul>
       </div>
+
+      <p className="mt-4 text-center text-xs text-muted-foreground">
+        Vos autres photos et votre vidéo de présentation s'ajoutent depuis
+        <span className="font-medium text-foreground"> Mon profil</span>, une
+        fois votre compte créé.
+      </p>
     </div>
   );
 }
@@ -989,12 +1016,10 @@ function SuccessScreen({ data }: { data: OnboardingData }) {
           Votre profil AgapeMeet est prêt. Nous préparons vos premières
           suggestions de compatibilité.
         </p>
-        <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-          <Link to="/">
-            <Button size="lg" variant="outline" className="w-full sm:w-auto">
-              Retour à l'accueil
-            </Button>
-          </Link>
+        {/* Une seule sortie : renvoyer vers la vitrine publique juste
+            après l'inscription ferait sortir de l'application le membre
+            qu'on vient d'y faire entrer. */}
+        <div className="mt-8">
           <Link to="/accueil">
             <Button
               size="lg"

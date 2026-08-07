@@ -5,6 +5,7 @@ import {
   LifeBuoy, User, Gift, AlertTriangle, MapPin, Eye, Ban, Heart, ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Avatar } from "@/components/app/Avatar";
 import {
   fetchUserDetail, grantDays, suspendUser, unsuspendUser,
   OFFER_LABELS, type UserDetail,
@@ -80,10 +81,11 @@ export function UserDetailSheet({ userId, onClose, onChanged }: {
             {/* En-tête */}
             <div className="sticky top-0 bg-background/95 backdrop-blur border-b border-border z-10">
               <div className="p-5 flex items-start gap-4">
-                <img
-                  src={p.photos?.[0] || `https://api.dicebear.com/7.x/initials/svg?seed=${p.first_name}`}
-                  alt=""
-                  className="w-16 h-16 rounded-2xl object-cover shrink-0"
+                <Avatar
+                  src={p.photos?.[0]}
+                  name={p.first_name}
+                  rounded="rounded-2xl"
+                  className="w-16 h-16 text-xl shrink-0"
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">

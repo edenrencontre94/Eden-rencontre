@@ -5,6 +5,7 @@ import {
   Loader2, AlertTriangle, RefreshCw, Check, X, Lock, ArrowLeft, Save, Search,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Avatar } from "@/components/app/Avatar";
 import { supabase } from "@/lib/supabase";
 import { getCurrentUserId } from "@/lib/auth";
 import { Switch } from "@/components/ui/switch";
@@ -613,10 +614,7 @@ function ModerationTab() {
             <div key={p.id} className="rounded-2xl border border-border bg-card overflow-hidden">
               <div className="p-4">
                 <div className="flex items-center gap-3">
-                  <img
-                    src={p.auteur_photo || `https://api.dicebear.com/7.x/initials/svg?seed=${p.auteur}`}
-                    alt="" className="w-9 h-9 rounded-full object-cover"
-                  />
+                  <Avatar src={p.auteur_photo} name={p.auteur} className="w-9 h-9 text-sm" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate">{p.auteur}</p>
                     <p className="text-[11px] text-muted-foreground">

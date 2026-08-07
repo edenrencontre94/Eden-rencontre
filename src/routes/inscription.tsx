@@ -30,7 +30,8 @@ export const Route = createFileRoute("/inscription")({
 
 function InscriptionPage() {
   const navigate = useNavigate();
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [acceptedCGU, setAcceptedCGU] = useState(false);
@@ -49,18 +50,35 @@ function InscriptionPage() {
       return;
     }
 
-    if (!fullName.trim() || !email.trim().includes("@") || password.length < 6 || !acceptedCGU) {
-      toast.error("Veuillez remplir tous les champs correctement.");
+    // Messages distincts : « remplissez tous les champs » oblige à
+    // chercher lequel manque.
+    if (firstName.trim().length < 2) {
+      toast.error("Votre prénom est requis");
+      return;
+    }
+    if (lastName.trim().length < 2) {
+      toast.error("Votre nom est requis");
+      return;
+    }
+    if (!email.trim().includes("@")) {
+      toast.error("L'adresse e-mail semble incomplète");
+      return;
+    }
+    if (password.length < 6) {
+      toast.error("Le mot de passe doit contenir au moins 6 caractères");
+      return;
+    }
+    if (!acceptedCGU) {
+      toast.error("Veuillez accepter les conditions d'utilisation");
       return;
     }
 
     setLoading(true);
     try {
       const { supabase } = await import("@/lib/supabase");
-      
-      const names = fullName.trim().split(" ");
-      const firstName = names[0];
-      const lastName = names.slice(1).join(" ") || "";
+
+      const prenom = firstName.trim();
+      const nom = lastName.trim();
 
       // 1. Inscription Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -68,8 +86,8 @@ function InscriptionPage() {
         password,
         options: {
           data: {
-            first_name: firstName,
-            last_name: lastName,
+            first_name: prenom,
+            last_name: nom,
           }
         }
       });
@@ -81,8 +99,8 @@ function InscriptionPage() {
       const userId = authData.user?.id || authData.session?.user?.id;
       if (userId) {
         sessionStorage.setItem("agape_pending_user_id", userId);
-        sessionStorage.setItem("agape_pending_first_name", firstName);
-        sessionStorage.setItem("agape_pending_last_name", lastName);
+        sessionStorage.setItem("agape_pending_first_name", prenom);
+        sessionStorage.setItem("agape_pending_last_name", nom);
       }
       
       toast.success("Compte créé avec succès !");
@@ -139,18 +157,42 @@ function InscriptionPage() {
           <div className="bg-card rounded-[2rem] shadow-elegant border border-border/50 p-8 sm:p-10">
             <form onSubmit={handleSubmit} className="space-y-6">
 
-              <div className="space-y-2">
-                <Label htmlFor="fullname" className="text-sm font-semibold">Nom complet</Label>
-                <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              {/* Deux champs distincts. Le champ unique « Nom complet »
+                  était découpé sur le premier espace : « Jean-Baptiste
+                  Kouassi N'Guessan » devenait prénom « Jean-Baptiste »
+                  — correct par chance — mais « Marie Claire Diallo »
+                  donnait le prénom « Marie » et le nom « Claire Diallo ».
+                  Aucune heuristique ne peut trancher : seule la personne
+                  concernée le sait. */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstname" className="text-sm font-semibold">Prénom</Label>
+                  <div className="relative">
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      id="firstname"
+                      type="text"
+                      autoComplete="given-name"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="Marie Claire"
+                      required
+                      className="pl-11 h-12 bg-background/50 focus:bg-background transition-colors text-base rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="lastname" className="text-sm font-semibold">Nom</Label>
                   <Input
-                    id="fullname"
+                    id="lastname"
                     type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Jean Dupont"
+                    autoComplete="family-name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Diallo"
                     required
-                    className="pl-11 h-12 bg-background/50 focus:bg-background transition-colors text-base rounded-xl"
+                    className="h-12 bg-background/50 focus:bg-background transition-colors text-base rounded-xl"
                   />
                 </div>
               </div>
