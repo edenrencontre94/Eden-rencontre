@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <linearGradient id="gs33" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fdf8ee"/><stop offset="1" stop-color="#f3e8d0"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="240" rx="52" fill="url(#gs33)"/>
+  <g>
+    <animateTransform attributeName="transform" type="translate"
+      values="0 0;0 -6;0 0" dur="2.8s" repeatCount="indefinite"
+      calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" keyTimes="0;0.5;1"/>
+    <text x="120" y="95" text-anchor="middle"
+           dominant-baseline="central"
+           font-family="Playfair Display, Georgia, 'Times New Roman', 'Noto Serif', serif" font-weight="700"
+           font-size="42" fill="#2d3a7c">Sois</text><text x="120" y="145" text-anchor="middle"
+           dominant-baseline="central"
+           font-family="Playfair Display, Georgia, 'Times New Roman', 'Noto Serif', serif" font-weight="700"
+           font-size="42" fill="#2d3a7c">béni(e)</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;0" dur="2s"
+      begin="0s" repeatCount="indefinite"/>
+    
+  <path transform="translate(54 58) scale(1.2)"
+        d="M0 -12 L3.2 -3.6 L12 0 L3.2 3.6 L0 12 L-3.2 3.6 L-12 0 L-3.2 -3.6 Z"
+        fill="#d9a441" opacity="1"/>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;0" dur="2s"
+      begin="0.7s" repeatCount="indefinite"/>
+    
+  <path transform="translate(192 76) scale(1)"
+        d="M0 -12 L3.2 -3.6 L12 0 L3.2 3.6 L0 12 L-3.2 3.6 L-12 0 L-3.2 -3.6 Z"
+        fill="#d9a441" opacity="1"/>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;0" dur="2s"
+      begin="1.4s" repeatCount="indefinite"/>
+    
+  <path transform="translate(70 188) scale(0.9)"
+        d="M0 -12 L3.2 -3.6 L12 0 L3.2 3.6 L0 12 L-3.2 3.6 L-12 0 L-3.2 -3.6 Z"
+        fill="#d9a441" opacity="1"/>
+  </g></svg>

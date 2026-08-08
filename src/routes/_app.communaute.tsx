@@ -24,6 +24,7 @@ import { useSubscription } from "@/lib/subscription";
 import { useNavigate } from "@tanstack/react-router";
 import { PlanBadge } from "@/components/app/PlanBadge";
 import { Avatar } from "@/components/app/Avatar";
+import { markCommunityRead } from "@/lib/badgesNav";
 
 export const Route = createFileRoute("/_app/communaute")({
   head: () => ({
@@ -424,6 +425,14 @@ function CommunityPage() {
       }
     }
     init();
+
+    // Marque le fil comme lu : la pastille de la barre de navigation
+    // compte les publications postérieures à cet horodatage.
+    //
+    // À l'ouverture et non au démontage : quitter la page peut se faire
+    // en fermant l'onglet, où aucun nettoyage n'est garanti — la pastille
+    // resterait alors allumée sur des publications déjà vues.
+    markCommunityRead();
   }, []);
 
   useEffect(() => {

@@ -21,7 +21,14 @@ export type DurationId = "15j" | "1m" | "3m";
 export type PlanFeatures = {
   /** Voir réellement les visiteurs (le gratuit n'a qu'un aperçu flouté) */
   visitors: boolean;
-  /** Consulter les onglets M'ont aimé / Super Likes / Visiteurs */
+  /**
+   * Consulter l'onglet Super Likes reçus.
+   *
+   * Ne couvre plus « M'ont aimé », désormais ouvert à tous : verrouiller
+   * cet onglet sur un compte neuf — qui n'a encore aucun match — ne
+   * laissait qu'un écran vide et un cadenas, au moment précis où il faut
+   * donner une raison de revenir.
+   */
   seeAdmirers: boolean;
   superLikesPerDay: number; // -1 = illimité
   /** Délai entre deux Super Likes, en jours (0 = pas de délai) */
@@ -186,10 +193,14 @@ export const PLANS: Plan[] = [
       "25 likes par jour pour explorer sans précipitation",
       "1 Super Like par semaine, pour les profils qui vous touchent vraiment",
       "5 messages par jour avec vos matchs",
+      // Ouvert à tous depuis que « M'ont aimé » n'est plus verrouillé :
+      // c'est ce qui donne envie de revenir, et l'annoncer ici évite de
+      // le faire découvrir par hasard.
+      "Voir qui vous a aimé",
       "Le verset du jour et la vie de la communauté",
     ],
     limits: [
-      "Vous ne voyez pas qui a visité votre profil ni qui vous a aimé",
+      "Vous ne voyez pas qui a visité votre profil, ni vos Super Likes reçus",
       "Ni appels audio ou vidéo, ni messages vocaux",
       "Publications sans photo ni vidéo",
       "Ni Boost, ni filtres avancés, ni réglage de visibilité",

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <linearGradient id="gs21" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e2a5e"/><stop offset="1" stop-color="#2d3a7c"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="240" rx="52" fill="url(#gs21)"/><path d="M134 58 A40 40 0 1 0 134 138 A33 33 0 1 1 134 58 Z" fill="#d9a441"/>
+  <path transform="translate(70 68) scale(1)"
+        d="M0 -12 L3.2 -3.6 L12 0 L3.2 3.6 L0 12 L-3.2 3.6 L-12 0 L-3.2 -3.6 Z"
+        fill="#fdf8ee" opacity="0.9"/>
+  <path transform="translate(172 100) scale(0.7)"
+        d="M0 -12 L3.2 -3.6 L12 0 L3.2 3.6 L0 12 L-3.2 3.6 L-12 0 L-3.2 -3.6 Z"
+        fill="#fdf8ee" opacity="0.7"/>
+  <path transform="translate(82 126) scale(0.55)"
+        d="M0 -12 L3.2 -3.6 L12 0 L3.2 3.6 L0 12 L-3.2 3.6 L-12 0 L-3.2 -3.6 Z"
+        fill="#fdf8ee" opacity="0.6"/><text x="120" y="190" text-anchor="middle" dominant-baseline="central"
+         font-family="Playfair Display, Georgia, 'Times New Roman', 'Noto Serif', serif" font-weight="700"
+         font-size="30" fill="#fdf8ee">Bonne nuit</text></svg>

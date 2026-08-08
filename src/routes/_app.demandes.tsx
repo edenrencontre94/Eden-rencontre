@@ -135,12 +135,23 @@ function RequestsPage() {
   const { features } = useSubscription();
   const navigate = useNavigate();
 
-  // En formule Gratuit, seuls les Matches sont consultables. « M'ont aimé »,
-  // « Super Likes » et « Visiteurs » montrent qui s'intéresse à vous : c'est
-  // précisément ce qu'on découvre en s'abonnant.
-  const isPremiumLocked =
-    (active === "visit" && !features.visitors) ||
-    (["like", "superlike"].includes(active) && !features.seeAdmirers);
+  /**
+   * Ce qui reste réservé aux formules payantes.
+   *
+   * « M'ont aimé » est ouvert à tous : voir qu'on plaît est ce qui donne
+   * envie de revenir, et le verrouiller sur un compte neuf — qui n'a
+   * encore aucun match — ne laissait qu'un onglet vide et un cadenas.
+   *
+   * « Super Likes » et « Visiteurs » restent payants : ils sont plus
+   * rares et plus révélateurs.
+   */
+  const tabVerrouille = (id: TabId): boolean => {
+    if (id === "visit") return !features.visitors;
+    if (id === "superlike") return !features.seeAdmirers;
+    return false;
+  };
+
+  const isPremiumLocked = tabVerrouille(active);
 
   useEffect(() => {
     async function load() {
@@ -313,9 +324,11 @@ function RequestsPage() {
             >
               <Icon className="w-3.5 h-3.5" />
               {t.label}
-              {t.id !== "match" && !features.seeAdmirers && (
-                <Lock className="w-3 h-3 opacity-70" />
-              )}
+              {/* Le cadenas suit le verrou réel de CHAQUE onglet. Il
+                  s'affichait auparavant sur les trois dès que
+                  `seeAdmirers` était faux — y compris sur « Visiteurs »,
+                  dont l'accès dépend d'un autre droit. */}
+              {tabVerrouille(t.id) && <Lock className="w-3 h-3 opacity-70" />}
             </button>
           );
         })}

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <linearGradient id="gs31" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e2a5e"/><stop offset="1" stop-color="#2d3a7c"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="240" rx="52" fill="url(#gs31)"/>
+  <g>
+    <animateTransform attributeName="transform" type="scale"
+      values="1;1.07;1" dur="2s" repeatCount="indefinite"
+      additive="sum" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" keyTimes="0;0.5;1"/>
+    <animateTransform attributeName="transform" type="translate"
+      values="0 0;-8.4 -8.4;0 0" dur="2s" repeatCount="indefinite"
+      additive="sum" calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" keyTimes="0;0.5;1"/>
+    
+  <path transform="translate(120 120) scale(4.6)"
+        d="M0 -12 L3.2 -3.6 L12 0 L3.2 3.6 L0 12 L-3.2 3.6 L-12 0 L-3.2 -3.6 Z"
+        fill="#d9a441" opacity="1"/>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;0" dur="2.2s"
+      begin="0.2s" repeatCount="indefinite"/>
+    
+  <path transform="translate(60 66) scale(1)"
+        d="M0 -12 L3.2 -3.6 L12 0 L3.2 3.6 L0 12 L-3.2 3.6 L-12 0 L-3.2 -3.6 Z"
+        fill="#fdf8ee" opacity="1"/>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;0" dur="2.2s"
+      begin="0.9s" repeatCount="indefinite"/>
+    
+  <path transform="translate(186 96) scale(0.8)"
+        d="M0 -12 L3.2 -3.6 L12 0 L3.2 3.6 L0 12 L-3.2 3.6 L-12 0 L-3.2 -3.6 Z"
+        fill="#fdf8ee" opacity="1"/>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;0" dur="2.2s"
+      begin="1.5s" repeatCount="indefinite"/>
+    
+  <path transform="translate(78 180) scale(0.9)"
+        d="M0 -12 L3.2 -3.6 L12 0 L3.2 3.6 L0 12 L-3.2 3.6 L-12 0 L-3.2 -3.6 Z"
+        fill="#fdf8ee" opacity="1"/>
+  </g></svg>

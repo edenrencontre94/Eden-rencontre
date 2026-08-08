@@ -39,6 +39,66 @@ export async function unblockUser(blockedId: string): Promise<boolean> {
   return true;
 }
 
+/* ── Archivage des conversations ──────────────────────────────
+ *
+ * Propre à chaque membre : archiver de son côté ne change rien pour
+ * l'autre, qui n'a aucune raison de l'apprendre. Un nouveau message
+ * désarchive automatiquement chez le destinataire (trigger de la
+ * migration 56) — l'archivage range, il ne fait pas taire.
+ */
+
+export async function archiveChat(matchId: string): Promise<boolean> {
+  const userId = await getCurrentUserId();
+  if (!userId) return false;
+
+  const { error } = await supabase
+    .from("archived_chats")
+    .upsert({ user_id: userId, match_id: matchId }, { onConflict: "user_id,match_id" });
+
+  if (error) {
+    console.error("[moderation] archivage:", error);
+    return false;
+  }
+  return true;
+}
+
+export async function unarchiveChat(matchId: string): Promise<boolean> {
+  const userId = await getCurrentUserId();
+  if (!userId) return false;
+
+  // `.select()` pour distinguer « rien supprimé » d'un vrai succès : une
+  // suppression bloquée par RLS ne renvoie AUCUNE erreur, seulement zéro
+  // ligne affectée.
+  const { data, error } = await supabase
+    .from("archived_chats")
+    .delete()
+    .eq("user_id", userId)
+    .eq("match_id", matchId)
+    .select("match_id");
+
+  if (error) {
+    console.error("[moderation] désarchivage:", error);
+    return false;
+  }
+  return (data ?? []).length > 0;
+}
+
+export async function fetchArchivedIds(): Promise<string[]> {
+  const userId = await getCurrentUserId();
+  if (!userId) return [];
+
+  const { data, error } = await supabase
+    .from("archived_chats")
+    .select("match_id")
+    .eq("user_id", userId);
+
+  if (error) {
+    console.error("[moderation] liste des archives:", error);
+    return [];
+  }
+  return (data ?? []).map((a: any) => a.match_id);
+}
+
 /** Identifiants des membres bloqués par l'utilisateur courant. */
 export async function fetchBlockedIds(): Promise<string[]> {
   const userId = await getCurrentUserId();

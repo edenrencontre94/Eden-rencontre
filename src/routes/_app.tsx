@@ -199,6 +199,19 @@ function AppLayout() {
     }
   };
 
+  // Enregistrement du service worker.
+  //
+  // Ici et non à la racine : seuls les membres connectés reçoivent des
+  // notifications, et l'enregistrer sur la vitrine publique ferait
+  // télécharger un fichier inutile à chaque visiteur.
+  //
+  // Aucune demande d'autorisation à cette étape — elle part uniquement
+  // du bouton dans les réglages. Demander au chargement fait refuser la
+  // plupart des gens, et un refus est presque irréversible.
+  useEffect(() => {
+    import("@/lib/push").then(m => m.enregistrerServiceWorker());
+  }, []);
+
   useEffect(() => {
     // This only runs in the browser, after hydration.
     // It reads the Supabase session from localStorage — the correct way.

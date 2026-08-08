@@ -75,6 +75,10 @@ export function quotaErrorMessage(error: unknown): string | null {
   // l'erreur brute de PostgreSQL.
   if (raw.includes("ACCOUNT_SUSPENDED"))
     return "Votre compte est suspendu";
+  // Levé par les triggers de la migration 56, dans les deux sens : que
+  // l'on ait bloqué ou que l'on ait été bloqué.
+  if (raw.includes("CONVERSATION_BLOCKED"))
+    return "Cette conversation est fermée";
 
   return null;
 }

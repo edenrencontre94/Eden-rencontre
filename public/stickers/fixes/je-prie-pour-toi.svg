@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <linearGradient id="gs8" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2d3a7c"/><stop offset="1" stop-color="#4a5aa8"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="240" rx="52" fill="url(#gs8)"/>
+  <g transform="translate(120 84) scale(0.52)">
+    <path d="M-6 -62 C-22 -46 -34 -24 -38 0 C-42 24 -34 46 -18 58 L-6 58 Z" fill="#d9a441"/>
+    <path d="M6 -62 C22 -46 34 -24 38 0 C42 24 34 46 18 58 L6 58 Z" fill="#d9a441"/>
+    <rect x="-3" y="-62" width="6" height="120" rx="3" fill="#d9a441" opacity=".55"/>
+    <path d="M-30 44 L30 44 L26 62 L-26 62 Z" fill="#d9a441" opacity=".8"/>
+  </g><text x="120" y="161" text-anchor="middle"
+           dominant-baseline="central"
+           font-family="Playfair Display, Georgia, 'Times New Roman', 'Noto Serif', serif" font-weight="700"
+           font-size="30" fill="#fdf8ee">Je prie</text><text x="120" y="199" text-anchor="middle"
+           dominant-baseline="central"
+           font-family="Playfair Display, Georgia, 'Times New Roman', 'Noto Serif', serif" font-weight="700"
+           font-size="30" fill="#fdf8ee">pour toi</text></svg>

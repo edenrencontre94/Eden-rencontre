@@ -1,0 +1,210 @@
+{
+  "fixes": [
+    {
+      "id": "fixes/croix",
+      "url": "/stickers/fixes/croix.svg",
+      "cat": "foi",
+      "motsCles": "croix jesus christ foi salut"
+    },
+    {
+      "id": "fixes/colombe",
+      "url": "/stickers/fixes/colombe.svg",
+      "cat": "foi",
+      "motsCles": "colombe paix saint esprit"
+    },
+    {
+      "id": "fixes/bible",
+      "url": "/stickers/fixes/bible.svg",
+      "cat": "foi",
+      "motsCles": "bible parole ecriture lecture"
+    },
+    {
+      "id": "fixes/poisson",
+      "url": "/stickers/fixes/poisson.svg",
+      "cat": "foi",
+      "motsCles": "poisson ichthys chretien signe"
+    },
+    {
+      "id": "fixes/flamme",
+      "url": "/stickers/fixes/flamme.svg",
+      "cat": "foi",
+      "motsCles": "flamme feu saint esprit pentecote"
+    },
+    {
+      "id": "fixes/couronne",
+      "url": "/stickers/fixes/couronne.svg",
+      "cat": "foi",
+      "motsCles": "couronne roi gloire victoire"
+    },
+    {
+      "id": "fixes/ancre",
+      "url": "/stickers/fixes/ancre.svg",
+      "cat": "foi",
+      "motsCles": "ancre esperance solide confiance"
+    },
+    {
+      "id": "fixes/priere",
+      "url": "/stickers/fixes/priere.svg",
+      "cat": "priere",
+      "motsCles": "priere mains jointes prier"
+    },
+    {
+      "id": "fixes/je-prie-pour-toi",
+      "url": "/stickers/fixes/je-prie-pour-toi.svg",
+      "cat": "priere",
+      "motsCles": "je prie pour toi soutien"
+    },
+    {
+      "id": "fixes/amen",
+      "url": "/stickers/fixes/amen.svg",
+      "cat": "priere",
+      "motsCles": "amen accord ainsi soit il"
+    },
+    {
+      "id": "fixes/alleluia",
+      "url": "/stickers/fixes/alleluia.svg",
+      "cat": "priere",
+      "motsCles": "alleluia louange joie"
+    },
+    {
+      "id": "fixes/gloire-a-dieu",
+      "url": "/stickers/fixes/gloire-a-dieu.svg",
+      "cat": "priere",
+      "motsCles": "gloire a dieu louange"
+    },
+    {
+      "id": "fixes/sois-beni",
+      "url": "/stickers/fixes/sois-beni.svg",
+      "cat": "encouragement",
+      "motsCles": "sois beni benediction"
+    },
+    {
+      "id": "fixes/courage",
+      "url": "/stickers/fixes/courage.svg",
+      "cat": "encouragement",
+      "motsCles": "courage force tiens bon"
+    },
+    {
+      "id": "fixes/dieu-pourvoira",
+      "url": "/stickers/fixes/dieu-pourvoira.svg",
+      "cat": "encouragement",
+      "motsCles": "dieu pourvoira confiance provision"
+    },
+    {
+      "id": "fixes/merci-seigneur",
+      "url": "/stickers/fixes/merci-seigneur.svg",
+      "cat": "encouragement",
+      "motsCles": "merci seigneur gratitude"
+    },
+    {
+      "id": "fixes/paix-sur-toi",
+      "url": "/stickers/fixes/paix-sur-toi.svg",
+      "cat": "encouragement",
+      "motsCles": "paix shalom serenite"
+    },
+    {
+      "id": "fixes/coeur-croix",
+      "url": "/stickers/fixes/coeur-croix.svg",
+      "cat": "relation",
+      "motsCles": "amour coeur croix agape"
+    },
+    {
+      "id": "fixes/alliance",
+      "url": "/stickers/fixes/alliance.svg",
+      "cat": "relation",
+      "motsCles": "alliance mariage anneaux union"
+    },
+    {
+      "id": "fixes/que-dieu-nous-guide",
+      "url": "/stickers/fixes/que-dieu-nous-guide.svg",
+      "cat": "relation",
+      "motsCles": "que dieu nous guide chemin"
+    },
+    {
+      "id": "fixes/bonjour",
+      "url": "/stickers/fixes/bonjour.svg",
+      "cat": "salutation",
+      "motsCles": "bonjour salut matin"
+    },
+    {
+      "id": "fixes/bonne-nuit",
+      "url": "/stickers/fixes/bonne-nuit.svg",
+      "cat": "salutation",
+      "motsCles": "bonne nuit dormir soir"
+    },
+    {
+      "id": "fixes/bon-dimanche",
+      "url": "/stickers/fixes/bon-dimanche.svg",
+      "cat": "salutation",
+      "motsCles": "bon dimanche culte eglise"
+    },
+    {
+      "id": "fixes/a-bientot",
+      "url": "/stickers/fixes/a-bientot.svg",
+      "cat": "salutation",
+      "motsCles": "a bientot au revoir"
+    }
+  ],
+  "animes": [
+    {
+      "id": "animes/coeur-anime",
+      "url": "/stickers/animes/coeur-anime.svg",
+      "cat": "relation",
+      "motsCles": "amour coeur battant anime"
+    },
+    {
+      "id": "animes/colombe-anime",
+      "url": "/stickers/animes/colombe-anime.svg",
+      "cat": "foi",
+      "motsCles": "colombe paix vol anime"
+    },
+    {
+      "id": "animes/flamme-anime",
+      "url": "/stickers/animes/flamme-anime.svg",
+      "cat": "foi",
+      "motsCles": "flamme feu esprit anime"
+    },
+    {
+      "id": "animes/croix-lumiere",
+      "url": "/stickers/animes/croix-lumiere.svg",
+      "cat": "foi",
+      "motsCles": "croix lumiere gloire anime"
+    },
+    {
+      "id": "animes/priere-anime",
+      "url": "/stickers/animes/priere-anime.svg",
+      "cat": "priere",
+      "motsCles": "priere mains anime"
+    },
+    {
+      "id": "animes/alleluia-anime",
+      "url": "/stickers/animes/alleluia-anime.svg",
+      "cat": "priere",
+      "motsCles": "alleluia louange anime joie"
+    },
+    {
+      "id": "animes/amen-anime",
+      "url": "/stickers/animes/amen-anime.svg",
+      "cat": "priere",
+      "motsCles": "amen anime accord"
+    },
+    {
+      "id": "animes/etoile-anime",
+      "url": "/stickers/animes/etoile-anime.svg",
+      "cat": "encouragement",
+      "motsCles": "etoile brille espoir anime"
+    },
+    {
+      "id": "animes/alliance-anime",
+      "url": "/stickers/animes/alliance-anime.svg",
+      "cat": "relation",
+      "motsCles": "alliance mariage anneaux anime"
+    },
+    {
+      "id": "animes/benediction-anime",
+      "url": "/stickers/animes/benediction-anime.svg",
+      "cat": "encouragement",
+      "motsCles": "benediction beni anime pluie"
+    }
+  ]
+}

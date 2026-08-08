@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <linearGradient id="gs28" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2d3a7c"/><stop offset="1" stop-color="#4a5aa8"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="240" rx="52" fill="url(#gs28)"/>
+  <g>
+    <animateTransform attributeName="transform" type="translate"
+      values="0 0;0 -8;0 0" dur="2.6s" repeatCount="indefinite"
+      calcMode="spline" keySplines="0.4 0 0.2 1;0.4 0 0.2 1" keyTimes="0;0.5;1"/>
+    
+  <g transform="translate(120 122) scale(1)">
+    <path d="M-6 -62 C-22 -46 -34 -24 -38 0 C-42 24 -34 46 -18 58 L-6 58 Z" fill="#fdf8ee"/>
+    <path d="M6 -62 C22 -46 34 -24 38 0 C42 24 34 46 18 58 L6 58 Z" fill="#fdf8ee"/>
+    <rect x="-3" y="-62" width="6" height="120" rx="3" fill="#fdf8ee" opacity=".55"/>
+    <path d="M-30 44 L30 44 L26 62 L-26 62 Z" fill="#fdf8ee" opacity=".8"/>
+  </g>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;0" dur="2.4s"
+      begin="0s" repeatCount="indefinite"/>
+    
+  <path transform="translate(60 62) scale(1.4)"
+        d="M0 -12 L3.2 -3.6 L12 0 L3.2 3.6 L0 12 L-3.2 3.6 L-12 0 L-3.2 -3.6 Z"
+        fill="#d9a441" opacity="1"/>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;0" dur="2.4s"
+      begin="0.8s" repeatCount="indefinite"/>
+    
+  <path transform="translate(182 84) scale(1.1)"
+        d="M0 -12 L3.2 -3.6 L12 0 L3.2 3.6 L0 12 L-3.2 3.6 L-12 0 L-3.2 -3.6 Z"
+        fill="#d9a441" opacity="1"/>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" values="0;1;0" dur="2.4s"
+      begin="1.6s" repeatCount="indefinite"/>
+    
+  <path transform="translate(74 176) scale(0.9)"
+        d="M0 -12 L3.2 -3.6 L12 0 L3.2 3.6 L0 12 L-3.2 3.6 L-12 0 L-3.2 -3.6 Z"
+        fill="#d9a441" opacity="1"/>
+  </g></svg>

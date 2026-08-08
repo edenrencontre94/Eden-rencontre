@@ -21,6 +21,20 @@
 /site.webmanifest
   cache-control: public, max-age=86400
 
+# Service worker : JAMAIS en cache.
+#
+# Le navigateur ne remplace le service worker que si l'octet reçu diffère
+# de celui qu'il détient. Servi depuis un cache, un correctif de
+# notification pourrait rester invisible pendant des jours — sur un
+# fichier qui, lui, décide de ce que les membres reçoivent.
+/sw.js
+  cache-control: no-cache, no-store, must-revalidate
+
+# Les stickers sont immuables : leur contenu ne change jamais sans que
+# leur nom change aussi. Un an de cache, et zéro requête ensuite.
+/stickers/*
+  cache-control: public, max-age=31536000, immutable
+
 # Fichiers de référencement : une heure. Assez pour épargner des requêtes,
 # assez court pour qu'une correction du sitemap soit prise en compte le
 # jour même plutôt qu'à la prochaine visite de Google.

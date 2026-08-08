@@ -11,12 +11,17 @@ import {
   X, GalleryHorizontal, Loader2, Play, Pause, BadgeCheck, Lock, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { normaliser } from "@/content/pays";
+import STICKERS from "@/content/stickers.json";
 // Le SDK Agora (~1,5 Mo) n'est téléchargé qu'au lancement d'un appel
 const CallView = lazy(() =>
   import("@/components/app/CallView").then(m => ({ default: m.CallView })),
 );
 import { createCall } from "@/lib/calls";
-import { blockUser, fetchBlockedIds } from "@/lib/moderation";
+import {
+  blockUser, fetchBlockedIds,
+  archiveChat, unarchiveChat, fetchArchivedIds,
+} from "@/lib/moderation";
 import { ReportDialog } from "@/components/app/ReportDialog";
 import { useSubscription } from "@/lib/subscription";
 import { fetchQuotas, quotaErrorMessage, type Quotas } from "@/lib/quotas";
@@ -45,6 +50,8 @@ type ChatProfile = {
 
 type MatchChat = {
   id: string;
+  /** Rangée par ce membre. Sans effet pour son interlocuteur. */
+  archived: boolean;
   profile: ChatProfile;
   lastMessage: string;
   lastMessageMine: boolean;
@@ -133,7 +140,7 @@ const MEDIA_LABELS: Record<string, string> = {
   image: "📷 Photo",
   video: "🎥 Vidéo",
   audio: "🎤 Message vocal",
-  gif: "🎬 GIF",
+  gif: "✨ Sticker animé",
   sticker: "✨ Sticker",
 };
 
@@ -205,35 +212,57 @@ function AudioPlayer({ src, isMe }: { src: string; isMe: boolean }) {
 }
 
 // ─────────────────────────────────────────────────
-// GIF & Sticker Picker Component (GIPHY API)
+// Sélecteur de stickers — bibliothèque interne
 // ─────────────────────────────────────────────────
-function GifPicker({ onSelect, type = "gif" }: { onSelect: (url: string) => void, type?: "gif" | "sticker" }) {
-  const [q, setQ] = useState(type === "gif" ? "love" : "cute");
-  const [gifs, setGifs] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const GIPHY_KEY = import.meta.env.VITE_GIPHY_API_KEY || "OUhPY0c5X5L5M3kNAJjjkQxqC3kXHzfG";
+/**
+ * Sélecteur de stickers — bibliothèque interne.
+ *
+ * L'ancienne version interrogeait GIPHY. Elle s'ouvrait vide en
+ * production : la clé codée en dur renvoyait 401, et comme GIPHY signale
+ * ses erreurs dans le corps d'une réponse HTTP 200, ni `fetch` ni le
+ * `catch` ne s'en apercevaient.
+ *
+ * Au-delà de la panne, le fonds GIPHY ne convenait pas : on y cherche
+ * « prière » et on obtient des extraits de séries. Les 34 pièces servies
+ * ici sont dessinées pour cette application — croix, colombe, alliances,
+ * « Que Dieu nous guide » — aux couleurs de la maison.
+ *
+ * Aucune requête vers un tiers, aucune clé, aucun quota. 36 Ko de SVG
+ * servis depuis notre domaine, nets à toutes les tailles.
+ */
+const CATEGORIES = [
+  { key: "tout", label: "Tout" },
+  { key: "foi", label: "Foi" },
+  { key: "priere", label: "Prière" },
+  { key: "encouragement", label: "Encouragement" },
+  { key: "relation", label: "Relation" },
+  { key: "salutation", label: "Salutations" },
+];
 
-  useEffect(() => {
-    let t: ReturnType<typeof setTimeout>;
-    t = setTimeout(search, 500);
-    return () => clearTimeout(t);
-  }, [q]);
+function GifPicker({
+  onSelect,
+  type = "gif",
+}: {
+  onSelect: (url: string, type: "gif" | "sticker") => void;
+  type?: "gif" | "sticker";
+}) {
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState("tout");
 
-  const search = async () => {
-    setLoading(true);
-    try {
-      const endpoint = type === "gif" ? "gifs" : "stickers";
-      const r = await fetch(`https://api.giphy.com/v1/${endpoint}/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(q)}&limit=12&rating=g`);
-      const json = await r.json();
-      setGifs((json.data || []).map((g: any) => g.images.fixed_height_small.url));
-    } catch {
-      // fallback: trending
-      const endpoint = type === "gif" ? "gifs" : "stickers";
-      const r = await fetch(`https://api.giphy.com/v1/${endpoint}/trending?api_key=${GIPHY_KEY}&limit=12&rating=g`);
-      const json = await r.json();
-      setGifs((json.data || []).map((g: any) => g.images.fixed_height_small.url));
-    } finally { setLoading(false); }
-  };
+  // Le bouton « GIF » ouvre les animés, « Sticker » les fixes. Deux jeux
+  // distincts plutôt qu'une liste unique : l'attente n'est pas la même.
+  const source = type === "gif" ? STICKERS.animes : STICKERS.fixes;
+
+  const visibles = useMemo(() => {
+    const r = normaliser(q);
+    return source.filter(s => {
+      if (cat !== "tout" && s.cat !== cat) return false;
+      if (!r) return true;
+      // Recherche sur les mots-clés ET sur le nom, sans accents : « priere »
+      // comme « prière » doivent aboutir.
+      return normaliser(`${s.motsCles} ${s.id}`).includes(r);
+    });
+  }, [source, q, cat]);
 
   return (
     <motion.div
@@ -242,25 +271,70 @@ function GifPicker({ onSelect, type = "gif" }: { onSelect: (url: string) => void
       exit={{ opacity: 0, y: 8 }}
       className="absolute bottom-16 left-0 right-0 bg-card border border-border rounded-2xl shadow-xl overflow-hidden z-30"
     >
+      {/* Les catégories AVANT la recherche : la bibliothèque est visible
+          d'emblée, et parcourir suffit dans la plupart des cas. */}
       <div className="p-2 border-b border-border">
-        <input
-          value={q}
-          onChange={e => setQ(e.target.value)}
-          placeholder="Rechercher un GIF…"
-          className="w-full px-3 py-1.5 rounded-lg bg-secondary text-sm focus:outline-none"
-          autoFocus
-        />
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-none">
+          {CATEGORIES.map(c => (
+            <button
+              key={c.key}
+              onClick={() => setCat(c.key)}
+              className={`px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-colors ${
+                cat === c.key
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-muted-foreground hover:bg-secondary/70"
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="grid grid-cols-3 gap-1 p-2 max-h-48 overflow-y-auto">
-        {loading ? (
-          <div className="col-span-3 flex justify-center py-4">
-            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+
+      {/* Pas d'`autoFocus` : sur téléphone il ouvrait le clavier à
+          l'ouverture du panneau, lequel recouvrait la grille — on croyait
+          devoir chercher avant de voir quoi que ce soit. */}
+      <div className="grid grid-cols-4 gap-1.5 p-2 max-h-72 overflow-y-auto">
+        {visibles.length === 0 ? (
+          <div className="col-span-4 px-4 py-8 text-center">
+            <p className="text-sm font-medium">Aucun sticker</p>
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Rien ne correspond à « {q.trim()} ».
+            </p>
           </div>
-        ) : gifs.map((url, i) => (
-          <button key={i} onClick={() => onSelect(url)} className="rounded-lg overflow-hidden hover:opacity-80 transition-opacity">
-            <img src={url} alt="gif" className="w-full h-20 object-cover" />
-          </button>
-        ))}
+        ) : (
+          visibles.map(s => (
+            <button
+              key={s.id}
+              onClick={() => onSelect(s.url, type)}
+              title={s.motsCles}
+              className="rounded-xl overflow-hidden hover:scale-105 active:scale-95 transition-transform"
+            >
+              <img src={s.url} alt="" loading="lazy" className="w-full aspect-square object-contain" />
+            </button>
+          ))
+        )}
+      </div>
+
+      <div className="p-2 border-t border-border">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <input
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder="Rechercher : prière, paix, alliance…"
+            className="w-full pl-8 pr-8 py-1.5 rounded-lg bg-secondary text-xs focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          {q && (
+            <button
+              onClick={() => setQ("")}
+              aria-label="Effacer la recherche"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
     </motion.div>
   );
@@ -295,13 +369,17 @@ async function loadConversations(userId: string): Promise<MatchChat[]> {
   const user = { id: userId };
 
   // matches et blocages en parallèle : 2 rondes réseau au lieu de 3
-  const [{ data: matchesData, error: matchesError }, blockedList] = await Promise.all([
-    supabase
-      .from("matches")
-      .select("id, created_at, user1_id, user2_id")
-      .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`),
-    fetchBlockedIds(),
-  ]);
+  const [{ data: matchesData, error: matchesError }, blockedList, archivedList] =
+    await Promise.all([
+      supabase
+        .from("matches")
+        .select("id, created_at, user1_id, user2_id")
+        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`),
+      fetchBlockedIds(),
+      fetchArchivedIds(),
+    ]);
+
+  const archivedSet = new Set(archivedList);
 
   if (matchesError) console.error("[messages] matches:", matchesError);
   if (!matchesData || matchesData.length === 0) return [];
@@ -383,6 +461,7 @@ async function loadConversations(userId: string): Promise<MatchChat[]> {
 
           return {
             id: m.id,
+            archived: archivedSet.has(m.id),
             profile: {
               id: otherId,
               firstName: p?.first_name || "Membre",
@@ -413,7 +492,7 @@ async function loadConversations(userId: string): Promise<MatchChat[]> {
 // ─────────────────────────────────────────────────
 function MessagesPage() {
   const [query, setQuery] = useState("");
-  const [tab, setTab] = useState<"all" | "unread">("all");
+  const [tab, setTab] = useState<"all" | "unread" | "archived">("all");
   const [active, setActive] = useState<MatchChat | null>(null);
   const [chats, setChats] = useState<MatchChat[]>([]);
   const userId = useCurrentUserId() ?? null;
@@ -499,13 +578,18 @@ function MessagesPage() {
     }
   }, [chats]);
 
-  const newMatches = useMemo(() => chats.filter(c => !c.hasMessages), [chats]);
+  const newMatches = useMemo(() => chats.filter(c => !c.hasMessages && !c.archived), [chats]);
   const conversations = useMemo(() => chats.filter(c => c.hasMessages), [chats]);
-  const totalUnread = useMemo(() => chats.reduce((n, c) => n + c.unread, 0), [chats]);
+  const archivedCount = useMemo(() => chats.filter(c => c.archived).length, [chats]);
+  const totalUnread = useMemo(
+    () => chats.filter(c => !c.archived).reduce((n, c) => n + c.unread, 0),
+    [chats],
+  );
 
   const filtered = useMemo(() => {
     const q = normalize(query.trim());
     return conversations
+      .filter(c => (tab === "archived" ? c.archived : !c.archived))
       .filter(c => (tab === "unread" ? c.unread > 0 : true))
       .filter(c =>
         !q ||
@@ -521,6 +605,13 @@ function MessagesPage() {
         currentUserId={userId}
         onBack={() => setActive(null)}
         onRead={id => setChats(prev => prev.map(c => (c.id === id ? { ...c, unread: 0 } : c)))}
+        // Bascule l'état localement plutôt que de recharger toute la
+        // liste : la ligne change d'onglet immédiatement.
+        onArchiveChange={() =>
+          setChats(prev =>
+            prev.map(c => (c.id === active.id ? { ...c, archived: !c.archived } : c)),
+          )
+        }
       />
     );
   }
@@ -557,7 +648,9 @@ function MessagesPage() {
 
       {/* Filtres */}
       <div className="flex gap-2 mb-4">
-        {([["all", "Toutes"], ["unread", "Non lues"]] as const).map(([key, label]) => (
+        {([["all", "Toutes"], ["unread", "Non lues"], ["archived", "Archivées"]] as const)
+          .filter(([key]) => key !== "archived" || archivedCount > 0)
+          .map(([key, label]) => (
           <button
             key={key}
             onClick={() => setTab(key)}
@@ -569,6 +662,7 @@ function MessagesPage() {
           >
             {label}
             {key === "unread" && totalUnread > 0 && ` · ${totalUnread}`}
+            {key === "archived" && ` · ${archivedCount}`}
           </button>
         ))}
       </div>
@@ -679,9 +773,11 @@ function MessagesPage() {
                     ? "Aucune conversation ne correspond à votre recherche."
                     : tab === "unread"
                       ? "Vous êtes à jour, aucun message non lu 🙌"
-                      : newMatches.length > 0
-                        ? "Lancez la conversation avec l'un de vos nouveaux matches ✨"
-                        : "Aucune conversation pour l'instant."}
+                      : tab === "archived"
+                        ? "Aucune conversation archivée."
+                        : newMatches.length > 0
+                          ? "Lancez la conversation avec l'un de vos nouveaux matches ✨"
+                          : "Aucune conversation pour l'instant."}
                 </p>
                 {!query && tab === "all" && newMatches.length === 0 && (
                   <p className="text-xs text-muted-foreground mt-1">Allez swiper pour faire de belles rencontres !</p>
@@ -720,12 +816,14 @@ function ChatView({
   onBack,
   onRead,
   onQuotaChange,
+  onArchiveChange,
 }: {
   chat: MatchChat;
   currentUserId: string;
   onBack: () => void;
   onRead: (matchId: string) => void;
   onQuotaChange?: () => void;
+  onArchiveChange?: () => void;
 }) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [now, setNow] = useState(() => Date.now());
@@ -1113,10 +1211,14 @@ function ChatView({
   };
 
   // ── GIF & Sticker send ──
-  const sendGif = async (url: string) => {
+  // Le type vient du sélecteur, pas de `showSticker` : celui-ci est remis
+  // à `false` deux lignes plus haut, et ne devait sa justesse qu'au fait
+  // que React ne met pas l'état à jour de façon synchrone. Un
+  // rafraîchissement au mauvais moment aurait enregistré un sticker en GIF.
+  const sendGif = async (url: string, kind: "gif" | "sticker") => {
     setShowGif(false);
     setShowSticker(false);
-    await sendMessage({ media_url: url, media_type: showSticker ? "sticker" : "gif" });
+    await sendMessage({ media_url: url, media_type: kind });
   };
 
   // ── Emoji ──
@@ -1159,9 +1261,17 @@ function ChatView({
     );
 
     if (m.media_type === "gif" || m.media_type === "sticker") return (
-      <div className={`${base} overflow-hidden p-0 bg-transparent shadow-none border-none`}>
-        <img src={m.media_url!} alt={m.media_type} className="max-w-[200px] rounded-2xl" />
-        <div className="px-2 pb-1 bg-card rounded-b-2xl mt-1">{ts}</div>
+      // Sans bulle : un sticker se pose sur la conversation, il ne
+      // s'encadre pas. `w-[140px]` fixe la taille — un SVG sans
+      // dimensions explicites s'étirerait à la largeur disponible.
+      <div className={`${base} p-0 bg-transparent shadow-none border-none`}>
+        <img
+          src={m.media_url!}
+          alt={m.media_type === "sticker" ? "Sticker" : "Sticker animé"}
+          loading="lazy"
+          className="w-[140px] h-[140px] object-contain rounded-2xl"
+        />
+        <div className="px-1 mt-0.5">{ts}</div>
       </div>
     );
 
@@ -1255,7 +1365,32 @@ function ChatView({
               <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
                 className="absolute right-0 top-11 w-48 bg-card border border-border rounded-xl shadow-elegant py-1 z-30">
                 {[
-                  { l: "Archiver", i: Archive, action: () => toast.success("Conversation archivée") },
+                  {
+                    // L'action se contentait d'un `toast.success` : aucune
+                    // table, aucun appel. Un message de succès pour une
+                    // opération qui n'avait jamais lieu.
+                    l: chat.archived ? "Désarchiver" : "Archiver",
+                    i: Archive,
+                    action: async () => {
+                      const ok = chat.archived
+                        ? await unarchiveChat(chat.id)
+                        : await archiveChat(chat.id);
+                      if (!ok) {
+                        toast.error("L'opération n'a pas pu être enregistrée");
+                        return;
+                      }
+                      toast.success(
+                        chat.archived
+                          ? "Conversation restaurée"
+                          : "Conversation archivée",
+                        chat.archived
+                          ? undefined
+                          : { description: "Un nouveau message la fera réapparaître." },
+                      );
+                      onArchiveChange?.();
+                      if (!chat.archived) onBack();
+                    },
+                  },
                   {
                     l: "Signaler",
                     i: Flag,
@@ -1337,7 +1472,7 @@ function ChatView({
               className="flex flex-col items-center gap-1 p-3 rounded-2xl bg-primary/10 hover:bg-primary/20 transition-colors"
             >
               <GalleryHorizontal className="w-6 h-6 text-primary" />
-              <span className="text-[10px] font-medium">GIF</span>
+              <span className="text-[10px] font-medium">Animés</span>
             </button>
             <button
               onClick={() => { setShowSticker(true); setShowGif(false); setShowMedia(false); }}

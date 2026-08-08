@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/lib/supabase";
 import { getCurrentUserId } from "@/lib/auth";
+import { PushToggle } from "@/components/app/PushToggle";
 
 export const Route = createFileRoute("/_app/parametres/notifications")({
   head: () => ({
@@ -104,8 +105,14 @@ function NotificationsPage() {
           <BellRing className="w-8 h-8 text-primary" />
         </div>
         <p className="text-sm text-center text-muted-foreground px-4">
-          Choisissez les e-mails que vous souhaitez recevoir.
+          Choisissez comment nous vous prévenons.
         </p>
+      </div>
+
+      {/* Le push d'abord : c'est l'immédiat. Les e-mails viennent après,
+          ils relèvent du récapitulatif. */}
+      <div className="mb-6">
+        <PushToggle />
       </div>
 
       {loading ? (
