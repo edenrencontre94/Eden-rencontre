@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import { poserPastille } from "@/lib/appBadge";
 
 /**
  * Compteurs affichés sur la barre de navigation.
@@ -43,11 +44,20 @@ export function useNavBadges(): NavBadges & { refresh: () => void } {
     }
 
     const d = (data ?? {}) as Partial<NavBadges>;
-    setBadges({
+    const suivant = {
       messages: d.messages ?? 0,
       demandes: d.demandes ?? 0,
       communaute: d.communaute ?? 0,
-    });
+    };
+    setBadges(suivant);
+
+    // Pastille sur l'icône de l'application installée.
+    //
+    // Messages + demandes, PAS la communauté : une pastille rouge doit
+    // signaler ce qui s'adresse personnellement au membre. Compter les
+    // publications du fil la ferait clignoter en permanence, et on
+    // cesserait de la regarder.
+    poserPastille(suivant.messages + suivant.demandes);
   }, []);
 
   useEffect(() => {

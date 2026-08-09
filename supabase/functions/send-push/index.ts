@@ -49,6 +49,10 @@ serve(async (req) => {
     body?: string;
     url?: string;
     tag?: string | null;
+    /** Total à afficher sur l'icône, calculé en base. */
+    badge?: number;
+    /** Message en rafale : remplacer sans re-sonner. */
+    silencieux?: boolean;
   };
   try {
     corps = await req.json();
@@ -56,7 +60,7 @@ serve(async (req) => {
     return new Response("JSON invalide", { status: 400 });
   }
 
-  const { user_id, title, body, url, tag } = corps;
+  const { user_id, title, body, url, tag, badge, silencieux } = corps;
   if (!user_id || !title) {
     return new Response("user_id et title requis", { status: 400 });
   }
@@ -83,6 +87,10 @@ serve(async (req) => {
     body: body ?? "",
     url: url ?? "/accueil",
     tag: tag ?? undefined,
+    // Relayé tel quel : c'est la base qui sait combien de messages et de
+    // demandes attendent, pas le service worker.
+    badge: typeof badge === "number" ? badge : undefined,
+    silencieux: silencieux === true ? true : undefined,
   });
 
   let envoyes = 0;
@@ -101,7 +109,7 @@ serve(async (req) => {
           charge,
           // TTL : au-delà de 24 h, une notification de message n'a plus
           // d'intérêt. Le service la jette au lieu de la garder.
-          { TTL: 86400, urgency: "high" },
+          { TTL: 86400, urgency: silencieux ? "normal" : "high" },
         );
         envoyes++;
       } catch (e: any) {

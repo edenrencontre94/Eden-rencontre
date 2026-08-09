@@ -43,6 +43,8 @@ import { useIsAdmin } from "@/lib/auth";
 import { useSetting } from "@/lib/appSettings";
 import { MaintenanceScreen } from "@/components/MaintenanceScreen";
 import { SuspendedScreen } from "@/components/SuspendedScreen";
+import { InstallPrompt } from "@/components/app/InstallPrompt";
+import { InstallMenuItem } from "@/components/app/InstallMenuItem";
 import { DELETION_REASONS, motifErrorMessage, type DeletionReason } from "@/lib/motifs";
 
 export const Route = createFileRoute("/_app")({
@@ -210,6 +212,9 @@ function AppLayout() {
   // plupart des gens, et un refus est presque irréversible.
   useEffect(() => {
     import("@/lib/push").then(m => m.enregistrerServiceWorker());
+    // Signale l'usage en mode installé — c'est ce qui rattrape iPhone,
+    // où l'évènement `appinstalled` n'existe pas.
+    import("@/lib/install").then(m => m.signalerSiInstalle());
   }, []);
 
   useEffect(() => {
@@ -452,6 +457,12 @@ function AppLayout() {
                     </Link>
                   </DropdownMenuItem>
                   
+                  {/* Disponible en permanence, contrairement au bandeau
+                      qui n'apparaît qu'au 3ᵉ passage et se tait 60 jours
+                      après un refus. Se retire d'elle-même une fois
+                      l'application installée. */}
+                  <InstallMenuItem />
+
                   <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
                     <Link to="/parametres/langue" className="flex items-center gap-3 py-2.5 px-2">
                       <Languages className="w-4 h-4 text-muted-foreground" />
@@ -593,6 +604,7 @@ function AppLayout() {
           <Outlet />
         </main>
         <BottomNav />
+        <InstallPrompt />
       </div>
     </SubscriptionProvider>
   );

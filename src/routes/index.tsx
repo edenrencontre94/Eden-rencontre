@@ -16,6 +16,7 @@ import testimonial3 from "@/assets/testimonial-3.jpg";
 import { COUNTRIES } from "@/content/countries";
 import { ARTICLES } from "@/content/articles";
 import { WhatsAppButton, useSupportContact } from "@/components/SupportContact";
+import { InstallBarTop, InstallSection, InstallPrompt } from "@/components/app/InstallPrompt";
 
 /** Domaine canonique. Toute URL de référencement doit en découler. */
 export const SITE_URL = "https://agapemeet.com";
@@ -984,6 +985,8 @@ function Footer() {
 function Index() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* En haut : attrape celui qui ne fera jamais défiler la page. */}
+      <InstallBarTop />
       <Nav />
       <main>
         <Hero />
@@ -997,8 +1000,13 @@ function Index() {
         <Blog />
         <FAQ />
         <FinalCTA />
+        {/* Dans le flux, avant le pied de page : celui qui lit
+            jusqu'ici est précisément celui qui est convaincu. */}
+        <InstallSection />
       </main>
       <Footer />
+      {/* Flottante, après une minute. */}
+      <InstallPrompt />
     </div>
   );
 }

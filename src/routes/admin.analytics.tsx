@@ -5,6 +5,7 @@ import {
   RefreshCw, Filter, Globe, UserMinus,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { InstallStats } from "@/components/admin/InstallStats";
 import { formatPrice } from "@/lib/plans";
 
 export const Route = createFileRoute("/admin/analytics")({
@@ -482,6 +483,10 @@ function AdminAnalytics() {
             <Breakdown title="Tranches d'âge" icon={Users} rows={data.by_age} />
             <Breakdown title="Confession" icon={Users} rows={data.by_denomination} />
           </div>
+
+          {/* Bloc autonome : il interroge sa propre fonction, pour qu'une
+              migration 59 non exécutée ne fasse pas tomber toute la page. */}
+          <InstallStats days={days} />
         </>
       )}
     </div>

@@ -22,6 +22,26 @@ self.addEventListener("activate", event => {
   event.waitUntil(self.clients.claim());
 });
 
+/**
+ * Gestionnaire `fetch` — condition d'installabilité.
+ *
+ * Chrome Android ne propose « Installer l'application » que si le
+ * service worker écoute cet évènement. Sans lui, le manifeste a beau
+ * être parfait, l'invitation n'apparaît jamais.
+ *
+ * Il ne met RIEN en cache, volontairement. Un service worker qui sert
+ * des pages hors ligne doit être versionné et purgé à chaque
+ * déploiement — sans quoi les membres restent bloqués sur une version
+ * ancienne, sans comprendre pourquoi et sans pouvoir en sortir. On
+ * remplit la condition, on n'introduit pas le risque.
+ *
+ * Le `return` sans `respondWith` laisse le navigateur gérer la requête
+ * exactement comme si le service worker n'existait pas.
+ */
+self.addEventListener("fetch", () => {
+  return;
+});
+
 self.addEventListener("push", event => {
   let data = {};
   try {
@@ -31,6 +51,23 @@ self.addEventListener("push", event => {
     // Une notification muette est pire qu'une notification générique —
     // le navigateur en signale l'absence à l'utilisateur.
     data = { title: "AgapeMeet", body: "Vous avez du nouveau." };
+  }
+
+  // Pastille sur l'icône, mise à jour même application FERMÉE.
+  //
+  // C'est le point important : sans cela, le chiffre ne bougerait qu'à
+  // la prochaine ouverture — c'est-à-dire trop tard pour donner envie
+  // d'ouvrir.
+  //
+  // Le total est calculé côté serveur et transmis dans la charge utile :
+  // le service worker n'a ni session ni accès à la base pour le compter
+  // lui-même.
+  if (typeof data.badge === "number" && self.navigator?.setAppBadge) {
+    event.waitUntil(
+      data.badge > 0
+        ? self.navigator.setAppBadge(data.badge).catch(() => {})
+        : self.navigator.clearAppBadge?.().catch(() => {}),
+    );
   }
 
   const titre = data.title || "AgapeMeet";
@@ -43,10 +80,17 @@ self.addEventListener("push", event => {
     // précédente au lieu de s'empiler. Dix messages d'une même personne
     // ne doivent pas produire dix lignes.
     tag: data.tag || "agape",
-    renotify: Boolean(data.tag),
+    // `silencieux` : message en rafale. On remplace le texte et la
+    // pastille SANS re-sonner.
+    //
+    // Le Web Push impose d'afficher quelque chose à chaque envoi — on ne
+    // peut pas transmettre une pastille en silence. Ce remplacement est
+    // le seul moyen de garder le chiffre juste sans harceler.
+    renotify: Boolean(data.tag) && !data.silencieux,
+    silent: Boolean(data.silencieux),
     data: { url: data.url || "/accueil" },
-    // Vibration courte : la version longue est perçue comme agressive.
-    vibrate: [80, 40, 80],
+    // Vibration courte, et aucune sur un remplacement.
+    vibrate: data.silencieux ? [] : [80, 40, 80],
     timestamp: Date.now(),
   };
 

@@ -77,7 +77,28 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      // `viewport-fit=cover` : une fois installée, l'application occupe
+      // tout l'écran, encoche comprise. Sans lui, deux bandes blanches
+      // encadrent la page sur iPhone.
+      // Les marges de sécurité sont déjà gérées : la barre du bas
+      // utilise `env(safe-area-inset-bottom)`.
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+
+      // ── Application installable ──────────────────────────────
+      // Colore la barre d'état du téléphone. Le manifeste porte la même
+      // valeur, mais lui n'agit qu'une fois l'application installée :
+      // cette balise vaut aussi dans le navigateur ordinaire.
+      { name: "theme-color", content: "#18337d" },
+      // `black-translucent` fait passer le contenu SOUS la barre d'état
+      // iOS, dans la continuité du dégradé — plutôt qu'un bandeau opaque
+      // qui coupe la page en deux.
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "AgapeMeet" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      // Empêche iOS de transformer les numéros en liens d'appel, ce qui
+      // les repeint en bleu système au milieu d'un texte.
+      { name: "format-detection", content: "telephone=no" },
       { title: "AgapeMeet  , Là où la foi unit les cœurs" },
       { name: "description", content: "AgapeMeet, la plateforme №1 de rencontres sérieuses chrétiennes. Rencontrez votre futur conjoint dans un espace sécurisé, centré sur la foi et le mariage." },
       { name: "author", content: "Lovable" },
