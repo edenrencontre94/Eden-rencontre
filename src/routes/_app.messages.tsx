@@ -410,22 +410,42 @@ async function loadConversations(userId: string): Promise<MatchChat[]> {
             .in("match_id", visibleMatches.map((m: any) => m.id))
             .neq("sender_id", user.id)
             .is("read_at", null),
-          Promise.all(
-            visibleMatches.map((m: any) =>
-              supabase
-                .from("messages")
-                .select("content, created_at, sender_id, media_type, read_at")
-                .eq("match_id", m.id)
-                .order("created_at", { ascending: false })
-                .limit(1),
-            ),
-          ),
+          // UNE requête pour tous les derniers messages, au lieu d'une par
+          // conversation. Trente conversations produisaient trente allers-
+          // retours HTTP : sur un réseau mobile à 300 ms de latence, la
+          // liste mettait plusieurs secondes à apparaître pour quelques
+          // kilo-octets de données.
+          supabase.rpc("my_last_messages"),
         ]);
 
         if (profilesError) console.error("[messages] profiles:", profilesError);
         if (unreadError) console.error("[messages] unread:", unreadError);
-        const lastMsgError = lastMsgResults.find(r => r.error)?.error;
-        if (lastMsgError) console.error("[messages] last message:", lastMsgError);
+
+        // Repli sur l'ancien chemin si la migration 62 n'est pas passée :
+        // la messagerie doit rester utilisable pendant le déploiement,
+        // quel que soit l'ordre entre le SQL et le code.
+        let derniers: any[] = (lastMsgResults as any)?.data ?? [];
+        if ((lastMsgResults as any)?.error) {
+          console.warn(
+            "[messages] my_last_messages indisponible, repli par conversation.",
+            "La migration 62 a-t-elle été exécutée ?",
+          );
+          const un = await Promise.all(
+            visibleMatches.map((m: any) =>
+              supabase
+                .from("messages")
+                .select("match_id, content, created_at, sender_id, media_type, read_at")
+                .eq("match_id", m.id)
+                .order("created_at", { ascending: false })
+                .limit(1),
+            ),
+          );
+          derniers = un.flatMap(r => r.data ?? []);
+        }
+
+        const dernierParMatch = new Map<string, any>(
+          derniers.map((d: any) => [d.match_id, d]),
+        );
 
         // Diagnostic : des matches existent mais aucun profil n'est lisible
         // → presque toujours une policy RLS SELECT trop restrictive sur `profiles`.
@@ -443,11 +463,14 @@ async function loadConversations(userId: string): Promise<MatchChat[]> {
           unreadMap.set((row as any).match_id, (unreadMap.get((row as any).match_id) ?? 0) + 1);
         }
 
-        const formatted: MatchChat[] = visibleMatches.map((m: any, i: number) => {
+        const formatted: MatchChat[] = visibleMatches.map((m: any) => {
           const otherId = m.user1_id === user.id ? m.user2_id : m.user1_id;
           const p = profileMap.get(otherId) as any;
 
-          const lastMsg = lastMsgResults[i].data?.[0] ?? null;
+          // Recherche par identifiant et non par position : la RPC ne
+          // renvoie que les conversations ayant au moins un message, son
+          // ordre ne correspond donc pas à celui de `visibleMatches`.
+          const lastMsg = dernierParMatch.get(m.id) ?? null;
           const mine = lastMsg ? lastMsg.sender_id === user.id : false;
 
           let preview = "Nouveau match — dites bonjour 👋";

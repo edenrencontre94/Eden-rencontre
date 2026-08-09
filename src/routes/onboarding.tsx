@@ -364,6 +364,11 @@ function OnboardingPage() {
           marriage_intent: data.marriageIntent,
           has_children: data.hasChildren,
           wants_children: data.wantsChildren,
+          // La question « comment nous avez-vous connus ? » était posée à
+          // chaque inscription, affichée, puis jetée : aucune colonne ne
+          // la recevait. C'est pourtant la seule donnée qui dit où placer
+          // un budget publicitaire.
+          acquisition_source: data.source || null,
           photos: uploadedPhotos
         });
 

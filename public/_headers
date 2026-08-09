@@ -35,6 +35,13 @@
 /stickers/*
   cache-control: public, max-age=31536000, immutable
 
+# Polices : même raisonnement. Une version différente porterait un autre
+# nom de fichier. `immutable` évite au navigateur de les revalider à
+# chaque visite — sur un réseau lent, cette revalidation coûte plus cher
+# que le fichier lui-même.
+/fonts/*
+  cache-control: public, max-age=31536000, immutable
+
 # Fichiers de référencement : une heure. Assez pour épargner des requêtes,
 # assez court pour qu'une correction du sitemap soit prise en compte le
 # jour même plutôt qu'à la prochaine visite de Google.
