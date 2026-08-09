@@ -15,8 +15,13 @@ import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
 import { COUNTRIES } from "@/content/countries";
 import { ARTICLES } from "@/content/articles";
+import { OFFERS, formatPrice } from "@/lib/plans";
 import { WhatsAppButton, useSupportContact } from "@/components/SupportContact";
 import { InstallBarTop, InstallSection, InstallPrompt } from "@/components/app/InstallPrompt";
+import {
+  Reveal, TitreCinetique, useParallaxe, CarteInclinable,
+  Compteur, Bandeau, BarreProgression, LueurCurseur, Grain,
+} from "@/components/landing/motion";
 
 /** Domaine canonique. Toute URL de référencement doit en découler. */
 export const SITE_URL = "https://agapemeet.com";
@@ -28,7 +33,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "AgapeMeet est la plateforme de rencontres chrétiennes sérieuses dédiée au mariage. Profils vérifiés, appels audio & vidéo, Stories, messagerie riche. Rejoignez 120 000 chrétiens en Afrique et dans le monde.",
+          "AgapeMeet est la plateforme de rencontres chrétiennes sérieuses dédiée au mariage. Profils vérifiés, appels audio & vidéo, Stories, messagerie riche. Rejoignez 1 200 chrétiens en Afrique et dans le monde.",
       },
       { name: "keywords", content: "rencontre chrétienne, mariage chrétien, rencontres sérieuses chrétiens, application rencontre chrétienne Afrique, site de rencontre chrétien, rencontre foi, AgapeMeet" },
       { property: "og:title", content: "AgapeMeet — La rencontre chrétienne sérieuse №1 en Afrique francophone" },
@@ -70,7 +75,7 @@ export const Route = createFileRoute("/")({
           aggregateRating: {
             "@type": "AggregateRating",
             ratingValue: "4.9",
-            reviewCount: "3200",
+            reviewCount: "380",
           },
         }),
       },
@@ -119,93 +124,198 @@ function Nav() {
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 function Hero() {
+  // Deux vitesses de parallaxe : l'écart entre elles crée la profondeur.
+  // Une seule ferait glisser tout le bloc d'un seul tenant.
+  const pImage = useParallaxe(70);
+  const pCartes = useParallaxe(-40);
+
   return (
-    <section id="top" aria-label="Introduction AgapeMeet" className="relative pt-32 pb-20 md:pt-44 md:pb-36 overflow-hidden">
+    <section
+      id="top"
+      aria-label="Introduction AgapeMeet"
+      className="relative pt-32 pb-20 md:pt-44 md:pb-36 overflow-hidden"
+    >
+      {/* Fond animé : deux halos qui dérivent lentement. Douze secondes
+          par cycle — assez lent pour ne jamais attirer l'œil, assez
+          présent pour que la page ne paraisse pas figée. */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary-soft/40 via-background to-background" />
-      <div className="absolute top-20 -left-40 w-96 h-96 rounded-full bg-gold/10 blur-3xl -z-10" />
-      <div className="absolute bottom-0 -right-40 w-96 h-96 rounded-full bg-primary/10 blur-3xl -z-10" />
+      <motion.div
+        aria-hidden
+        className="absolute top-10 -left-40 w-[32rem] h-[32rem] rounded-full bg-gold/10 blur-3xl -z-10"
+        animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        aria-hidden
+        className="absolute bottom-0 -right-40 w-[32rem] h-[32rem] rounded-full bg-primary/10 blur-3xl -z-10"
+        animate={{ x: [0, -40, 0], y: [0, 30, 0] }}
+        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+      />
 
       <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-        <motion.div initial="hidden" animate="visible" variants={fadeUp} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}>
-          <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold-soft px-3 py-1 text-xs font-medium text-gold-foreground mb-6">
-            <Sparkles className="w-3.5 h-3.5" />
+        <div>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold-soft px-3 py-1 text-xs font-medium text-gold-foreground mb-6"
+          >
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-gold opacity-75 animate-ping" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-gold" />
+            </span>
             Plateforme №1 de rencontres chrétiennes en Afrique francophone
-          </div>
+          </motion.div>
+
+          {/* Le titre reste un seul `h1` : le découpage est décoratif,
+              les moteurs de recherche lisent le texte complet. */}
           <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight text-foreground">
-            Votre âme sœur
+            <TitreCinetique texte="Votre âme sœur" delay={0.15} />
             <br />
-            vous attend <span className="italic text-gradient-gold">en Christ.</span>
+            <TitreCinetique texte="vous attend en Christ." delay={0.35} motsColores={[2, 3]} />
           </h1>
-          <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
+
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-6 text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed"
+          >
             AgapeMeet est la première plateforme de rencontres chrétiennes sérieuses pensée pour le mariage.
             Des profils vérifiés, une communauté de foi vivante, et des outils de communication modernes
             pour bâtir une relation qui glorifie Dieu.
-          </p>
-          <div className="mt-10 flex flex-wrap items-center gap-3">
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.85, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-10 flex flex-wrap items-center gap-3"
+          >
+            {/* `group` + halo au survol : le bouton principal doit se
+                distinguer d'un simple lien coloré. */}
             <Link
               to="/inscription"
-              className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-7 py-4 text-base font-medium hover:bg-primary/90 transition shadow-elegant"
+              className="group relative inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-7 py-4 text-base font-medium shadow-elegant overflow-hidden transition-transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              Commencer gratuitement
-              <ArrowRight className="w-4 h-4" />
+              <span
+                aria-hidden
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent
+                           -translate-x-full group-hover:translate-x-full transition-transform duration-700"
+              />
+              <span className="relative">Commencer gratuitement</span>
+              <ArrowRight className="relative w-4 h-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
               to="/login"
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-7 py-4 text-base font-medium hover:bg-secondary transition"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-7 py-4 text-base font-medium hover:bg-secondary hover:border-primary/30 transition"
             >
               Se connecter
             </Link>
-          </div>
+          </motion.div>
+
           <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-500" /> Profils vérifiés</div>
-            <div className="flex items-center gap-1.5"><Lock className="w-4 h-4 text-emerald-500" /> 100% sécurisé</div>
-            <div className="flex items-center gap-1.5"><Church className="w-4 h-4 text-emerald-500" /> Foi au centre</div>
-            <div className="flex items-center gap-1.5"><Heart className="w-4 h-4 text-emerald-500" /> Mariage sérieux</div>
+            {[
+              { i: ShieldCheck, t: "Profils vérifiés" },
+              { i: Lock, t: "100% sécurisé" },
+              { i: Church, t: "Foi au centre" },
+              { i: Heart, t: "Mariage sérieux" },
+            ].map((g, k) => (
+              <motion.div
+                key={g.t}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 1 + k * 0.08 }}
+                className="flex items-center gap-1.5"
+              >
+                <g.i className="w-4 h-4 text-emerald-500" /> {g.t}
+              </motion.div>
+            ))}
           </div>
-        </motion.div>
+        </div>
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
           className="relative"
         >
-          <div className="relative aspect-[4/5] rounded-[2rem] overflow-hidden shadow-elegant">
-            <img src={heroCouple} alt="Couple chrétien heureux trouvé sur AgapeMeet" className="w-full h-full object-cover" width={1400} height={1600} />
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/30 via-transparent to-transparent" />
-          </div>
+          <CarteInclinable intensite={6}>
+            <motion.div
+              style={{ y: pImage }}
+              className="relative aspect-[4/5] rounded-[2rem] overflow-hidden shadow-elegant"
+            >
+              <img
+                src={heroCouple}
+                alt="Couple chrétien heureux trouvé sur AgapeMeet"
+                className="w-full h-full object-cover"
+                width={1400}
+                height={1600}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-primary/30 via-transparent to-transparent" />
+              {/* Reflet oblique, très discret : il donne à la photo
+                  l'aspect d'une surface plutôt que d'un aplat. */}
+              <div
+                aria-hidden
+                className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent"
+              />
+            </motion.div>
+          </CarteInclinable>
 
-          {/* Floating badge – compatibility */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }}
-            className="absolute -left-4 md:-left-10 top-10 rounded-2xl bg-background shadow-elegant px-4 py-3 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-500/15 grid place-items-center">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Compatibilité spirituelle</p>
-              <p className="text-lg font-semibold text-foreground">98%</p>
-            </div>
-          </motion.div>
+          {/* Les cartes dérivent à contre-sens de la photo. */}
+          <motion.div style={{ y: pCartes }} className="absolute inset-0 pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.6 }}
+              className="absolute -left-4 md:-left-10 top-10 rounded-2xl bg-background/95 backdrop-blur shadow-elegant px-4 py-3 flex items-center gap-3"
+            >
+              <div className="w-10 h-10 rounded-full bg-emerald-500/15 grid place-items-center">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Compatibilité spirituelle</p>
+                <p className="text-lg font-semibold text-foreground">
+                  <Compteur valeur={98} suffixe=" %" duree={1400} />
+                </p>
+              </div>
+            </motion.div>
 
-          {/* Floating badge – verse */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.6 }}
-            className="absolute -right-4 md:-right-6 bottom-16 rounded-2xl bg-background shadow-elegant px-4 py-3 flex items-center gap-3 max-w-[220px]">
-            <div className="w-10 h-10 rounded-full bg-gold-soft grid place-items-center shrink-0">
-              <BookOpen className="w-5 h-5 text-gold" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Verset du jour partagé</p>
-              <p className="text-sm font-medium text-foreground leading-tight">« Eccl. 4:9 — Deux valent mieux qu'un »</p>
-            </div>
-          </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8, duration: 0.6 }}
+              className="absolute -right-4 md:-right-6 bottom-16 rounded-2xl bg-background/95 backdrop-blur shadow-elegant px-4 py-3 flex items-center gap-3 max-w-[220px]"
+            >
+              <div className="w-10 h-10 rounded-full bg-gold-soft grid place-items-center shrink-0">
+                <BookOpen className="w-5 h-5 text-gold" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Verset du jour partagé</p>
+                <p className="text-sm font-medium text-foreground leading-tight">
+                  « Eccl. 4:9 — Deux valent mieux qu'un »
+                </p>
+              </div>
+            </motion.div>
 
-          {/* Floating badge – match */}
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.1, duration: 0.6 }}
-            className="absolute left-4 -bottom-4 rounded-2xl bg-primary text-primary-foreground shadow-elegant px-4 py-3 flex items-center gap-3">
-            <Heart className="w-5 h-5 text-gold fill-gold" />
-            <div>
-              <p className="text-xs opacity-80">Nouveau match !</p>
-              <p className="text-sm font-semibold">Sarah, Abidjan 🇨🇮</p>
-            </div>
+            {/* Respiration lente sur la carte « match » : c'est
+                l'évènement que la page vend, il doit rester vivant. */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0, y: [0, -6, 0] }}
+              transition={{
+                opacity: { delay: 1.1, duration: 0.6 },
+                x: { delay: 1.1, duration: 0.6 },
+                y: { delay: 1.7, duration: 4, repeat: Infinity, ease: "easeInOut" },
+              }}
+              className="absolute left-4 -bottom-4 rounded-2xl bg-primary text-primary-foreground shadow-elegant px-4 py-3 flex items-center gap-3"
+            >
+              <Heart className="w-5 h-5 text-gold fill-gold" />
+              <div>
+                <p className="text-xs opacity-80">Nouveau match !</p>
+                <p className="text-sm font-semibold">Sarah, Abidjan 🇨🇮</p>
+              </div>
+            </motion.div>
           </motion.div>
         </motion.div>
       </div>
@@ -215,22 +325,80 @@ function Hero() {
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 function Stats() {
+  // `n` sépare le nombre à animer de ce qui l'entoure : un compteur qui
+  // tenterait de faire défiler « 4,9 / 5 » n'aurait aucun sens.
   const stats = [
-    { value: "120 000+", label: "Chrétiens inscrits", sub: "en Afrique & diaspora" },
-    { value: "3 200+", label: "Mariages bénis", sub: "célébrés depuis 2022" },
-    { value: "24 pays", label: "Présents dans", sub: "Afrique, Europe, Amériques" },
-    { value: "4,9 / 5", label: "Note des membres", sub: "sur 8 000+ avis vérifiés" },
+    { n: 1200, suffixe: "+", label: "Chrétiens inscrits", sub: "en Afrique & diaspora" },
+    { n: 120, suffixe: "+", label: "Mariages bénis", sub: "célébrés depuis 2022" },
+    { n: 24, suffixe: " pays", label: "Présents dans", sub: "Afrique, Europe, Amériques" },
+    { fixe: "4,9 / 5", label: "Note des membres", sub: "sur 380 avis vérifiés" },
   ];
+
   return (
-    <section className="border-y border-border/60 bg-secondary/40" aria-label="Chiffres clés AgapeMeet">
+    <section className="relative border-y border-border/60 bg-secondary/40 overflow-hidden" aria-label="Chiffres clés AgapeMeet">
+      {/* Filet doré traversant : un trait suffit à marquer la rupture
+          entre deux sections, sans ajouter de bloc. */}
+      <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
+
       <div className="max-w-7xl mx-auto px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-8">
-        {stats.map(s => (
-          <div key={s.label} className="text-center">
-            <div className="font-serif text-3xl md:text-4xl font-semibold text-primary">{s.value}</div>
+        {stats.map((s, i) => (
+          <Reveal key={s.label} delay={i * 0.1} y={20} className="text-center">
+            <div className="font-serif text-3xl md:text-4xl font-semibold text-primary tabular-nums">
+              {s.fixe ?? <Compteur valeur={s.n!} suffixe={s.suffixe} duree={1800} />}
+            </div>
             <div className="mt-1 text-sm font-medium text-foreground">{s.label}</div>
             <div className="text-xs text-muted-foreground mt-0.5">{s.sub}</div>
-          </div>
+          </Reveal>
         ))}
+      </div>
+    </section>
+  );
+}
+
+// ─── Bandeau des pays ─────────────────────────────────────────────────────────
+/**
+ * Défilement continu des pays couverts.
+ *
+ * Deux rangées en sens inverse : une seule paraît décorative, deux
+ * donnent l'impression d'un flux — c'est ce qui fait « vivant » sur les
+ * pages produit haut de gamme.
+ *
+ * Le contenu vient de `COUNTRIES`, la même source que les pages par
+ * pays : le bandeau ne peut pas annoncer un pays qui n'existe pas.
+ */
+function BandeauPays() {
+  const noms = COUNTRIES.map(c => c.name);
+  const moitie = Math.ceil(noms.length / 2);
+
+  const Puce = ({ nom }: { nom: string }) => (
+    <span className="shrink-0 inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/70 px-4 py-2 text-sm text-muted-foreground whitespace-nowrap">
+      <Globe className="w-3.5 h-3.5 text-primary/60" />
+      {nom}
+    </span>
+  );
+
+  return (
+    <section className="py-12 md:py-16 overflow-hidden" aria-label="Pays couverts par AgapeMeet">
+      <p className="text-center text-xs font-medium text-muted-foreground uppercase tracking-[0.2em] mb-8">
+        Une communauté sans frontières
+      </p>
+
+      <div className="relative space-y-3">
+        {/* Dégradés latéraux : sans eux, les puces apparaissent et
+            disparaissent net sur les bords, ce qui trahit l'astuce. */}
+        <div aria-hidden className="absolute left-0 inset-y-0 w-24 sm:w-40 bg-gradient-to-r from-background to-transparent z-10" />
+        <div aria-hidden className="absolute right-0 inset-y-0 w-24 sm:w-40 bg-gradient-to-l from-background to-transparent z-10" />
+
+        <Bandeau vitesse={48}>
+          <div className="flex gap-3">
+            {noms.slice(0, moitie).map(n => <Puce key={n} nom={n} />)}
+          </div>
+        </Bandeau>
+        <Bandeau vitesse={56} inverse>
+          <div className="flex gap-3">
+            {noms.slice(moitie).map(n => <Puce key={n} nom={n} />)}
+          </div>
+        </Bandeau>
       </div>
     </section>
   );
@@ -262,15 +430,21 @@ function MessagingFeature() {
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((f, i) => (
-            <motion.div key={f.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.5, delay: (i % 3) * 0.1 }}
-              className="rounded-3xl bg-card border border-border p-8 hover:border-primary/40 hover:shadow-elegant transition-all duration-500 group">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 grid place-items-center mb-5 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                <f.icon className="w-6 h-6 text-primary group-hover:text-primary-foreground" />
-              </div>
-              <h3 className="font-serif text-xl text-foreground mb-2">{f.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-            </motion.div>
+            <Reveal key={f.title} delay={(i % 3) * 0.1} y={24}>
+              {/* Inclinaison à la souris : la carte réagit au curseur au
+                  lieu de rester un rectangle plat. Sans effet au doigt,
+                  où elle se déclencherait pendant le défilement. */}
+              <CarteInclinable
+                intensite={5}
+                className="h-full rounded-3xl bg-card border border-border p-8 hover:border-primary/40 hover:shadow-elegant transition-all duration-500 group"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 grid place-items-center mb-5 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+                  <f.icon className="w-6 h-6 text-primary group-hover:text-primary-foreground" />
+                </div>
+                <h3 className="font-serif text-xl text-foreground mb-2">{f.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+              </CarteInclinable>
+            </Reveal>
           ))}
         </div>
       </div>
@@ -537,7 +711,7 @@ function Testimonials() {
           <h2 className="mt-3 font-serif text-4xl md:text-5xl text-foreground">
             Des histoires <span className="italic">écrites par Dieu</span>
           </h2>
-          <p className="mt-4 text-muted-foreground">Plus de 3 200 couples formés. Voici quelques-uns de leurs témoignages.</p>
+          <p className="mt-4 text-muted-foreground">Plus de 120 couples formés. Voici quelques-uns de leurs témoignages.</p>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {items.map((t, i) => (
@@ -565,105 +739,208 @@ function Testimonials() {
 }
 
 // ─── Pricing ──────────────────────────────────────────────────────────────────
+/**
+ * Tarifs — lus depuis `OFFERS`, jamais réécrits ici.
+ *
+ * Cette section annonçait « Premium 9 990 FCFA / mois » et « VIP 1 500
+ * FCFA / jour ». Aucun de ces deux prix n'existe dans le catalogue : le
+ * Premium mensuel est à 4 000 FCFA et le VIP à 12 000 FCFA par mois.
+ *
+ * Un visiteur découvrait donc un tarif sur la page d'accueil, et un autre
+ * au moment de payer. C'est le genre d'écart qui fait abandonner un
+ * paiement — et qui, sur une plateforme chrétienne, coûte plus cher qu'un
+ * abonnement perdu.
+ *
+ * `OFFERS` reste la seule source : changer un prix dans `plans.ts` le
+ * change ici, sur /tarifs et dans le tunnel de paiement, d'un seul geste.
+ */
 function Pricing() {
-  const plans = [
-    {
-      name: "Gratuit",
-      price: "0",
-      currency: "FCFA",
-      period: "pour toujours",
-      desc: "Commencez votre voyage vers l'amour chrétien.",
-      features: [
-        "Profil complet & photos",
-        "Découvrir des profils compatibles",
-        "Swipe J'adore / Passe",
-        "Messagerie de base",
-        "Accès à la Communauté",
-        "Verset du jour",
-      ],
-      cta: "Commencer gratuitement",
-      highlight: false,
-    },
-    {
-      name: "Premium",
-      price: "9 990",
-      currency: "FCFA",
-      period: "/ mois",
-      desc: "Pour ceux qui visent le mariage et ne laissent rien au hasard.",
-      features: [
-        "Voir qui a aimé votre profil",
-        "Super Likes illimités",
-        "Appels audio & vidéo illimités",
-        "Stories chrétiens",
-        "Retour arrière (Rewind)",
-        "Boost de profil mensuel",
-        "Filtres avancés (dénomination, ville…)",
-        "Mode navigation invisible",
-        "Badge Premium & profil mis en avant",
-      ],
-      cta: "Devenir Premium",
-      highlight: true,
-    },
-    {
-      name: "VIP",
-      price: "1 500",
-      currency: "FCFA",
-      period: "/ jour",
-      desc: "Un pass journalier pour les voyageurs et les curieux.",
-      features: [
-        "Tous les avantages Premium",
-        "Accès 24h — sans engagement",
-        "Parfait pour tester avant de s'abonner",
-        "Boosts supplémentaires inclus",
-      ],
-      cta: "Essayer VIP 24h",
-      highlight: false,
-    },
+  const premium = OFFERS.filter(o => o.planId === "premium");
+  const vip = OFFERS.find(o => o.planId === "vip")!;
+
+  // Le mensuel sert de référence pour calculer l'économie des autres durées.
+  const ref = premium.find(o => o.duration === "1m")!;
+  const economie = (o: typeof ref) => {
+    const parJourRef = ref.priceXOF / ref.days;
+    const parJour = o.priceXOF / o.days;
+    return Math.round((1 - parJour / parJourRef) * 100);
+  };
+
+  const avantagesPremium = [
+    "Voir qui a aimé votre profil",
+    "Appels audio illimités",
+    "Messages vocaux et vidéos",
+    "Filtres avancés — dénomination, ville, études",
+    "Voir les visiteurs de votre profil",
+    "Boost de profil inclus",
+    "Badge Premium sur votre profil",
   ];
+
+  const avantagesVIP = [
+    "Tout le Premium, sans limite",
+    "Appels vidéo",
+    "Messages illimités",
+    "Super Likes illimités",
+    "Publications photo et vidéo en communauté",
+    "Badge VIP doré",
+  ];
+
   return (
     <section id="tarifs" aria-label="Tarifs et abonnements AgapeMeet" className="py-24 md:py-32 bg-secondary/40">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="text-center max-w-2xl mx-auto mb-16">
+        <div className="text-center max-w-2xl mx-auto mb-14">
           <p className="text-sm font-medium text-gold uppercase tracking-widest">Tarifs</p>
           <h2 className="mt-3 font-serif text-4xl md:text-5xl text-foreground">
             Un plan pour <span className="italic">chaque cœur</span>
           </h2>
-          <p className="mt-4 text-muted-foreground">Commencez gratuitement. Passez Premium quand votre cœur est prêt.</p>
+          <p className="mt-4 text-muted-foreground">
+            Commencez gratuitement. Passez Premium quand votre cœur est prêt.
+          </p>
         </div>
-        <div className="grid md:grid-cols-3 gap-6 items-stretch">
-          {plans.map(p => (
-            <div key={p.name} className={`relative rounded-3xl p-8 border transition-all duration-500 flex flex-col ${
-              p.highlight ? "bg-primary text-primary-foreground border-primary shadow-elegant scale-[1.02]" : "bg-card border-border hover:shadow-soft"
-            }`}>
-              {p.highlight && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gold text-gold-foreground text-xs font-medium px-3 py-1 shadow-soft whitespace-nowrap">
-                  ✦ Le plus choisi — Idéal mariage
-                </div>
-              )}
-              <h3 className="font-serif text-2xl">{p.name}</h3>
-              <p className={`mt-1 text-sm ${p.highlight ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{p.desc}</p>
+
+        {/* ── Gratuit et VIP encadrent les trois durées Premium ── */}
+        <div className="grid lg:grid-cols-3 gap-6 items-start">
+
+          {/* Gratuit */}
+          <Reveal>
+            <div className="rounded-3xl p-8 border border-border bg-card hover:shadow-soft transition-all duration-500 h-full flex flex-col">
+              <h3 className="font-serif text-2xl">Gratuit</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Commencez votre voyage vers l'amour chrétien.
+              </p>
               <div className="mt-6 flex items-baseline gap-1">
-                <span className="font-serif text-4xl font-semibold">{p.price}</span>
-                <span className={`text-sm ${p.highlight ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                  {" "}{p.currency} {p.period}
-                </span>
+                <span className="font-serif text-4xl font-semibold">0</span>
+                <span className="text-sm text-muted-foreground"> FCFA · pour toujours</span>
               </div>
               <ul className="mt-8 space-y-3 flex-1">
-                {p.features.map(f => (
+                {[
+                  "Profil complet et photo",
+                  "Découvrir des profils compatibles",
+                  "Voir qui vous a aimé",
+                  "5 messages par jour avec vos matchs",
+                  "Accès à la communauté",
+                  "Verset du jour",
+                ].map(f => (
                   <li key={f} className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className={`w-4 h-4 mt-0.5 shrink-0 ${p.highlight ? "text-gold" : "text-emerald-500"}`} />
+                    <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-emerald-500" />
                     <span>{f}</span>
                   </li>
                 ))}
               </ul>
-              <Link to="/inscription" className={`mt-8 inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition ${
-                p.highlight ? "bg-gold text-gold-foreground hover:bg-gold/90" : "bg-primary text-primary-foreground hover:bg-primary/90"
-              }`}>
-                {p.cta} <ArrowRight className="w-4 h-4" />
+              <Link
+                to="/inscription"
+                className="mt-8 inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition"
+              >
+                Commencer gratuitement <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-          ))}
+          </Reveal>
+
+          {/* Premium — les trois durées */}
+          <Reveal delay={0.1}>
+            <div className="relative rounded-3xl p-8 border border-primary bg-primary text-primary-foreground shadow-elegant h-full flex flex-col">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gold text-gold-foreground text-xs font-medium px-3 py-1 shadow-soft whitespace-nowrap">
+                ✦ Le plus choisi — Idéal mariage
+              </div>
+
+              <h3 className="font-serif text-2xl">Premium</h3>
+              <p className="mt-1 text-sm text-primary-foreground/70">
+                Pour ceux qui visent le mariage et ne laissent rien au hasard.
+              </p>
+
+              {/* Les trois durées côte à côte plutôt qu'un prix unique :
+                  c'est la comparaison qui vend la formule longue. */}
+              <div className="mt-6 space-y-2">
+                {premium.map(o => {
+                  const eco = economie(o);
+                  return (
+                    <div
+                      key={o.id}
+                      className={`rounded-2xl px-4 py-3 flex items-center justify-between gap-3 border transition-colors ${
+                        o.popular
+                          ? "bg-primary-foreground/15 border-gold/60"
+                          : "bg-primary-foreground/5 border-primary-foreground/15"
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold">{o.label}</p>
+                        {o.popular && (
+                          <p className="text-[11px] text-gold font-medium">Le plus choisi</p>
+                        )}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-serif text-xl font-semibold tabular-nums">
+                          {formatPrice(o.priceXOF)}
+                        </p>
+                        {eco > 0 && (
+                          <p className="text-[11px] font-semibold text-gold">
+                            −{eco} %
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <ul className="mt-7 space-y-3 flex-1">
+                {avantagesPremium.map(f => (
+                  <li key={f} className="flex items-start gap-2 text-sm">
+                    <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-gold" />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Link
+                to="/inscription"
+                className="mt-8 inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold bg-gold text-gold-foreground hover:bg-gold/90 transition"
+              >
+                Devenir Premium <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </Reveal>
+
+          {/* VIP */}
+          <Reveal delay={0.2}>
+            <div className="rounded-3xl p-8 border border-gold/40 bg-card hover:shadow-soft transition-all duration-500 h-full flex flex-col">
+              <div className="flex items-center gap-2">
+                <h3 className="font-serif text-2xl">VIP</h3>
+                <Crown className="w-4 h-4 text-gold" />
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                L'accès complet, sans aucune limite.
+              </p>
+              <div className="mt-6 flex items-baseline gap-1">
+                <span className="font-serif text-4xl font-semibold tabular-nums">
+                  {new Intl.NumberFormat("fr-FR").format(vip.priceXOF)}
+                </span>
+                <span className="text-sm text-muted-foreground"> FCFA / mois</span>
+              </div>
+
+              <ul className="mt-8 space-y-3 flex-1">
+                {avantagesVIP.map(f => (
+                  <li key={f} className="flex items-start gap-2 text-sm">
+                    <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-gold" />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Link
+                to="/inscription"
+                className="mt-8 inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition"
+              >
+                Devenir VIP <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </Reveal>
         </div>
+
+        <p className="text-center text-xs text-muted-foreground mt-8">
+          Paiement par Mobile Money et carte bancaire. Sans engagement —
+          l'abonnement ne se renouvelle pas automatiquement.
+        </p>
       </div>
     </section>
   );
@@ -803,7 +1080,7 @@ function FinalCTA() {
             style={{ backgroundImage: "radial-gradient(circle at 20% 20%, oklch(0.82 0.14 88) 0%, transparent 40%), radial-gradient(circle at 80% 80%, oklch(0.82 0.14 88) 0%, transparent 40%)" }} />
           <div className="relative">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 backdrop-blur-md border border-primary-foreground/20 px-3 py-1 text-xs text-primary-foreground mb-6">
-              <Sparkles className="w-3.5 h-3.5 text-gold" /> Plus de 120 000 chrétiens vous attendent
+              <Sparkles className="w-3.5 h-3.5 text-gold" /> Plus de 1 200 chrétiens vous attendent
             </div>
             <h2 className="font-serif text-4xl md:text-6xl text-primary-foreground leading-tight">
               Votre histoire d'amour
@@ -985,12 +1262,17 @@ function Footer() {
 function Index() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Fixes, hors du flux : ni l'un ni l'autre ne décale quoi que ce soit. */}
+      <BarreProgression />
+      <LueurCurseur />
+      <Grain />
       {/* En haut : attrape celui qui ne fera jamais défiler la page. */}
       <InstallBarTop />
       <Nav />
       <main>
         <Hero />
         <Stats />
+        <BandeauPays />
         <MessagingFeature />
         <AllFeatures />
         <HowItWorks />
