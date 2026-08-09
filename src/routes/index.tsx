@@ -14,7 +14,7 @@ import testimonial1 from "@/assets/testimonial-1.jpg";
 import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
 import { COUNTRIES } from "@/content/countries";
-import { ARTICLES } from "@/content/articles";
+import { articlesPublies } from "@/content/articles";
 import { OFFERS, formatPrice } from "@/lib/plans";
 import { WhatsAppButton, useSupportContact } from "@/components/SupportContact";
 import { InstallBarTop, InstallSection, InstallPrompt } from "@/components/app/InstallPrompt";
@@ -1227,7 +1227,7 @@ function Footer() {
         <div>
           <h4 className="font-semibold text-foreground mb-4 text-sm">Blog & Ressources</h4>
           <ul className="space-y-2.5 text-sm text-muted-foreground">
-            {ARTICLES.map(a => (
+            {articlesPublies().slice(0, 6).map(a => (
               <li key={a.slug}>
                 <Link to="/blog/$slug" params={{ slug: a.slug }} className="hover:text-foreground transition">
                   {a.title}

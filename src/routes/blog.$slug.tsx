@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { PublicLayout, SITE_URL } from "@/components/public/PublicLayout";
-import { ARTICLES, getArticle } from "@/content/articles";
+import { articlesPublies, getArticle } from "@/content/articles";
 import { fetchArticle } from "@/lib/blog";
 import { ArrowRight, Clock } from "lucide-react";
 
@@ -57,7 +57,7 @@ export const Route = createFileRoute("/blog/$slug")({
 
 function ArticlePage() {
   const a = Route.useLoaderData();
-  const others = ARTICLES.filter(x => x.slug !== a.slug).slice(0, 2);
+  const others = articlesPublies().filter(x => x.slug !== a.slug).slice(0, 2);
 
   return (
     <PublicLayout

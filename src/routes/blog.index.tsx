@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PublicLayout, SITE_URL } from "@/components/public/PublicLayout";
 import { useEffect, useState } from "react";
-import { ARTICLES, type Article } from "@/content/articles";
+import { articlesPublies, type Article } from "@/content/articles";
 import { fetchArticles } from "@/lib/blog";
 import { Clock, ArrowRight } from "lucide-react";
 
@@ -29,7 +29,7 @@ function BlogIndex() {
   // ajouter au chargement. L'inverse aurait produit une page vide au
   // premier rendu, exactement ce qu'un moteur de recherche retiendrait.
   const [articles, setArticles] = useState<Article[]>(
-    [...ARTICLES].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)),
+    articlesPublies(),
   );
 
   useEffect(() => { fetchArticles().then(setArticles); }, []);

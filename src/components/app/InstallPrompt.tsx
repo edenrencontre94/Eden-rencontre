@@ -224,7 +224,16 @@ export function InstallSection() {
   const { possible, ios, installer } = useInstall();
   const [etapes, setEtapes] = useState(false);
 
-  if (!possible) return null;
+  // Aucune condition d'affichage : cette section fait partie du contenu
+  // de la page, au même titre que les tarifs ou la foire aux questions.
+  //
+  // Elle reste donc visible même pour quelqu'un qui a déjà installé
+  // l'application — d'autant que sur iPhone, Safari est de toute façon
+  // incapable de le savoir : l'application installée et l'onglet ont des
+  // espaces de stockage distincts.
+  //
+  // Ce qui s'adapte, c'est le BOUTON, jamais le texte.
+  const installationDirecte = possible && !ios;
 
   return (
     <section className="border-t border-border/60 bg-secondary/40">
@@ -242,27 +251,54 @@ export function InstallSection() {
           de vos nouveaux matchs, même application fermée.
         </p>
 
-        {ios ? (
-          <>
-            <button
-              onClick={() => setEtapes(v => !v)}
-              className="mt-6 inline-flex items-center gap-2 px-7 py-3 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold shadow-elegant"
-            >
-              <Smartphone className="w-4 h-4" /> Comment installer ?
-            </button>
-            {etapes && (
-              <div className="mt-5 max-w-sm mx-auto text-left rounded-2xl border border-border bg-card p-4">
-                <EtapesIOS />
-              </div>
-            )}
-          </>
-        ) : (
+        {installationDirecte ? (
+          /* Le navigateur a signalé que l'installation est possible :
+             un clic ouvre la boîte de dialogue native. */
           <button
             onClick={installer}
-            className="mt-6 inline-flex items-center gap-2 px-7 py-3 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold shadow-elegant"
+            className="mt-6 inline-flex items-center gap-2 px-7 py-3 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold shadow-elegant hover:brightness-110 active:scale-[0.98] transition"
           >
             <Download className="w-4 h-4" /> Installer l'application
           </button>
+        ) : (
+          /* Sinon on explique le geste, au lieu d'un bouton qui ne ferait
+             rien. Ce cas couvre l'iPhone — où Safari n'expose aucune API —
+             mais aussi l'application déjà installée et les navigateurs qui
+             ne prennent pas l'installation en charge. */
+          <>
+            <button
+              onClick={() => setEtapes(v => !v)}
+              aria-expanded={etapes}
+              className="mt-6 inline-flex items-center gap-2 px-7 py-3 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold shadow-elegant hover:brightness-110 active:scale-[0.98] transition"
+            >
+              <Smartphone className="w-4 h-4" /> Comment installer ?
+            </button>
+
+            {etapes && (
+              <div className="mt-5 max-w-sm mx-auto text-left rounded-2xl border border-border bg-card p-4">
+                {ios ? (
+                  <EtapesIOS />
+                ) : (
+                  <div className="space-y-2.5 text-xs text-muted-foreground leading-relaxed">
+                    <p>
+                      <strong className="text-foreground">Sur Android</strong> —
+                      ouvrez le menu <span className="font-mono">⋮</span> de votre
+                      navigateur, puis <strong>Installer l'application</strong>.
+                    </p>
+                    <p>
+                      <strong className="text-foreground">Sur ordinateur</strong> —
+                      cliquez sur l'icône d'installation, à droite de la barre
+                      d'adresse.
+                    </p>
+                    <p className="pt-1 border-t border-border/60">
+                      Si l'option n'apparaît pas, c'est que l'application est
+                      déjà installée sur cet appareil.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>
