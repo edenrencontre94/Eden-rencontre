@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import {
   FileText, ShieldCheck, MessagesSquare, Plus, Trash2, Eye, EyeOff,
   Loader2, AlertTriangle, RefreshCw, Check, X, Lock, ArrowLeft, Save, Search,
+  ExternalLink,
 } from "lucide-react";
+import { ARTICLES } from "@/content/articles";
 import { toast } from "sonner";
 import { Avatar } from "@/components/app/Avatar";
 import { supabase } from "@/lib/supabase";
@@ -345,11 +347,11 @@ function BlogTab() {
           {[...Array(3)].map((_, i) => <div key={i} className="h-16 rounded-2xl bg-secondary animate-pulse" />)}
         </div>
       ) : posts.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border py-14 text-center">
-          <FileText className="w-10 h-10 text-muted-foreground/30 mx-auto" />
-          <p className="text-sm text-muted-foreground mt-3">
-            Aucun article en base. Les quatre articles existants restent servis
-            depuis le code — ils continuent de fonctionner.
+        <div className="rounded-2xl border border-dashed border-border py-10 text-center">
+          <FileText className="w-9 h-9 text-muted-foreground/30 mx-auto" />
+          <p className="text-sm text-muted-foreground mt-3 max-w-md mx-auto leading-relaxed">
+            Aucun article rédigé depuis cette page. Ceux du code sont listés
+            ci-dessous et fonctionnent normalement.
           </p>
         </div>
       ) : (
@@ -383,7 +385,118 @@ function BlogTab() {
           ))}
         </div>
       )}
+
+      <ArticlesDuCode />
     </div>
+  );
+}
+
+// ─── Articles rédigés dans le code ───────────────────────────────────────────
+
+/**
+ * Les articles de `src/content/articles.ts`.
+ *
+ * Ils ne sont pas en base : ce sont des textes longs, rendus côté serveur
+ * pour être indexés, qui changent rarement. Les déplacer dans Supabase
+ * ajouterait une requête réseau et un risque de page vide au chargement,
+ * pour aucun gain de référencement.
+ *
+ * Ils étaient donc invisibles depuis l'administration — on ne pouvait
+ * pas savoir ce qui était en ligne ni ce qui allait sortir. Cette liste
+ * les montre, en lecture seule : leur modification passe par le code.
+ */
+function ArticlesDuCode() {
+  const aujourdhui = new Date().toISOString().slice(0, 10);
+
+  // Antéchronologique, le plus lointain en premier : ce qui n'est pas
+  // encore paru est ce qu'on vient vérifier.
+  const tous = [...ARTICLES].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+  const enLigne = tous.filter(a => a.publishedAt <= aujourdhui);
+  const aVenir = tous.filter(a => a.publishedAt > aujourdhui);
+
+  const dateFr = (iso: string) =>
+    new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+
+  const joursAvant = (iso: string) =>
+    Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000);
+
+  return (
+    <section className="mt-8">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="font-serif text-lg font-semibold">Articles du code</h3>
+        <p className="text-xs text-muted-foreground">
+          {enLigne.length} en ligne · {aVenir.length} programmé{aVenir.length > 1 ? "s" : ""}
+        </p>
+      </div>
+      <p className="text-xs text-muted-foreground mt-1 max-w-2xl leading-relaxed">
+        Un article daté du futur reste invisible partout — blog, page d'accueil,
+        sitemap — jusqu'à sa date. Il paraît seul, sans intervention.
+      </p>
+
+      {aVenir.length > 0 && (
+        <div className="mt-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+            À paraître
+          </p>
+          <div className="rounded-2xl border border-gold/40 bg-gold/5 divide-y divide-gold/20 overflow-hidden">
+            {aVenir.map(a => {
+              const j = joursAvant(a.publishedAt);
+              return (
+                <div key={a.slug} className="px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm truncate">{a.title}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      /blog/{a.slug} · {a.category} · {a.readingMinutes} min
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs font-semibold text-gold">{dateFr(a.publishedAt)}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      dans {j} jour{j > 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+          En ligne
+        </p>
+        <div className="rounded-2xl border border-border bg-card divide-y divide-border overflow-hidden">
+          {enLigne.map(a => (
+            <div key={a.slug} className="px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm truncate">{a.title}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  /blog/{a.slug} · {a.category} · {a.readingMinutes} min
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[11px] text-muted-foreground">{dateFr(a.publishedAt)}</span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-600">
+                  <Eye className="w-3 h-3" /> Publié
+                </span>
+                {/* Lien externe : l'article vit sur la vitrine publique,
+                    hors de l'espace d'administration. */}
+                <a
+                  href={`/blog/${a.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-primary"
+                  aria-label={`Ouvrir ${a.title}`}
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
