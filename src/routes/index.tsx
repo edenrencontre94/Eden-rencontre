@@ -49,8 +49,15 @@ export const Route = createFileRoute("/")({
       { property: "og:url", content: `${SITE_URL}/` },
       { property: "og:site_name", content: "AgapeMeet" },
       { property: "og:locale", content: "fr_FR" },
-      { property: "og:image", content: `${SITE_URL}/favicon.png` },
-      { name: "twitter:image", content: `${SITE_URL}/favicon.png` },
+      // Visuel de partage dédié, 1200×630 et 55 Ko. L'ancien pointait sur
+      // /favicon.png : un carré de 1254×1254 pesant 964 Ko. WhatsApp
+      // abandonne le téléchargement de l'aperçu bien avant ce poids —
+      // beaucoup de partages ne montraient donc aucune image.
+      { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "AgapeMeet — Trouvez la personne que Dieu vous destine" },
+      { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
     ],
     // ABSOLUE, impérativement. Un canonical relatif (« / ») se résout contre
     // l'URL courante : http://www.agapemeet.com/ se déclarait alors canonique
