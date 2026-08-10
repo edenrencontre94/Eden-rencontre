@@ -280,6 +280,19 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           const json = await res.json();
           if (!res.ok) return { ok: false, error: json?.error ?? "Le paiement n'a pas pu être lancé" };
 
+          // La commande est créée côté serveur : l'intention d'achat est
+          // réelle. InitiateCheckout, pas Purchase — l'argent n'a pas encore
+          // changé de main, et beaucoup de tunnels sont abandonnés ici.
+          import("@/lib/meta").then(m =>
+            m.suivreMeta("InitiateCheckout", {
+              valeurXof: offer.priceXOF,
+              // Le numero vient d etre saisi pour le Mobile Money : il
+              // ameliore nettement la correspondance chez Meta, et part
+              // hache — jamais en clair.
+              telephone: phone,
+            }),
+          );
+
           // Chariow affiche ses propres moyens de paiement selon l'indicatif
           if (json.checkoutUrl) {
             window.location.href = json.checkoutUrl;

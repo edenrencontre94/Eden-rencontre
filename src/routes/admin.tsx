@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Users, ShieldAlert, CreditCard, Megaphone, Settings, LogOut, BarChart3, LifeBuoy, FileText, UsersRound } from "lucide-react";
+import { LayoutDashboard, Users, ShieldAlert, CreditCard, Megaphone, Settings, LogOut, BarChart3, LifeBuoy, FileText, UsersRound, Radio } from "lucide-react";
 import { fetchMyPermissions, ROLE_LABELS, type MyPermissions, type Permission } from "@/lib/permissions";
 import logo from "@/assets/logo.png";
 import { supabase } from "@/lib/supabase";
@@ -27,6 +27,10 @@ const adminMenus: {
   { to: "/admin/contenus", label: "Contenus", icon: FileText, perm: "contenus" },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3, perm: "finances" },
   { to: "/admin/support", label: "Support", icon: LifeBuoy, perm: "support" },
+  // Menu PRINCIPAL, au même niveau que les autres — et non un sous-menu de
+  // Marketing : Pixel, Conversions API, audiences et attribution forment un
+  // module autonome, avec sa propre navigation interne.
+  { to: "/admin/meta-ads", label: "Meta Ads", icon: Radio, perm: "reglages" },
   { to: "/admin/marketing", label: "Marketing", icon: Megaphone, perm: "reglages" },
   { to: "/admin/equipe", label: "Équipe", icon: UsersRound, perm: "equipe" },
   { to: "/admin/parametres", label: "Paramètres", icon: Settings, perm: "reglages" },

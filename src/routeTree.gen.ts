@@ -36,6 +36,7 @@ import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminContenusRouteImport } from './routes/admin.contenus'
 import { Route as AdminEquipeRouteImport } from './routes/admin.equipe'
 import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
+import { Route as AdminMetaAdsRouteImport } from './routes/admin.meta-ads'
 import { Route as AdminModerationRouteImport } from './routes/admin.moderation'
 import { Route as AdminParametresRouteImport } from './routes/admin.parametres'
 import { Route as AdminSupportRouteImport } from './routes/admin.support'
@@ -182,6 +183,11 @@ const AdminMarketingRoute = AdminMarketingRouteImport.update({
   path: '/marketing',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminMetaAdsRoute = AdminMetaAdsRouteImport.update({
+  id: '/meta-ads',
+  path: '/meta-ads',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminModerationRoute = AdminModerationRouteImport.update({
   id: '/moderation',
   path: '/moderation',
@@ -265,6 +271,7 @@ export interface FileRoutesByFullPath {
   '/admin/contenus': typeof AdminContenusRoute
   '/admin/equipe': typeof AdminEquipeRoute
   '/admin/marketing': typeof AdminMarketingRoute
+  '/admin/meta-ads': typeof AdminMetaAdsRoute
   '/admin/moderation': typeof AdminModerationRoute
   '/admin/parametres': typeof AdminParametresRoute
   '/admin/support': typeof AdminSupportRoute
@@ -303,6 +310,7 @@ export interface FileRoutesByTo {
   '/admin/contenus': typeof AdminContenusRoute
   '/admin/equipe': typeof AdminEquipeRoute
   '/admin/marketing': typeof AdminMarketingRoute
+  '/admin/meta-ads': typeof AdminMetaAdsRoute
   '/admin/moderation': typeof AdminModerationRoute
   '/admin/parametres': typeof AdminParametresRoute
   '/admin/support': typeof AdminSupportRoute
@@ -344,6 +352,7 @@ export interface FileRoutesById {
   '/admin/contenus': typeof AdminContenusRoute
   '/admin/equipe': typeof AdminEquipeRoute
   '/admin/marketing': typeof AdminMarketingRoute
+  '/admin/meta-ads': typeof AdminMetaAdsRoute
   '/admin/moderation': typeof AdminModerationRoute
   '/admin/parametres': typeof AdminParametresRoute
   '/admin/support': typeof AdminSupportRoute
@@ -385,6 +394,7 @@ export interface FileRouteTypes {
     | '/admin/contenus'
     | '/admin/equipe'
     | '/admin/marketing'
+    | '/admin/meta-ads'
     | '/admin/moderation'
     | '/admin/parametres'
     | '/admin/support'
@@ -423,6 +433,7 @@ export interface FileRouteTypes {
     | '/admin/contenus'
     | '/admin/equipe'
     | '/admin/marketing'
+    | '/admin/meta-ads'
     | '/admin/moderation'
     | '/admin/parametres'
     | '/admin/support'
@@ -463,6 +474,7 @@ export interface FileRouteTypes {
     | '/admin/contenus'
     | '/admin/equipe'
     | '/admin/marketing'
+    | '/admin/meta-ads'
     | '/admin/moderation'
     | '/admin/parametres'
     | '/admin/support'
@@ -686,6 +698,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMarketingRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/meta-ads': {
+      id: '/admin/meta-ads'
+      path: '/meta-ads'
+      fullPath: '/admin/meta-ads'
+      preLoaderRoute: typeof AdminMetaAdsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/moderation': {
       id: '/admin/moderation'
       path: '/moderation'
@@ -806,6 +825,7 @@ interface AdminRouteChildren {
   AdminContenusRoute: typeof AdminContenusRoute
   AdminEquipeRoute: typeof AdminEquipeRoute
   AdminMarketingRoute: typeof AdminMarketingRoute
+  AdminMetaAdsRoute: typeof AdminMetaAdsRoute
   AdminModerationRoute: typeof AdminModerationRoute
   AdminParametresRoute: typeof AdminParametresRoute
   AdminSupportRoute: typeof AdminSupportRoute
@@ -819,6 +839,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminContenusRoute: AdminContenusRoute,
   AdminEquipeRoute: AdminEquipeRoute,
   AdminMarketingRoute: AdminMarketingRoute,
+  AdminMetaAdsRoute: AdminMetaAdsRoute,
   AdminModerationRoute: AdminModerationRoute,
   AdminParametresRoute: AdminParametresRoute,
   AdminSupportRoute: AdminSupportRoute,

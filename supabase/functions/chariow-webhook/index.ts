@@ -214,6 +214,41 @@ serve(async (req: Request) => {
     const label = offer.kind === "boost" ? `Boost ${offer.hours} h` : `Abonnement ${offer.planId}`;
     console.log(`${label} activé pour ${userId} jusqu'au ${newExpiry}`);
 
+    // ── 5 bis. Purchase vers Meta ──
+    //
+    // ICI, et nulle part ailleurs. C'est le seul endroit du projet où un
+    // encaissement est réellement confirmé : le verrou `pending →
+    // completed` vient de réussir, donc l'argent est arrivé.
+    //
+    // Déclencher depuis le navigateur, au clic sur « Payer », compterait
+    // une vente pour chaque tunnel abandonné — et Meta optimiserait les
+    // campagnes sur des conversions qui n'ont jamais eu lieu.
+    //
+    // L'identifiant dérive du paiement : un rejeu du webhook produit le
+    // même `event_id`, que la contrainte unique en base écarte. Aucune
+    // double conversion possible.
+    //
+    // Sans `await` ni `throw` : l'accès du membre est déjà ouvert, et un
+    // envoi publicitaire raté ne doit jamais faire échouer le webhook —
+    // Chariow le rejouerait, au risque d'un double crédit.
+    try {
+      const secret = Deno.env.get("PUSH_SECRET") ?? "";
+      if (secret) {
+        fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/meta-capi`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-push-secret": secret },
+          body: JSON.stringify({
+            event_name: "Purchase",
+            event_id: `purchase_${claimed[0].id}`,
+            user_id: userId,
+            value_xof: PRICES[offerId] ?? undefined,
+          }),
+        }).catch(e => console.error("[meta] Purchase:", e));
+      }
+    } catch (e) {
+      console.error("[meta] Purchase ignoré:", e);
+    }
+
     // ── 6. Confirmation par e-mail ──
     // Volontairement APRÈS l'activation et sans `throw` : l'accès est déjà
     // ouvert, un e-mail qui ne part pas ne doit jamais faire échouer le

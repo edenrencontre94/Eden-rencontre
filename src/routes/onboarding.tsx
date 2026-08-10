@@ -374,6 +374,23 @@ function OnboardingPage() {
 
         if (profileError) throw profileError;
 
+        // Le compte existe RÉELLEMENT à partir d'ici : le profil est
+        // écrit en base. Déclencher plus tôt — au clic sur « Créer mon
+        // compte » — compterait des inscriptions qui n'aboutissent pas.
+        //
+        // Import dynamique : le suivi publicitaire ne doit pas alourdir
+        // le fragment servi à chaque visiteur.
+        import("@/lib/meta").then(async m => {
+          await m.rattacherProvenance();
+          await m.suivreMeta("CompleteRegistration");
+
+          // Un profil déjà complet à l'inscription : l'événement part
+          // aussi maintenant, sinon il ne partirait jamais pour ces
+          // membres-là.
+          const { data: pct } = await supabase.rpc("my_profile_completion");
+          if (typeof pct === "number" && pct >= 60) await m.suivreMeta("CompleteProfile");
+        });
+
         toast.dismiss("saving");
         // Nettoyer sessionStorage et localStorage après enregistrement réussi
         if (typeof window !== "undefined") {

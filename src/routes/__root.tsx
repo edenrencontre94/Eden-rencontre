@@ -167,6 +167,21 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  // Provenance publicitaire et Pixel Meta.
+  //
+  // À la racine, parce qu'une publicité peut pointer vers N'IMPORTE
+  // QUELLE page — un article de blog, la page tarifs, une page pays.
+  // Ne capturer que sur l'accueil perdrait toutes ces campagnes.
+  //
+  // Import dynamique : ni le script du Pixel ni ce module n'entrent dans
+  // le premier fragment servi au visiteur.
+  useEffect(() => {
+    import("@/lib/meta").then(m => {
+      m.capturerProvenance();
+      m.chargerPixel();
+    });
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}

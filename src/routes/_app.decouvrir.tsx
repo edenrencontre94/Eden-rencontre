@@ -264,6 +264,10 @@ function DiscoverPage() {
         refreshQuotas();
 
         if (dbAction === 'like' || dbAction === 'superlike') {
+          // Le like est ECRIT en base a ce stade : l evenement decrit un
+          // fait, pas une intention.
+          import("@/lib/meta").then(m => m.suivreMeta("Like"));
+
           const { data: matchCheck } = await supabase
             .from('swipes')
             .select('id')
@@ -274,6 +278,8 @@ function DiscoverPage() {
 
           if (matchCheck) {
             toast.success(`C'est un match avec ${currentFiltered.firstName} ! 🎉`, { duration: 5000 });
+            // Reciprocite confirmee par la base : le match existe.
+            import("@/lib/meta").then(m => m.suivreMeta("Match"));
           }
         }
       }
