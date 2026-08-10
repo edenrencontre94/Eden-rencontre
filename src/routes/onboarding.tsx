@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect, useRef, useMemo, type ReactElement } from "react";
 import { Heart, Search, Camera, Church, ArrowRight, ArrowLeft, Upload, X, Sparkles, Check } from "lucide-react";
-import { Music2, Instagram, Facebook, Youtube, Users, MoreHorizontal } from "lucide-react";
+import { Music2, Instagram, Facebook, Youtube, Users, MoreHorizontal, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logoAsset from "@/assets/logo.png";
 import { Input } from "@/components/ui/input";
@@ -1132,7 +1132,12 @@ function SourceScreen({ onSelect, onBack }: { onSelect: (s: string) => void; onB
     { id: "instagram", label: "Instagram", icon: <Instagram className="w-6 h-6" />, color: "bg-gradient-to-tr from-fuchsia-500 via-pink-500 to-amber-400 text-white" },
     { id: "facebook", label: "Facebook", icon: <Facebook className="w-6 h-6" />, color: "bg-[#1877F2] text-white" },
     { id: "youtube", label: "YouTube", icon: <Youtube className="w-6 h-6" />, color: "bg-[#FF0000] text-white" },
-    { id: "recommandation", label: "Une recommandation", icon: <Users className="w-6 h-6" />, color: "bg-[#25D366] text-white" },
+    // WhatsApp est vraisemblablement le premier canal réel sur ce marché :
+    // un lien partagé dans un groupe d'église circule plus qu'une
+    // publicité. Sans cette entrée, ces membres se rangeaient dans
+    // « Autre » — la case qui n'apprend rien.
+    { id: "whatsapp", label: "WhatsApp", icon: <MessageCircle className="w-6 h-6" />, color: "bg-[#25D366] text-white" },
+    { id: "recommandation", label: "Une recommandation", icon: <Users className="w-6 h-6" />, color: "bg-primary text-primary-foreground" },
     { id: "autre", label: "Autre", icon: <MoreHorizontal className="w-6 h-6" />, color: "bg-primary/10 text-primary" },
   ];
   return (

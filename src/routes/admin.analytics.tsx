@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { InstallStats } from "@/components/admin/InstallStats";
+import { CanalAcquisition } from "@/components/admin/CanalAcquisition";
 import { formatPrice } from "@/lib/plans";
 
 export const Route = createFileRoute("/admin/analytics")({
@@ -486,6 +487,8 @@ function AdminAnalytics() {
 
           {/* Bloc autonome : il interroge sa propre fonction, pour qu'une
               migration 59 non exécutée ne fasse pas tomber toute la page. */}
+          <CanalAcquisition days={days} />
+
           <InstallStats days={days} />
         </>
       )}

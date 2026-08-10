@@ -60,6 +60,7 @@ const SOURCES: Record<string, string> = {
   instagram: "Instagram",
   facebook: "Facebook",
   youtube: "YouTube",
+  whatsapp: "WhatsApp",
   recommandation: "Recommandation",
   autre: "Autre",
   inconnu: "Non renseigné",
