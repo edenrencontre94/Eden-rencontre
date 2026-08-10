@@ -1,31 +1,33 @@
 # AgapeMeet — https://agapemeet.com
 #
-# Ce fichier remplace le robots.txt managé que Cloudflare servait par défaut.
-# Celui-ci n'empêchait pas Google de crawler (User-agent: * / Allow: /) mais
-# ne déclarait aucun sitemap, et bloquait les robots d'IA.
-# On conserve ces blocages et on ajoute ce qui manquait.
+# ── POURQUOI SI PEU DE « Disallow » ─────────────────────────────────────
+#
+# `robots.txt` interdit la LECTURE d'une page. Il n'interdit pas son
+# indexation : Google peut parfaitement inscrire une URL découverte par
+# un lien, sans jamais l'avoir ouverte. La page entre alors dans l'index
+# sans titre ni contenu — c'est l'avertissement « Indexée malgré le
+# blocage par le fichier robots.txt ».
+#
+# Pire : la page bloquée porte une balise `noindex`, mais Google ne vient
+# plus la lire, donc ne la voit jamais. Le blocage empêche exactement ce
+# qu'il devait produire.
+#
+# Pour sortir une page de l'index, il faut au contraire LAISSER ENTRER
+# Google, qui lit le `noindex` et retire l'URL. Tout l'espace connecté
+# (`/accueil`, `/messages`, `/profil`, `/admin`…) porte ce `noindex`,
+# posé sur les mises en page `_app` et `admin`. Aucun blocage ici ne doit
+# venir l'annuler.
+#
+# Ne bloquer ici que ce qui n'a rien à lire du tout.
 
 User-agent: *
 Allow: /
 
-# Espaces privés : aucun intérêt pour la recherche, et ils exposeraient
-# des pages nécessitant une session.
-Disallow: /accueil
-Disallow: /decouvrir
-Disallow: /messages
-Disallow: /demandes
-Disallow: /communaute
-Disallow: /profil
-Disallow: /parametres
-Disallow: /abonnement
-Disallow: /admin
-Disallow: /onboarding
-Disallow: /login
-
-# Paramètre ajouté au retour de paiement : évite de créer des doublons d'URL
+# Paramètre ajouté au retour de paiement : il créerait des doublons
+# d'URL sans rien apporter. Rien à désindexer, rien à lire.
 Disallow: /*?paiement=
 
-# ── Robots d'entraînement IA ──────────────────────────────────────────────
+# ── Robots d'entraînement IA ──────────────────────────────────────────
 # Les contenus des membres ne doivent pas alimenter de modèles.
 User-agent: GPTBot
 Disallow: /

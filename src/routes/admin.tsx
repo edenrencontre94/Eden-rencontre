@@ -8,6 +8,9 @@ import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
+  head: () => ({
+    meta: [{ name: "robots", content: "noindex, nofollow" }],
+  }),
 });
 
 // Chaque entrée porte la permission qu'elle exige. Le menu ne fait que

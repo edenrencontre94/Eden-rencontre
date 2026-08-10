@@ -50,6 +50,18 @@ import { DELETION_REASONS, motifErrorMessage, type DeletionReason } from "@/lib/
 export const Route = createFileRoute("/_app")({
   // No beforeLoad — auth is checked client-side only to avoid SSR logout on refresh
   component: AppLayout,
+
+  // `noindex` posé une seule fois, sur la mise en page : tout l'espace
+  // connecté en hérite, y compris les routes ajoutées plus tard.
+  //
+  // C'est cette balise, et non `robots.txt`, qui fait sortir une page de
+  // l'index. Un `Disallow` interdit la LECTURE : Google cesse alors de
+  // venir, ne voit jamais le `noindex`, et garde l'URL indexée sans
+  // contenu — l'avertissement « Indexée malgré le blocage par le fichier
+  // robots.txt ». Pour désindexer, il faut au contraire laisser entrer.
+  head: () => ({
+    meta: [{ name: "robots", content: "noindex, nofollow" }],
+  }),
 });
 
 /**
