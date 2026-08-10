@@ -49,6 +49,24 @@ const CANAUX: Record<string, { label: string; icone: any; couleur: string }> = {
   non_renseigne: { label: "Non renseigné", icone: HelpCircle, couleur: "bg-secondary text-muted-foreground" },
 };
 
+/**
+ * Les canaux proposés à l'inscription, dans leur ordre d'affichage.
+ *
+ * Ils apparaissent TOUS, même à zéro. Un canal absent du tableau serait
+ * lu comme « pas encore suivi », alors qu'il signifie « suivi, et
+ * personne n'est venu par là » — deux conclusions opposées.
+ *
+ * `non_renseigne` est délibérément hors de cette liste : ce n'est pas un
+ * choix offert, seulement le reliquat des comptes antérieurs à la
+ * question. Il ne s'affiche que s'il contient réellement quelqu'un.
+ */
+const ORDRE = [
+  "tiktok", "instagram", "facebook", "youtube",
+  "whatsapp", "recommandation", "autre",
+] as const;
+
+const VIDE = { actifs: 0, profils: 0, matchs: 0, payants: 0, revenus: 0 };
+
 export function CanalAcquisition({ days }: { days: number }) {
   const [d, setD] = useState<Donnees | null>(null);
   const [erreur, setErreur] = useState(false);
@@ -82,7 +100,16 @@ export function CanalAcquisition({ days }: { days: number }) {
 
   if (!d) return <div className="h-56 rounded-2xl bg-secondary animate-pulse" />;
 
-  const max = Math.max(1, ...d.declare.map(x => x.inscrits));
+  // Les canaux renvoyés par la base, complétés par ceux restés à zéro,
+  // puis triés par volume — les canaux vides fermant la marche dans
+  // l'ordre où ils sont proposés à l'inscription.
+  const parCanal = new Map(d.declare.map(x => [x.canal, x]));
+  const lignes = [
+    ...ORDRE.map(c => parCanal.get(c) ?? { canal: c, inscrits: 0, ...VIDE }),
+    ...d.declare.filter(x => !ORDRE.includes(x.canal as any)),
+  ].sort((a, b) => b.inscrits - a.inscrits);
+
+  const max = Math.max(1, ...lignes.map(x => x.inscrits));
 
   // Le bouche-à-oreille amplifié : arrivés par une publicité, mais qui
   // attribuent leur venue à autre chose.
@@ -134,7 +161,7 @@ export function CanalAcquisition({ days }: { days: number }) {
         </div>
       )}
 
-      {d.declare.length === 0 ? (
+      {d.inscrits === 0 ? (
         <div className="rounded-2xl border border-dashed border-border py-10 text-center">
           <Sparkles className="w-8 h-8 text-muted-foreground/30 mx-auto" />
           <p className="text-sm text-muted-foreground mt-3">
@@ -155,11 +182,13 @@ export function CanalAcquisition({ days }: { days: number }) {
               </tr>
             </thead>
             <tbody>
-              {d.declare.map(c => {
+              {lignes.map(c => {
                 const m = CANAUX[c.canal] ?? CANAUX.autre;
                 const conv = c.inscrits > 0 ? Math.round((c.payants / c.inscrits) * 100) : 0;
+                const vide = c.inscrits === 0;
                 return (
-                  <tr key={c.canal} className="border-b border-border/60 last:border-0">
+                  <tr key={c.canal}
+                      className={`border-b border-border/60 last:border-0 ${vide ? "opacity-45" : ""}`}>
                     <td className="px-4 py-3">
                       <span className="flex items-center gap-2">
                         <span className={`w-6 h-6 rounded-lg grid place-items-center shrink-0 ${m.couleur}`}>
