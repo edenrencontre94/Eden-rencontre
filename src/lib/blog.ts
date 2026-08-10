@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { ARTICLES, type Article } from "@/content/articles";
+import { articlesPublies, type Article } from "@/content/articles";
 
 /**
  * Articles du blog : base de données ET code.
@@ -67,13 +67,20 @@ export async function fetchArticles(): Promise<Article[]> {
 
   if (error) {
     console.error("[blog] lecture:", error);
-    return ARTICLES;
+    return articlesPublies();
   }
 
-  const depuisBase = (data ?? []).map((p: any) => versArticle(p as DbPost));
+  // Les articles de base peuvent eux aussi porter une date future : le
+  // statut « published » dit qu ils sont prets, pas qu ils sont parus.
+  const auj = new Date().toISOString().slice(0, 10);
+
+  const depuisBase = (data ?? [])
+    .map((p: any) => versArticle(p as DbPost))
+    .filter((a: Article) => a.publishedAt <= auj);
+
   const adressesBase = new Set(depuisBase.map((a: Article) => a.slug));
 
-  return [...depuisBase, ...ARTICLES.filter(a => !adressesBase.has(a.slug))]
+  return [...depuisBase, ...articlesPublies().filter(a => !adressesBase.has(a.slug))]
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
 }
 
@@ -85,6 +92,12 @@ export async function fetchArticle(slug: string): Promise<Article | undefined> {
     .eq("slug", slug)
     .maybeSingle();
 
-  if (data) return versArticle(data as DbPost);
-  return ARTICLES.find(a => a.slug === slug);
+  const auj = new Date().toISOString().slice(0, 10);
+
+  // Une adresse devinee ne doit pas donner acces a un texte non paru.
+  if (data) {
+    const a = versArticle(data as DbPost);
+    return a.publishedAt <= auj ? a : undefined;
+  }
+  return articlesPublies().find(a => a.slug === slug);
 }
