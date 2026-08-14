@@ -89,7 +89,7 @@ export function InstallStats({ days }: { days: number }) {
           <Smartphone className="w-5 h-5 text-primary" /> Installations
         </h2>
         <p className="text-xs text-muted-foreground mt-1">
-          Membres ayant ajouté AgapeMeet à leur écran d'accueil. Les
+          Membres ayant ajouté Eden Rencontre à leur écran d'accueil. Les
           désinstallations ne sont signalées par aucun navigateur : elles se
           déduisent d'une absence prolongée.
         </p>

@@ -4,7 +4,7 @@ import logoAsset from "@/assets/logo.png";
 import { Heart } from "lucide-react";
 
 /** Domaine canonique — toute URL de référencement en découle. */
-export const SITE_URL = "https://agapemeet.com";
+export const SITE_URL = "https://edenrencontre.com";
 
 /**
  * Gabarit des pages publiques indexables.
@@ -29,8 +29,8 @@ export function PublicLayout({
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-background/85 border-b border-border/40">
         <div className="max-w-5xl mx-auto flex items-center justify-between px-4 py-3">
           <Link to="/" className="flex items-center gap-2">
-            <img src={logoAsset} alt="AgapeMeet" className="w-8 h-8 object-contain" />
-            <span className="font-serif text-lg font-semibold">AgapeMeet</span>
+            <img src={logoAsset} alt="Eden Rencontre" className="w-8 h-8 object-contain" />
+            <span className="font-serif text-lg font-semibold">Eden Rencontre</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground" aria-label="Navigation principale">
@@ -72,7 +72,7 @@ export function PublicLayout({
           <div>
             <div className="flex items-center gap-2">
               <img src={logoAsset} alt="" className="w-7 h-7 object-contain" />
-              <span className="font-serif font-semibold">AgapeMeet</span>
+              <span className="font-serif font-semibold">Eden Rencontre</span>
             </div>
             <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
               La rencontre chrétienne sérieuse, orientée vers le mariage.
@@ -100,7 +100,7 @@ export function PublicLayout({
 
         <div className="border-t border-border/60 py-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
           <Heart className="w-3 h-3 text-primary" fill="currentColor" />
-          AgapeMeet — {new Date().getFullYear()}
+          Eden Rencontre — {new Date().getFullYear()}
         </div>
       </footer>
     </div>

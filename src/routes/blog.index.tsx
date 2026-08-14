@@ -8,13 +8,13 @@ import { Clock, ArrowRight } from "lucide-react";
 export const Route = createFileRoute("/blog/")({
   head: () => ({
     meta: [
-      { title: "Blog — Conseils pour une relation chrétienne durable | AgapeMeet" },
+      { title: "Blog – Conseils pour une relation chrétienne durable | Eden Rencontre" },
       {
         name: "description",
         content:
           "Conseils concrets sur le discernement, la préparation au mariage chrétien, la sécurité des rencontres en ligne et la vie spirituelle du célibataire.",
       },
-      { property: "og:title", content: "Blog AgapeMeet — mariage et relations chrétiennes" },
+      { property: "og:title", content: "Blog Eden Rencontre – mariage et relations chrétiennes" },
       { property: "og:url", content: `${SITE_URL}/blog` },
       { property: "og:type", content: "website" },
     ],
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/blog/")({
 });
 
 function BlogIndex() {
-  // Les articles du code s'affichent IMMÉDIATEMENT — ils sont rendus côté
+  // Les articles du code s'affichent IMMÉDIATEMENT – ils sont rendus côté
   // serveur, donc indexables sans attendre. Ceux de la base viennent s'y
   // ajouter au chargement. L'inverse aurait produit une page vide au
   // premier rendu, exactement ce qu'un moteur de recherche retiendrait.
@@ -39,7 +39,7 @@ function BlogIndex() {
   return (
     <PublicLayout
       title="Le blog"
-      intro="Des repères concrets sur le discernement, la préparation au mariage et les rencontres en ligne — sans langue de bois."
+      intro="Des repères concrets sur le discernement, la préparation au mariage et les rencontres en ligne – sans langue de bois."
       breadcrumb={[{ label: "Blog", to: "/blog" }]}
     >
       <div className="space-y-4">

@@ -34,10 +34,6 @@ const OFFER_LABELS: Record<string, string> = {
   premium_15j: "Premium 15 jours",
   premium_1m: "Premium 1 mois",
   premium_3m: "Premium 3 mois",
-  vip_1m: "VIP 1 mois",
-  boost_24h: "Boost 24 h",
-  boost_3j: "Boost 3 jours",
-  boost_7j: "Boost 7 jours",
 };
 
 /** Commission Chariow : le net est ce qui arrive réellement sur le compte. */
@@ -61,9 +57,9 @@ function AdminAbonnements() {
         .order("created_at", { ascending: false })
         .limit(200),
       supabase
-        .from("subscriptions")
-        .select("plan_id, expires_at")
-        .gt("expires_at", new Date().toISOString()),
+        .from("profiles")
+        .select("public_plan, premium_until")
+        .gt("premium_until", new Date().toISOString()),
     ]);
 
     if (payErr || subErr) {
@@ -76,7 +72,7 @@ function AdminAbonnements() {
     }
 
     setPayments((pay ?? []) as Payment[]);
-    setActiveSubs((subs ?? []) as any[]);
+    setActiveSubs((subs ?? []).map((s: any) => ({ plan_id: s.public_plan })) as any[]);
 
     const ids = [...new Set((pay ?? []).map((p: any) => p.user_id))];
     if (ids.length > 0) {
@@ -101,16 +97,12 @@ function AdminAbonnements() {
   const revenueMonth = completed
     .filter(p => (p.completed_at ?? p.created_at) >= monthStart)
     .reduce((s, p) => s + p.amount_xof, 0);
-  const boostRevenue = completed
-    .filter(p => p.plan_id === "boost")
-    .reduce((s, p) => s + p.amount_xof, 0);
 
   const byOffer = completed.reduce((acc, p) => {
     acc[p.offer_id] = (acc[p.offer_id] ?? 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  const vipCount = activeSubs.filter(s => s.plan_id === "vip").length;
   const premiumCount = activeSubs.filter(s => s.plan_id === "premium").length;
 
   return (
@@ -157,15 +149,13 @@ function AdminAbonnements() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat icon={Users} label="Abonnés actifs" value={String(premiumCount + vipCount)}
-                  hint={`${premiumCount} Premium · ${vipCount} VIP`} />
+            <Stat icon={Users} label="Abonnés actifs" value={String(premiumCount)}
+                  hint={`${premiumCount} Premium`} />
             <Stat icon={CreditCard} label="Paiements réglés" value={String(completed.length)}
                   hint={`sur ${payments.length} initiés`} />
             <Stat icon={Clock} label="En attente" value={String(pending.length)}
                   hint={pending.length > 0 ? "à surveiller" : "rien en suspens"}
                   warn={pending.length > 0} />
-            <Stat icon={Rocket} label="Revenus Boost" value={formatPrice(boostRevenue)}
-                  hint="achats à l'unité" />
           </div>
 
           <section className="rounded-2xl border border-border bg-card p-5">

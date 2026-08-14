@@ -30,7 +30,7 @@ const adminMenus: {
   { to: "/admin/contenus", label: "Contenus", icon: FileText, perm: "contenus" },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3, perm: "finances" },
   { to: "/admin/support", label: "Support", icon: LifeBuoy, perm: "support" },
-  // Menu PRINCIPAL, au même niveau que les autres — et non un sous-menu de
+  // Menu PRINCIPAL, au même niveau que les autres – et non un sous-menu de
   // Marketing : Pixel, Conversions API, audiences et attribution forment un
   // module autonome, avec sa propre navigation interne.
   { to: "/admin/meta-ads", label: "Meta Ads", icon: Radio, perm: "reglages" },
@@ -48,7 +48,7 @@ function AdminLayout() {
     async function checkStaff() {
       const user = await getCurrentUser();
 
-      // Pas de compte → on l'oriente vers l'inscription.
+      // Pas de compte â†’ on l'oriente vers l'inscription.
       // `replace: true` retire /admin de l'historique : le bouton Retour
       // ne le ramènera pas ici en boucle.
       if (!user) {
@@ -78,8 +78,8 @@ function AdminLayout() {
 
   const menus = adminMenus.filter(m => !m.perm || perms?.permissions.includes(m.perm));
 
-  // Tant que le rôle n'est pas tranché — et pendant la redirection des
-  // non-autorisés — on n'affiche qu'un écran neutre. Il ne doit rien
+  // Tant que le rôle n'est pas tranché – et pendant la redirection des
+  // non-autorisés – on n'affiche qu'un écran neutre. Il ne doit rien
   // laisser deviner du contenu qui se trouve derrière.
   if (!perms) {
     return (
@@ -94,10 +94,10 @@ function AdminLayout() {
       {/* Sidebar */}
       <aside className="w-64 bg-card border-r border-border flex flex-col hidden md:flex">
         <div className="p-6 flex items-center gap-3">
-          <img src={logo} alt="AgapeMeet Admin" className="w-8 h-8 object-contain" />
+          <img src={logo} alt="Eden Rencontre Admin" className="w-8 h-8 object-contain" />
           <div className="min-w-0">
             <span className="font-serif text-xl font-bold text-primary block leading-none">
-              AgapeAdmin
+              EdenAdmin
             </span>
             {/* Le rôle est affiché : un agent doit savoir à quel titre il
                 agit, et pourquoi certaines sections lui sont absentes. */}
@@ -145,7 +145,7 @@ function AdminLayout() {
         {/* Mobile Header (Hidden on Desktop) */}
         <header className="md:hidden bg-card border-b border-border p-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={logo} alt="AgapeMeet" className="w-8 h-8 object-contain" />
+            <img src={logo} alt="Eden Rencontre" className="w-8 h-8 object-contain" />
             <span className="font-serif font-bold text-primary">Admin</span>
           </div>
           <div className="text-sm text-muted-foreground">Ouvrez sur PC pour plus de confort</div>

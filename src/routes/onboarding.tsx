@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect, useRef, useMemo, type ReactElement } from "react";
 import { Heart, Search, Camera, Church, ArrowRight, ArrowLeft, Upload, X, Sparkles, Check } from "lucide-react";
@@ -135,25 +135,25 @@ const initialData: OnboardingData = {
 const steps = [
   { id: 1, title: "Profil", subtitle: "Faisons connaissance", icon: Heart },
   { id: 2, title: "Foi", subtitle: "Votre confession", icon: Church },
-  { id: 3, title: "Recherche", subtitle: "Vos critères", icon: Search },
+  { id: 3, title: "Recherche", subtitle: "Vos critÃ¨res", icon: Search },
   { id: 4, title: "Photos", subtitle: "Montrez-vous", icon: Camera },
 ];
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
     meta: [
-      { title: "Créer votre profil — AgapeMeet" },
+      { title: "CrÃ©er votre profil â€” Eden Rencontre" },
       {
         name: "description",
         content:
-          "Créez votre profil AgapeMeet en 4 étapes : identité, foi, critères de recherche et photos. Une rencontre chrétienne sérieuse commence ici.",
+          "CrÃ©ez votre profil Eden Rencontre en 4 Ã©tapes : identitÃ©, foi, critÃ¨res de recherche et photos. Une rencontre chrÃ©tienne sÃ©rieuse commence ici.",
       },
       { name: "robots", content: "noindex" },
-      { property: "og:title", content: "Créer votre profil — AgapeMeet" },
+      { property: "og:title", content: "CrÃ©er votre profil â€” Eden Rencontre" },
       {
         property: "og:description",
         content:
-          "Rejoignez AgapeMeet et créez votre profil en 4 étapes simples.",
+          "Rejoignez Eden Rencontre et crÃ©ez votre profil en 4 Ã©tapes simples.",
       },
     ],
   }),
@@ -164,7 +164,7 @@ function OnboardingPage() {
   const [step, setStep] = useState<number>(() => {
     if (typeof window === "undefined") return 1;
     try {
-      const saved = localStorage.getItem("agape_onboarding_step");
+      const saved = localStorage.getItem("eden_onboarding_step");
       return saved ? parseInt(saved, 10) : 1;
     } catch {
       return 1;
@@ -173,7 +173,7 @@ function OnboardingPage() {
   const [data, setData] = useState<OnboardingData>(() => {
     if (typeof window === "undefined") return initialData;
     try {
-      const saved = localStorage.getItem("agape_onboarding_data");
+      const saved = localStorage.getItem("eden_onboarding_data");
       if (saved) {
         const parsed = JSON.parse(saved);
         return { ...initialData, ...parsed, photos: [] };
@@ -183,10 +183,10 @@ function OnboardingPage() {
   });
   const [submitted, setSubmitted] = useState(false);
 
-  // Sauvegarder dans localStorage à chaque changement
+  // Sauvegarder dans localStorage Ã  chaque changement
   useEffect(() => {
     try {
-      localStorage.setItem("agape_onboarding_step", String(step));
+      localStorage.setItem("eden_onboarding_step", String(step));
     } catch {}
   }, [step]);
 
@@ -194,7 +194,7 @@ function OnboardingPage() {
     // Ne pas sauvegarder les photos (fichiers locaux)
     const { photos, ...toSave } = data;
     try {
-      localStorage.setItem("agape_onboarding_data", JSON.stringify(toSave));
+      localStorage.setItem("eden_onboarding_data", JSON.stringify(toSave));
     } catch {}
   }, [data]);
 
@@ -224,7 +224,7 @@ function OnboardingPage() {
     }
     if (step === 2)
       return (
-        // .trim() : « Autre » ouvre un champ libre, et des espaces seuls
+        // .trim() : Â« Autre Â» ouvre un champ libre, et des espaces seuls
         // laisseraient passer une confession vide.
         data.denomination.trim() !== "" &&
         data.practiceLevel !== "" &&
@@ -247,7 +247,7 @@ function OnboardingPage() {
 
   const handleNext = async () => {
     if (!canNext) {
-      toast.error("Veuillez compléter tous les champs requis");
+      toast.error("Veuillez complÃ©ter tous les champs requis");
       return;
     }
     if (step < 4) {
@@ -256,37 +256,45 @@ function OnboardingPage() {
       try {
         const { supabase } = await import('@/lib/supabase');
         
-        // Récupérer la session active (getSession inclut le token JWT pour RLS)
+        // RÃ©cupÃ©rer la session active (getSession inclut le token JWT pour RLS)
         let userId: string | null = null;
         let firstName = "";
         let lastName = "";
 
-        // 1. Essayer la session active
+        // 1. Essayer la session active (token JWT prÃ©sent â†’ auth.uid() fonctionnel cÃ´tÃ© BDD)
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           userId = session.user.id;
           firstName = session.user.user_metadata?.first_name || "";
           lastName = session.user.user_metadata?.last_name || "";
         } else {
-          // 2. Fallback : tenter de récupérer l'utilisateur (refreshToken)
-          const user = await getSessionUser();
+          // 2. Fallback : getUser() rafraÃ®chit le token si possible
+          const { data: { user } } = await supabase.auth.getUser();
           if (user) {
             userId = user.id;
             firstName = user.user_metadata?.first_name || "";
             lastName = user.user_metadata?.last_name || "";
           } else {
-            // 3. Dernier recours : sessionStorage (email non confirmé)
-            if (typeof window !== "undefined") {
-              try {
-                userId = sessionStorage.getItem("agape_pending_user_id");
-                firstName = sessionStorage.getItem("agape_pending_first_name") || "";
-                lastName = sessionStorage.getItem("agape_pending_last_name") || "";
-              } catch {}
+            // 3. Fallback legacy : refreshToken via helper
+            const legacyUser = await getSessionUser();
+            if (legacyUser) {
+              userId = legacyUser.id;
+              firstName = legacyUser.user_metadata?.first_name || "";
+              lastName = legacyUser.user_metadata?.last_name || "";
+            } else {
+              // 4. Dernier recours : sessionStorage (inscription sans confirmation d'email)
+              if (typeof window !== "undefined") {
+                try {
+                  userId = sessionStorage.getItem("eden_pending_user_id");
+                  firstName = sessionStorage.getItem("eden_pending_first_name") || "";
+                  lastName = sessionStorage.getItem("eden_pending_last_name") || "";
+                } catch {}
+              }
             }
           }
         }
 
-        if (!userId) throw new Error("Erreur: Utilisateur non connecté. Veuillez vous inscrire d'abord.");
+        if (!userId) throw new Error("Erreur: Utilisateur non connectÃ©. Veuillez vous inscrire d'abord.");
 
         toast.info("Enregistrement du profil en cours...", { id: "saving" });
 
@@ -305,10 +313,10 @@ function OnboardingPage() {
               .upload(filePath, blob, { contentType: blob.type });
 
             if (uploadError) {
-              // L'erreur était SILENCIEUSEMENT ignorée : `if (!uploadError)`
-              // sans branche `else`. Un échec de stockage laissait donc
+              // L'erreur Ã©tait SILENCIEUSEMENT ignorÃ©e : `if (!uploadError)`
+              // sans branche `else`. Un Ã©chec de stockage laissait donc
               // l'inscription se terminer avec `photos: []`.
-              console.error("[onboarding] téléversement refusé :", uploadError);
+              console.error("[onboarding] tÃ©lÃ©versement refusÃ© :", uploadError);
               dernierEchec = uploadError.message;
               continue;
             }
@@ -316,32 +324,32 @@ function OnboardingPage() {
             const { data: publicUrlData } = supabase.storage.from('photos').getPublicUrl(filePath);
             uploadedPhotos.push(publicUrlData.publicUrl);
           } catch (e: any) {
-            console.error("[onboarding] téléversement impossible :", e);
-            dernierEchec = e?.message ?? "erreur réseau";
+            console.error("[onboarding] tÃ©lÃ©versement impossible :", e);
+            dernierEchec = e?.message ?? "erreur rÃ©seau";
           }
         }
 
-        // AUCUNE photo n'est passée : on interrompt au lieu de créer un
+        // AUCUNE photo n'est passÃ©e : on interrompt au lieu de crÃ©er un
         // profil vide. Sans cela, le membre termine son inscription
         // convaincu d'avoir mis sa photo, ne comprend pas pourquoi
         // personne ne le like, et repart au bout de quelques jours.
         if (uploadedPhotos.length === 0) {
           toast.dismiss("saving");
-          toast.error("Votre photo n'a pas pu être envoyée", {
+          toast.error("Votre photo n'a pas pu Ãªtre envoyÃ©e", {
             description: dernierEchec
-              ? `${dernierEchec} — vérifiez votre connexion et réessayez.`
-              : "Vérifiez votre connexion et réessayez.",
+              ? `${dernierEchec} â€” vÃ©rifiez votre connexion et rÃ©essayez.`
+              : "VÃ©rifiez votre connexion et rÃ©essayez.",
             duration: 8000,
           });
-          // On reste à l'étape 4 : les fichiers sélectionnés sont toujours
-          // en mémoire, un second clic suffit à réessayer.
+          // On reste Ã  l'Ã©tape 4 : les fichiers sÃ©lectionnÃ©s sont toujours
+          // en mÃ©moire, un second clic suffit Ã  rÃ©essayer.
           return;
         }
 
-        // Certaines sont passées, d'autres non : on continue, mais on le dit.
+        // Certaines sont passÃ©es, d'autres non : on continue, mais on le dit.
         if (uploadedPhotos.length < data.photos.length) {
           toast.warning(
-            `${data.photos.length - uploadedPhotos.length} photo(s) n'ont pas pu être envoyées`,
+            `${data.photos.length - uploadedPhotos.length} photo(s) n'ont pas pu Ãªtre envoyÃ©es`,
             { description: "Vous pourrez les ajouter depuis votre profil." },
           );
         }
@@ -364,9 +372,9 @@ function OnboardingPage() {
           marriage_intent: data.marriageIntent,
           has_children: data.hasChildren,
           wants_children: data.wantsChildren,
-          // La question « comment nous avez-vous connus ? » était posée à
-          // chaque inscription, affichée, puis jetée : aucune colonne ne
-          // la recevait. C'est pourtant la seule donnée qui dit où placer
+          // La question Â« comment nous avez-vous connus ? Â» Ã©tait posÃ©e Ã 
+          // chaque inscription, affichÃ©e, puis jetÃ©e : aucune colonne ne
+          // la recevait. C'est pourtant la seule donnÃ©e qui dit oÃ¹ placer
           // un budget publicitaire.
           acquisition_source: data.source || null,
           photos: uploadedPhotos
@@ -374,36 +382,36 @@ function OnboardingPage() {
 
         if (profileError) throw profileError;
 
-        // Le compte existe RÉELLEMENT à partir d'ici : le profil est
-        // écrit en base. Déclencher plus tôt — au clic sur « Créer mon
-        // compte » — compterait des inscriptions qui n'aboutissent pas.
+        // Le compte existe RÃ‰ELLEMENT Ã  partir d'ici : le profil est
+        // Ã©crit en base. DÃ©clencher plus tÃ´t â€” au clic sur Â« CrÃ©er mon
+        // compte Â» â€” compterait des inscriptions qui n'aboutissent pas.
         //
         // Import dynamique : le suivi publicitaire ne doit pas alourdir
-        // le fragment servi à chaque visiteur.
+        // le fragment servi Ã  chaque visiteur.
         import("@/lib/meta").then(async m => {
           await m.rattacherProvenance();
           await m.suivreMeta("CompleteRegistration");
 
-          // Un profil déjà complet à l'inscription : l'événement part
+          // Un profil dÃ©jÃ  complet Ã  l'inscription : l'Ã©vÃ©nement part
           // aussi maintenant, sinon il ne partirait jamais pour ces
-          // membres-là.
+          // membres-lÃ .
           const { data: pct } = await supabase.rpc("my_profile_completion");
           if (typeof pct === "number" && pct >= 60) await m.suivreMeta("CompleteProfile");
         });
 
         toast.dismiss("saving");
-        // Nettoyer sessionStorage et localStorage après enregistrement réussi
+        // Nettoyer sessionStorage et localStorage aprÃ¨s enregistrement rÃ©ussi
         if (typeof window !== "undefined") {
           try {
-            sessionStorage.removeItem("agape_pending_user_id");
-            sessionStorage.removeItem("agape_pending_first_name");
-            sessionStorage.removeItem("agape_pending_last_name");
-            localStorage.removeItem("agape_onboarding_step");
-            localStorage.removeItem("agape_onboarding_data");
+            sessionStorage.removeItem("eden_pending_user_id");
+            sessionStorage.removeItem("eden_pending_first_name");
+            sessionStorage.removeItem("eden_pending_last_name");
+            localStorage.removeItem("eden_onboarding_step");
+            localStorage.removeItem("eden_onboarding_data");
           } catch {}
         }
         setSubmitted(true);
-        toast.success("Profil créé avec succès !");
+        toast.success("Profil crÃ©Ã© avec succÃ¨s !");
 
       } catch (error: any) {
         toast.dismiss("saving");
@@ -431,11 +439,11 @@ function OnboardingPage() {
       <header className="border-b border-border/40 backdrop-blur-md bg-background/80 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
-            <img src={logoAsset} alt="AgapeMeet" className="w-10 h-10 object-contain" />
-            <span className="font-serif text-xl font-semibold">AgapeMeet</span>
+            <img src={logoAsset} alt="Eden Rencontre" className="w-10 h-10 object-contain" />
+            <span className="font-serif text-xl font-semibold">Eden Rencontre</span>
           </Link>
           <span className="text-sm text-muted-foreground">
-            Étape {step} <span className="text-foreground/40">/ {steps.length}</span>
+            Ã‰tape {step} <span className="text-foreground/40">/ {steps.length}</span>
           </span>
         </div>
       </header>
@@ -486,7 +494,7 @@ function OnboardingPage() {
         <div className="sm:hidden mb-6">
           <Progress value={progress} className="h-2" />
           <div className="mt-2 text-sm text-muted-foreground">
-            {steps[step - 1].title} — {steps[step - 1].subtitle}
+            {steps[step - 1].title} â€” {steps[step - 1].subtitle}
           </div>
         </div>
       </div>
@@ -538,7 +546,7 @@ function OnboardingPage() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Vos informations sont confidentielles et servent uniquement à vous
+          Vos informations sont confidentielles et servent uniquement Ã  vous
           proposer des profils compatibles.
         </p>
       </main>
@@ -557,9 +565,9 @@ function StepProfile({
   return (
     <div>
       <StepHeader
-        eyebrow="Étape 1"
+        eyebrow="Ã‰tape 1"
         title="Votre Profil"
-        description="Ces informations apparaîtront publiquement sur votre profil."
+        description="Ces informations apparaÃ®tront publiquement sur votre profil."
       />
       <div className="grid sm:grid-cols-2 gap-5 mt-8">
         <div className="sm:col-span-2">
@@ -584,8 +592,8 @@ function StepProfile({
             const isAdult = age > 18 || (age === 18 && m >= 0 && (m > 0 || today.getDate() >= birth.getDate()));
             if (!isAdult) return (
               <div className="mt-2 flex items-center gap-2 px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-sm font-medium">
-                <span>⛔</span>
-                <span>Vous devez avoir au moins <strong>18 ans</strong> pour vous inscrire sur AgapeMeet.</span>
+                <span>â›”</span>
+                <span>Vous devez avoir au moins <strong>18 ans</strong> pour vous inscrire sur Eden Rencontre.</span>
               </div>
             );
             return null;
@@ -609,17 +617,17 @@ function StepProfile({
             </div>
           </Field>
         </div>
-        {/* Pays d'abord : la liste des villes en dépend. L'ordre inverse
-            obligeait à saisir une ville « à l'aveugle », puis à changer de
-            pays — sans que la ville soit remise en cause. */}
+        {/* Pays d'abord : la liste des villes en dÃ©pend. L'ordre inverse
+            obligeait Ã  saisir une ville Â« Ã  l'aveugle Â», puis Ã  changer de
+            pays â€” sans que la ville soit remise en cause. */}
         <Field label="Pays" htmlFor="country">
           <PaysSelect
             id="country"
             value={data.country}
             onChange={(pays) => {
-              // Changer de pays invalide la ville : « Abidjan, Sénégal »
+              // Changer de pays invalide la ville : Â« Abidjan, SÃ©nÃ©gal Â»
               // n'a aucun sens, et le filtre par pays s'en trouverait
-              // faussé.
+              // faussÃ©.
               if (pays !== data.country) update("city", "");
               update("country", pays);
             }}
@@ -634,7 +642,7 @@ function StepProfile({
           />
         </Field>
         <div className="sm:col-span-2">
-          <Field label="Présentation" htmlFor="bio">
+          <Field label="PrÃ©sentation" htmlFor="bio">
             <Textarea
               id="bio"
               maxLength={500}
@@ -661,26 +669,26 @@ function StepFaith({
   data: OnboardingData;
   update: <K extends keyof OnboardingData>(k: K, v: OnboardingData[K]) => void;
 }) {
-  // « Autre » n'est pas une confession : c'est l'aveu qu'on n'a pas su
-  // proposer la sienne. Un profil « Autre » ne dit rien à personne, et le
-  // filtre par dénomination le range dans un fourre-tout. Ce qui est
-  // enregistré est donc toujours la dénomination réelle.
+  // Â« Autre Â» n'est pas une confession : c'est l'aveu qu'on n'a pas su
+  // proposer la sienne. Un profil Â« Autre Â» ne dit rien Ã  personne, et le
+  // filtre par dÃ©nomination le range dans un fourre-tout. Ce qui est
+  // enregistrÃ© est donc toujours la dÃ©nomination rÃ©elle.
   const estAutre =
     data.denomination !== "" && !DENOMINATIONS_CONNUES.includes(data.denomination);
 
-  // État séparé : à l'instant du clic sur « Autre », le champ est vide,
-  // donc `estAutre` est faux — la puce paraîtrait inactive.
+  // Ã‰tat sÃ©parÃ© : Ã  l'instant du clic sur Â« Autre Â», le champ est vide,
+  // donc `estAutre` est faux â€” la puce paraÃ®trait inactive.
   const [autreOuvert, setAutreOuvert] = useState(estAutre);
 
   return (
     <div>
       <StepHeader
-        eyebrow="Étape 2"
+        eyebrow="Ã‰tape 2"
         title="Votre foi"
-        description="Le cœur de votre profil : votre relation avec Dieu."
+        description="Le cÅ“ur de votre profil : votre relation avec Dieu."
       />
       <div className="grid gap-6 mt-8">
-        <Field label="Confession / Dénomination">
+        <Field label="Confession / DÃ©nomination">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {DENOMINATIONS_CONNUES.map((d) => (
               <ChoiceChip
@@ -697,8 +705,8 @@ function StepFaith({
               active={autreOuvert || estAutre}
               onClick={() => {
                 setAutreOuvert(true);
-                // Le choix précédent est effacé : le laisser afficherait
-                // « Baptiste » coché sous un champ libre en cours de saisie.
+                // Le choix prÃ©cÃ©dent est effacÃ© : le laisser afficherait
+                // Â« Baptiste Â» cochÃ© sous un champ libre en cours de saisie.
                 if (!estAutre) update("denomination", "");
               }}
               label="Autre"
@@ -712,11 +720,11 @@ function StepFaith({
                 maxLength={60}
                 value={estAutre ? data.denomination : ""}
                 onChange={(e) => update("denomination", e.target.value)}
-                placeholder="Assemblées de Dieu, Église du Christ, Anglicane…"
+                placeholder="AssemblÃ©es de Dieu, Ã‰glise du Christ, Anglicaneâ€¦"
               />
               <p className="text-xs text-muted-foreground mt-1.5">
-                Écrivez le nom de votre église ou dénomination. Il apparaîtra
-                sur votre profil et permettra aux membres de la même confession
+                Ã‰crivez le nom de votre Ã©glise ou dÃ©nomination. Il apparaÃ®tra
+                sur votre profil et permettra aux membres de la mÃªme confession
                 de vous trouver.
               </p>
             </div>
@@ -726,7 +734,7 @@ function StepFaith({
         <Field label="Niveau de pratique">
           <div className="grid sm:grid-cols-2 gap-2">
             {[
-              { v: "tres-pratiquant", l: "Très pratiquant" },
+              { v: "tres-pratiquant", l: "TrÃ¨s pratiquant" },
               { v: "pratiquant", l: "Pratiquant" },
               { v: "croyant", l: "Croyant, peu pratiquant" },
               { v: "en-recherche", l: "En recherche spirituelle" },
@@ -742,7 +750,7 @@ function StepFaith({
         </Field>
 
         <div className="grid sm:grid-cols-2 gap-5">
-          <Field label="Baptisé(e) ?">
+          <Field label="BaptisÃ©(e) ?">
             <div className="grid grid-cols-2 gap-2">
               {[
                 { v: "oui", l: "Oui" },
@@ -757,13 +765,13 @@ function StepFaith({
               ))}
             </div>
           </Field>
-          <Field label="Fréquence à l'église">
+          <Field label="FrÃ©quence Ã  l'Ã©glise">
             <Select
               value={data.churchAttendance}
               onValueChange={(v) => update("churchAttendance", v)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionner" />
+                <SelectValue placeholder="SÃ©lectionner" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="plusieurs-semaine">Plusieurs fois / semaine</SelectItem>
@@ -791,9 +799,9 @@ function StepSearch({
   return (
     <div>
       <StepHeader
-        eyebrow="Étape 3"
-        title="Vos critères de recherche"
-        description="Aidez-nous à vous proposer les profils les plus compatibles."
+        eyebrow="Ã‰tape 3"
+        title="Vos critÃ¨res de recherche"
+        description="Aidez-nous Ã  vous proposer les profils les plus compatibles."
       />
       <div className="grid gap-6 mt-8">
         <Field label="Je recherche">
@@ -813,9 +821,9 @@ function StepSearch({
           </div>
         </Field>
 
-        {/* Placée juste après « Je recherche » : c'est le premier critère
-            qu'un membre orienté vers le mariage vérifie, avant même
-            l'échéance. « Marié(e) » n'y figure pas — la contrainte CHECK
+        {/* PlacÃ©e juste aprÃ¨s Â« Je recherche Â» : c'est le premier critÃ¨re
+            qu'un membre orientÃ© vers le mariage vÃ©rifie, avant mÃªme
+            l'Ã©chÃ©ance. Â« MariÃ©(e) Â» n'y figure pas â€” la contrainte CHECK
             de la migration 40 le refuse aussi en base. */}
         <Field label="Votre situation matrimoniale">
           <div className="grid sm:grid-cols-3 gap-2">
@@ -829,17 +837,17 @@ function StepSearch({
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Séparé(e) signifie que l'union n'est pas encore dissoute ;
-            « mariage annulé » qu'une annulation religieuse a été prononcée.
+            SÃ©parÃ©(e) signifie que l'union n'est pas encore dissoute ;
+            Â« mariage annulÃ© Â» qu'une annulation religieuse a Ã©tÃ© prononcÃ©e.
           </p>
         </Field>
 
         <Field label="Intention par rapport au mariage">
           <div className="grid sm:grid-cols-3 gap-2">
             {[
-              { v: "1-2ans", l: "Dans 1 à 2 ans" },
-              { v: "2-5ans", l: "Dans 2 à 5 ans" },
-              { v: "ouvert", l: "Ouvert, sans échéance" },
+              { v: "1-2ans", l: "Dans 1 Ã  2 ans" },
+              { v: "2-5ans", l: "Dans 2 Ã  5 ans" },
+              { v: "ouvert", l: "Ouvert, sans Ã©chÃ©ance" },
             ].map((o) => (
               <ChoiceChip
                 key={o.v}
@@ -871,7 +879,7 @@ function StepSearch({
           <div className="grid grid-cols-3 gap-2">
             {[
               { v: "oui", l: "Oui" },
-              { v: "peut-etre", l: "Peut-être" },
+              { v: "peut-etre", l: "Peut-Ãªtre" },
               { v: "non", l: "Non" },
             ].map((o) => (
               <ChoiceChip
@@ -903,13 +911,13 @@ function StepPhotos({
   const photo = data.photos[0] ?? null;
 
   /**
-   * Une seule photo à l'inscription.
+   * Une seule photo Ã  l'inscription.
    *
-   * L'étape affichait six emplacements dont cinq verrouillés : on
-   * demandait un effort en montrant surtout ce qui était refusé, juste
-   * avant la dernière validation. La galerie complète — photos
-   * supplémentaires et vidéo — vit dans « Mon profil », une fois le
-   * compte créé.
+   * L'Ã©tape affichait six emplacements dont cinq verrouillÃ©s : on
+   * demandait un effort en montrant surtout ce qui Ã©tait refusÃ©, juste
+   * avant la derniÃ¨re validation. La galerie complÃ¨te â€” photos
+   * supplÃ©mentaires et vidÃ©o â€” vit dans Â« Mon profil Â», une fois le
+   * compte crÃ©Ã©.
    */
   const handleFile = (files: FileList | null) => {
     const file = files?.[0];
@@ -921,7 +929,7 @@ function StepPhotos({
     }
     if (file.size > 8 * 1024 * 1024) {
       toast.error("Image trop volumineuse", {
-        description: "8 Mo maximum. Réduisez-la ou choisissez une autre photo.",
+        description: "8 Mo maximum. RÃ©duisez-la ou choisissez une autre photo.",
       });
       return;
     }
@@ -935,19 +943,19 @@ function StepPhotos({
           name: file.name,
         },
       ]);
-    r.onerror = () => toast.error("Cette image n'a pas pu être lue.");
+    r.onerror = () => toast.error("Cette image n'a pas pu Ãªtre lue.");
     r.readAsDataURL(file);
   };
 
   return (
     <div>
       <StepHeader
-        eyebrow="Étape 4"
+        eyebrow="Ã‰tape 4"
         title="Votre photo de profil"
         description="Une seule photo suffit pour commencer. Vous en ajouterez d'autres depuis votre profil."
       />
 
-      {/* Un seul emplacement, centré et large : c'est LA photo que les
+      {/* Un seul emplacement, centrÃ© et large : c'est LA photo que les
           autres membres verront en premier. */}
       <div className="mt-8 max-w-[15rem] mx-auto">
         {photo ? (
@@ -985,7 +993,7 @@ function StepPhotos({
               </div>
             )}
             <span className="text-sm font-semibold">Ajouter ma photo</span>
-            <span className="text-xs">JPG ou PNG · 8 Mo maximum</span>
+            <span className="text-xs">JPG ou PNG Â· 8 Mo maximum</span>
           </button>
         )}
       </div>
@@ -1005,15 +1013,15 @@ function StepPhotos({
         <p className="font-medium text-foreground mb-1">Une bonne photo principale</p>
         <ul className="list-disc pl-5 space-y-1">
           <li>Un portrait clair et souriant, votre visage bien visible.</li>
-          <li>Une photo récente, qui vous ressemble aujourd'hui.</li>
+          <li>Une photo rÃ©cente, qui vous ressemble aujourd'hui.</li>
           <li>Ni lunettes de soleil, ni photo de groupe.</li>
         </ul>
       </div>
 
       <p className="mt-4 text-center text-xs text-muted-foreground">
-        Vos autres photos et votre vidéo de présentation s'ajoutent depuis
+        Vos autres photos et votre vidÃ©o de prÃ©sentation s'ajoutent depuis
         <span className="font-medium text-foreground"> Mon profil</span>, une
-        fois votre compte créé.
+        fois votre compte crÃ©Ã©.
       </p>
     </div>
   );
@@ -1035,11 +1043,11 @@ function SuccessScreen({ data }: { data: OnboardingData }) {
           Bienvenue !
         </h1>
         <p className="text-muted-foreground mt-3">
-          Votre profil AgapeMeet est prêt. Nous préparons vos premières
-          suggestions de compatibilité.
+          Votre profil Eden Rencontre est prÃªt. Nous prÃ©parons vos premiÃ¨res
+          suggestions de compatibilitÃ©.
         </p>
         {/* Une seule sortie : renvoyer vers la vitrine publique juste
-            après l'inscription ferait sortir de l'application le membre
+            aprÃ¨s l'inscription ferait sortir de l'application le membre
             qu'on vient d'y faire entrer. */}
         <div className="mt-8">
           <Link to="/accueil">
@@ -1047,7 +1055,7 @@ function SuccessScreen({ data }: { data: OnboardingData }) {
               size="lg"
               className="bg-gradient-to-r from-primary to-primary/80 shadow-elegant w-full sm:w-auto"
             >
-              Découvrir des profils
+              DÃ©couvrir des profils
             </Button>
           </Link>
         </div>
@@ -1132,10 +1140,10 @@ function SourceScreen({ onSelect, onBack }: { onSelect: (s: string) => void; onB
     { id: "instagram", label: "Instagram", icon: <Instagram className="w-6 h-6" />, color: "bg-gradient-to-tr from-fuchsia-500 via-pink-500 to-amber-400 text-white" },
     { id: "facebook", label: "Facebook", icon: <Facebook className="w-6 h-6" />, color: "bg-[#1877F2] text-white" },
     { id: "youtube", label: "YouTube", icon: <Youtube className="w-6 h-6" />, color: "bg-[#FF0000] text-white" },
-    // WhatsApp est vraisemblablement le premier canal réel sur ce marché :
-    // un lien partagé dans un groupe d'église circule plus qu'une
-    // publicité. Sans cette entrée, ces membres se rangeaient dans
-    // « Autre » — la case qui n'apprend rien.
+    // WhatsApp est vraisemblablement le premier canal rÃ©el sur ce marchÃ© :
+    // un lien partagÃ© dans un groupe d'Ã©glise circule plus qu'une
+    // publicitÃ©. Sans cette entrÃ©e, ces membres se rangeaient dans
+    // Â« Autre Â» â€” la case qui n'apprend rien.
     { id: "whatsapp", label: "WhatsApp", icon: <MessageCircle className="w-6 h-6" />, color: "bg-[#25D366] text-white" },
     { id: "recommandation", label: "Une recommandation", icon: <Users className="w-6 h-6" />, color: "bg-primary text-primary-foreground" },
     { id: "autre", label: "Autre", icon: <MoreHorizontal className="w-6 h-6" />, color: "bg-primary/10 text-primary" },
@@ -1145,8 +1153,8 @@ function SourceScreen({ onSelect, onBack }: { onSelect: (s: string) => void; onB
       <header className="border-b border-border/40 backdrop-blur-md bg-background/80 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
-            <img src={logoAsset} alt="AgapeMeet" className="w-10 h-10 object-contain" />
-            <span className="font-serif text-xl font-semibold">AgapeMeet</span>
+            <img src={logoAsset} alt="Eden Rencontre" className="w-10 h-10 object-contain" />
+            <span className="font-serif text-xl font-semibold">Eden Rencontre</span>
           </Link>
           <button
             type="button"
@@ -1167,9 +1175,9 @@ function SourceScreen({ onSelect, onBack }: { onSelect: (s: string) => void; onB
         >
           <div className="text-center mb-8">
             <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-foreground">
-              Comment nous as-tu découvert ?
+              Comment nous as-tu dÃ©couvert ?
             </h1>
-            <p className="text-muted-foreground mt-2 text-sm">Dis-nous d'où tu viens 😊</p>
+            <p className="text-muted-foreground mt-2 text-sm">Dis-nous d'oÃ¹ tu viens ðŸ˜Š</p>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {options.map((o) => (
@@ -1192,7 +1200,7 @@ function SourceScreen({ onSelect, onBack }: { onSelect: (s: string) => void; onB
           </div>
         </motion.div>
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Cela nous aide à mieux vous connaître.
+          Cela nous aide Ã  mieux vous connaÃ®tre.
         </p>
       </main>
     </div>

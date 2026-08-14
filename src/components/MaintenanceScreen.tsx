@@ -12,8 +12,8 @@ import { useSetting } from "@/lib/appSettings";
  * recours, y compris après la fin de la maintenance.
  */
 const DEFAULT_MESSAGE =
-  "Nous améliorons AgapeMeet en ce moment même. L'application sera de nouveau " +
-  "accessible d'ici peu — vos conversations et votre profil sont intacts.";
+  "Nous améliorons Eden Rencontre en ce moment même. L'application sera de nouveau " +
+  "accessible d'ici peu – vos conversations et votre profil sont intacts.";
 
 export function MaintenanceScreen() {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ export function MaintenanceScreen() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 flex items-center justify-center px-6">
       <div className="max-w-md text-center">
-        <img src={logo} alt="AgapeMeet" className="w-14 h-14 object-contain mx-auto" />
+        <img src={logo} alt="Eden Rencontre" className="w-14 h-14 object-contain mx-auto" />
 
         <div className="mt-6 w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
           <Wrench className="w-7 h-7" />

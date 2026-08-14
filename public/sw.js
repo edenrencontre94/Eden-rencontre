@@ -1,6 +1,6 @@
 /* eslint-disable no-undef */
 /**
- * Service worker — notifications push.
+ * Service worker – notifications push.
  *
  * Volontairement minimal : il ne met RIEN en cache. Un service worker
  * qui sert des pages hors ligne doit être versionné et purgé à chaque
@@ -13,7 +13,7 @@ const BADGE = "/favicon-96x96.png";
 
 self.addEventListener("install", () => {
   // Prend la main immédiatement : sans cela, la première activation
-  // attend la fermeture de tous les onglets — donc les notifications
+  // attend la fermeture de tous les onglets – donc les notifications
   // n'arriveraient qu'au prochain lancement de l'application.
   self.skipWaiting();
 });
@@ -23,7 +23,7 @@ self.addEventListener("activate", event => {
 });
 
 /**
- * Gestionnaire `fetch` — condition d'installabilité.
+ * Gestionnaire `fetch` – condition d'installabilité.
  *
  * Chrome Android ne propose « Installer l'application » que si le
  * service worker écoute cet évènement. Sans lui, le manifeste a beau
@@ -31,7 +31,7 @@ self.addEventListener("activate", event => {
  *
  * Il ne met RIEN en cache, volontairement. Un service worker qui sert
  * des pages hors ligne doit être versionné et purgé à chaque
- * déploiement — sans quoi les membres restent bloqués sur une version
+ * déploiement – sans quoi les membres restent bloqués sur une version
  * ancienne, sans comprendre pourquoi et sans pouvoir en sortir. On
  * remplit la condition, on n'introduit pas le risque.
  *
@@ -48,15 +48,15 @@ self.addEventListener("push", event => {
     data = event.data ? event.data.json() : {};
   } catch {
     // Charge utile illisible : on affiche quand même quelque chose.
-    // Une notification muette est pire qu'une notification générique —
+    // Une notification muette est pire qu'une notification générique –
     // le navigateur en signale l'absence à l'utilisateur.
-    data = { title: "AgapeMeet", body: "Vous avez du nouveau." };
+    data = { title: "Eden Rencontre", body: "Vous avez du nouveau." };
   }
 
   // Pastille sur l'icône, mise à jour même application FERMÉE.
   //
   // C'est le point important : sans cela, le chiffre ne bougerait qu'à
-  // la prochaine ouverture — c'est-à-dire trop tard pour donner envie
+  // la prochaine ouverture – c'est-à-dire trop tard pour donner envie
   // d'ouvrir.
   //
   // Le total est calculé côté serveur et transmis dans la charge utile :
@@ -70,7 +70,7 @@ self.addEventListener("push", event => {
     );
   }
 
-  const titre = data.title || "AgapeMeet";
+  const titre = data.title || "Eden Rencontre";
   const options = {
     body: data.body || "",
     icon: data.icon || ICONE,
@@ -83,7 +83,7 @@ self.addEventListener("push", event => {
     // `silencieux` : message en rafale. On remplace le texte et la
     // pastille SANS re-sonner.
     //
-    // Le Web Push impose d'afficher quelque chose à chaque envoi — on ne
+    // Le Web Push impose d'afficher quelque chose à chaque envoi – on ne
     // peut pas transmettre une pastille en silence. Ce remplacement est
     // le seul moyen de garder le chiffre juste sans harceler.
     renotify: Boolean(data.tag) && !data.silencieux,

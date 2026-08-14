@@ -34,7 +34,7 @@ type Analytics = {
     departs_succes: number; suspendus: number;
   };
   engagement: {
-    likes: number; passes: number; superlikes: number; boosts: number;
+    likes: number; passes: number; superlikes: number;
     publications: number; visites: number;
     taux_reciprocite: number | null; taux_engagement_match: number | null;
     taux_reponse: number | null; messages_par_match: number | null;
@@ -51,7 +51,7 @@ type Analytics = {
   monetisation: {
     panier_moyen: number; payants_uniques: number; taux_conversion: number;
     taux_reachat: number | null; jours_avant_achat: number | null;
-    revenu_boosts: number; revenu_abonnements: number;
+    revenu_abonnements: number;
     echecs_periode: number; taux_echec: number | null;
   };
   sante: {
@@ -249,7 +249,7 @@ function AdminAnalytics() {
               <Petit label="Likes" valeur={data.engagement.likes} />
               <Petit label="Passes" valeur={data.engagement.passes} />
               <Petit label="Super Likes" valeur={data.engagement.superlikes} />
-              <Petit label="Boosts" valeur={data.engagement.boosts} />
+
               <Petit label="Publications" valeur={data.engagement.publications} />
               <Petit label="Msgs / match" valeur={data.engagement.messages_par_match} />
             </div>
@@ -320,8 +320,7 @@ function AdminAnalytics() {
             <div className="grid gap-4 sm:grid-cols-3 mt-4">
               <Petit label="Revenus abonnements"
                      texte={formatPrice(data.monetisation.revenu_abonnements)} />
-              <Petit label="Revenus Boosts"
-                     texte={formatPrice(data.monetisation.revenu_boosts)} />
+
               <Petit label="Taux d'échec de paiement"
                      valeur={data.monetisation.taux_echec} suffixe=" %" />
             </div>
@@ -500,10 +499,6 @@ const OFFER_LABELS: Record<string, string> = {
   premium_15j: "Premium — 15 jours",
   premium_1m: "Premium — 1 mois",
   premium_3m: "Premium — 3 mois",
-  vip_1m: "VIP — 1 mois",
-  boost_24h: "Boost 24 h",
-  boost_3j: "Boost 3 jours",
-  boost_7j: "Boost 7 jours",
 };
 
 const GENDER_LABELS: Record<string, string> = {

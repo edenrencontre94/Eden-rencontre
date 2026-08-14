@@ -28,21 +28,20 @@ export type { Plan, PlanId, PlanFeatures, Offer, DurationId } from "@/lib/plans"
  * L'abonnement fait désormais autorité côté serveur.
  *
  * Auparavant l'état vivait dans le localStorage : trois lignes dans la console
- * du navigateur suffisaient à s'octroyer VIP. Seul le webhook Chariow, qui
- * passe par la service key, peut créditer la table `subscriptions` — la RLS
+ * du navigateur suffisaient à s'octroyer Premium. Seul le webhook Chariow, qui
+ * passe par la service key, peut créditer la table `subscriptions` – la RLS
  * n'accorde à l'utilisateur qu'un droit de lecture.
  *
  * Les compteurs d'usage quotidien (Super Likes, Boosts) restent en local :
  * ce sont des garde-fous de confort, pas des droits d'accès.
  */
 
-type Usage = { day: string; superLikes: number; month: string; boosts: number };
+type Usage = { day: string; superLikes: number };
 
-const USAGE_KEY = "agapemeet.usage";
+const USAGE_KEY = "edenrencontre.usage";
 const todayKey = () => new Date().toISOString().slice(0, 10);
-const monthKey = () => new Date().toISOString().slice(0, 7);
 
-const initialUsage: Usage = { day: todayKey(), superLikes: 0, month: monthKey(), boosts: 0 };
+const initialUsage: Usage = { day: todayKey(), superLikes: 0 };
 
 type SubscriptionContextValue = {
   planId: PlanId;
@@ -50,16 +49,14 @@ type SubscriptionContextValue = {
   expiresAt: string | null;
   daysLeft: number | null;
   isPaid: boolean;
-  /** Inscrit avant la mise en place du paiement — accès VIP à vie. */
+  /** Inscrit avant la mise en place du paiement – accès Premium à vie. */
   isFounder: boolean;
-  /** 0 gratuit · 1 15j · 2 1 mois · 3 3 mois · 4 VIP */
+  /** 0 gratuit · 1 15j · 2 1 mois · 3 3 mois */
   level: PlanLevel;
   loading: boolean;
   features: PlanFeatures;
   superLikesLeft: number; // -1 = illimité
-  boostsLeft: number; // -1 = illimité
   consumeSuperLike: () => boolean;
-  consumeBoost: () => boolean;
   /** Ouvre le paiement Chariow pour l'offre choisie. */
   startCheckout: (offer: Offer, phone: string, countryCode: string) => Promise<{ ok: boolean; error?: string }>;
   refresh: () => Promise<void>;
@@ -77,13 +74,13 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [usage, setUsage] = useState<Usage>(initialUsage);
   const [pendingPayments, setPendingPayments] = useState(0);
-  /** Membre inscrit avant la mise en place du paiement : accès VIP à vie. */
+  /** Membre inscrit avant la mise en place du paiement : accès Premium à vie. */
   const [isFounder, setIsFounder] = useState(false);
   const [level, setLevel] = useState<PlanLevel>(0);
   // Réglages d'administration : lus une fois, mis en cache par le module.
   const settings = useSettings();
 
-  // ── Compteurs d'usage (locaux) ──
+  // â”€â”€ Compteurs d'usage (locaux) â”€â”€
   useEffect(() => {
     try {
       const raw = localStorage.getItem(USAGE_KEY);
@@ -91,9 +88,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       const parsed = JSON.parse(raw) as Usage;
       setUsage({
         day: todayKey(),
-        month: monthKey(),
+
         superLikes: parsed.day === todayKey() ? parsed.superLikes : 0,
-        boosts: parsed.month === monthKey() ? parsed.boosts : 0,
       });
     } catch {
       /* ignore */
@@ -109,7 +105,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // ── Abonnement (serveur) ──
+  // â”€â”€ Abonnement (serveur) â”€â”€
   const load = useCallback(async () => {
     const userId = await getCurrentUserId();
     if (!userId) {
@@ -175,7 +171,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(t);
   }, [reconcile]);
 
-  // ── Temps réel : le webhook crédite, l'écran se met à jour tout seul ──
+  // â”€â”€ Temps réel : le webhook crédite, l'écran se met à jour tout seul â”€â”€
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
@@ -191,7 +187,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           (payload: any) => {
             const row = payload.new;
             if (!row) return;
-            // Un fondateur reste VIP quoi qu'il arrive côté abonnements :
+            // Un fondateur reste Premium quoi qu'il arrive côté abonnements :
             // sans cette garde, la réception d'une ligne expirée le
             // rétrograderait en gratuit.
             if (isFounder) return;
@@ -220,14 +216,12 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     // Les quotas dépendent du palier acheté, pas seulement de la formule.
     // `applyQuotaSettings` recale ensuite ces valeurs sur les réglages
     // d'administration, afin que l'interface annonce exactement ce que la
-    // base autorise — sans quoi les deux divergeraient dès le premier
+    // base autorise – sans quoi les deux divergeraient dès le premier
     // ajustement fait dans /admin/parametres.
     const f = applyQuotaSettings(featuresFor(planId, level), settings, level);
 
     const superLikesLeft =
       f.superLikesPerDay === -1 ? -1 : Math.max(0, f.superLikesPerDay - usage.superLikes);
-    const boostsLeft =
-      f.boostsPerMonth === -1 ? -1 : Math.max(0, f.boostsPerMonth - usage.boosts);
 
     const daysLeft = expiresAt
       ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000))
@@ -244,19 +238,11 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       loading,
       features: f,
       superLikesLeft,
-      boostsLeft,
 
       consumeSuperLike: () => {
         if (superLikesLeft === 0) return false;
         if (superLikesLeft === -1) return true;
         persistUsage({ ...usage, day: todayKey(), superLikes: usage.superLikes + 1 });
-        return true;
-      },
-
-      consumeBoost: () => {
-        if (boostsLeft === 0) return false;
-        if (boostsLeft === -1) return true;
-        persistUsage({ ...usage, month: monthKey(), boosts: usage.boosts + 1 });
         return true;
       },
 
@@ -281,14 +267,14 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           if (!res.ok) return { ok: false, error: json?.error ?? "Le paiement n'a pas pu être lancé" };
 
           // La commande est créée côté serveur : l'intention d'achat est
-          // réelle. InitiateCheckout, pas Purchase — l'argent n'a pas encore
+          // réelle. InitiateCheckout, pas Purchase – l'argent n'a pas encore
           // changé de main, et beaucoup de tunnels sont abandonnés ici.
           import("@/lib/meta").then(m =>
             m.suivreMeta("InitiateCheckout", {
               valeurXof: offer.priceXOF,
               // Le numero vient d etre saisi pour le Mobile Money : il
               // ameliore nettement la correspondance chez Meta, et part
-              // hache — jamais en clair.
+              // hache – jamais en clair.
               telephone: phone,
             }),
           );

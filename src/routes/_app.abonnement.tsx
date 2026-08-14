@@ -32,11 +32,11 @@ import {
 export const Route = createFileRoute("/_app/abonnement")({
   head: () => ({
     meta: [
-      { title: "Abonnement — AgapeMeet" },
+      { title: "Abonnement — Eden Rencontre" },
       {
         name: "description",
         content:
-          "Choisissez votre formule AgapeMeet : visiteurs, Super Likes illimités, Boosts et filtres avancés.",
+          "Choisissez votre formule Eden Rencontre : visiteurs, Super Likes illimités, Boosts et filtres avancés.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -47,7 +47,7 @@ export const Route = createFileRoute("/_app/abonnement")({
 function SubscriptionPage() {
   const {
     plan, planId, expiresAt, daysLeft, isPaid, isFounder, loading,
-    superLikesLeft, boostsLeft, refresh, pendingPayments, reconcile,
+    superLikesLeft, refresh, pendingPayments, reconcile,
   } = useSubscription();
   const [checkoutOffer, setCheckoutOffer] = useState<Offer | null>(null);
   const [checking, setChecking] = useState(false);
@@ -90,8 +90,8 @@ function SubscriptionPage() {
         </h1>
         <p className="text-xs text-muted-foreground mt-1">
           {isFounder
-            ? "Merci d'avoir rejoint AgapeMeet dès les débuts."
-            : "Voyez vos visiteurs, envoyez des Super Likes illimités et boostez votre profil."}
+            ? "Merci d'avoir rejoint Eden Rencontre dès les débuts."
+            : "Voyez vos visiteurs, envoyez des Super Likes illimités et profitez de toutes les fonctionnalités."}
         </p>
       </div>
 
@@ -107,7 +107,7 @@ function SubscriptionPage() {
             <div className="w-12 h-12 rounded-full bg-white/25 mx-auto flex items-center justify-center">
               <Crown className="w-6 h-6" />
             </div>
-            <h2 className="font-serif text-xl font-semibold mt-3">Accès VIP à vie</h2>
+            <h2 className="font-serif text-xl font-semibold mt-3">Accès Premium à vie</h2>
             <p className="text-xs opacity-90 mt-1.5 max-w-xs mx-auto leading-relaxed">
               Parce que vous étiez là avant tout le monde, l'intégralité des fonctionnalités
               vous reste offerte — sans abonnement, sans limite de durée.
@@ -143,7 +143,7 @@ function SubscriptionPage() {
                   être là, pas trois écrans plus loin. */}
               <WhatsAppButton
                 label="Nous écrire"
-                message="Bonjour, j'ai payé sur AgapeMeet mais mon abonnement n'est toujours pas actif."
+                message="Bonjour, j'ai payé sur Eden Rencontre mais mon abonnement n'est toujours pas actif."
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-[11px] font-semibold hover:bg-emerald-700 transition-colors"
               />
             </div>
@@ -176,20 +176,7 @@ function SubscriptionPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-2 mt-4">
-          <StatTile icon={Eye} label="Visiteurs" value={plan.features.visitors ? "Oui" : "Non"} />
-          <StatTile
-            icon={Star}
-            label="Super Likes"
-            value={superLikesLeft === -1 ? "∞" : String(superLikesLeft)}
-          />
-          <StatTile
-            icon={Zap}
-            label="Boosts"
-            value={boostsLeft === -1 ? "∞" : String(boostsLeft)}
-          />
         </div>
-      </div>
 
       {/* Formules — inutile de les proposer à qui a déjà tout */}
       {!isFounder && (
@@ -218,7 +205,7 @@ function SubscriptionPage() {
         {checkoutOffer && (
           <CheckoutSheet
             offerId={checkoutOffer.id}
-            title={`${checkoutOffer.planId === "vip" ? "VIP" : "Premium"} · ${checkoutOffer.label}`}
+            title={`Premium · ${checkoutOffer.label}`}
             subtitle={`Abonnement de ${checkoutOffer.label}`}
             priceXOF={checkoutOffer.priceXOF}
             onClose={() => setCheckoutOffer(null)}
@@ -230,8 +217,8 @@ function SubscriptionPage() {
         <SupportContactBlock
           title="Un problème avec votre paiement ?"
           description="Paiement débité sans activation, erreur de l'opérateur mobile, ou simple question sur les formules : écrivez-nous, une personne vous répond."
-          message="Bonjour, j'ai une question concernant mon paiement sur AgapeMeet."
-          subject="Question sur mon paiement AgapeMeet"
+          message="Bonjour, j'ai une question concernant mon paiement sur Eden Rencontre."
+          subject="Question sur mon paiement Eden Rencontre"
           compact
         />
       </div>
@@ -278,7 +265,6 @@ function PlanCard({
         <div>
           <div className="font-serif text-xl font-semibold flex items-center gap-1.5">
             {plan.name}
-            {plan.id === "vip" && <Crown className="w-4 h-4 text-gold" />}
           </div>
           <div className={`text-[11px] ${plan.highlight ? "opacity-85" : "text-muted-foreground"}`}>
             {plan.tagline}

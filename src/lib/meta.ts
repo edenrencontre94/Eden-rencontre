@@ -17,8 +17,8 @@ import { supabase } from "@/lib/supabase";
  * L'adresse e-mail part hachée, et uniquement depuis le serveur.
  */
 
-const CLE_SESSION = "agape_ad_session";
-const CLE_UTM = "agape_utm";
+const CLE_SESSION = "eden_ad_session";
+const CLE_UTM = "eden_utm";
 
 export type Evenement =
   | "PageView" | "ViewContent" | "CompleteRegistration" | "CompleteProfile"

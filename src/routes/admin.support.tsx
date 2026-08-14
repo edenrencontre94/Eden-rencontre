@@ -176,7 +176,7 @@ function AdminSupport() {
     load();
   };
 
-  // ── Vue conversation ───────────────────────────────────────
+  // â”€â”€ Vue conversation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (selected) {
     return (
       <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -248,7 +248,7 @@ function AdminSupport() {
                   : "bg-card border border-border rounded-bl-md"
               }`}>
                 <p className="text-[11px] font-semibold opacity-70 mb-1">
-                  {m.is_staff ? "AgapeMeet" : names[selected.user_id] ?? "Membre"}
+                  {m.is_staff ? "Eden Rencontre" : names[selected.user_id] ?? "Membre"}
                 </p>
                 <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.body}</p>
                 <p className="text-[10px] opacity-60 mt-1.5">
@@ -290,7 +290,7 @@ function AdminSupport() {
     );
   }
 
-  // ── Vue liste ──────────────────────────────────────────────
+  // â”€â”€ Vue liste â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -321,8 +321,8 @@ function AdminSupport() {
             <Stat icon={Inbox} label="À traiter" value={String(stats.open)} warn={stats.open > 0} />
             <Stat icon={Clock} label="En attente du membre" value={String(stats.pending)} />
             <Stat
-              icon={Timer} label="Délai moyen de 1ʳᵉ réponse"
-              value={stats.avg_first_reply_hours != null ? `${stats.avg_first_reply_hours} h` : "—"}
+              icon={Timer} label="Délai moyen de 1Ê³áµ‰ réponse"
+              value={stats.avg_first_reply_hours != null ? `${stats.avg_first_reply_hours} h` : "–"}
             />
             <Stat icon={CheckCircle2} label="Résolus" value={String(stats.resolved)}
                   hint={`${stats.total} au total`} />

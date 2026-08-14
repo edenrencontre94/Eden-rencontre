@@ -4,10 +4,10 @@ import { PublicLayout, SITE_URL } from "@/components/public/PublicLayout";
 export const Route = createFileRoute("/conditions")({
   head: () => ({
     meta: [
-      { title: "Conditions d'utilisation — AgapeMeet" },
+      { title: "Conditions d'utilisation – Eden Rencontre" },
       {
         name: "description",
-        content: "Conditions générales d'utilisation d'AgapeMeet : accès au service, comportement attendu, abonnements et résiliation.",
+        content: "Conditions générales d'utilisation d'Eden Rencontre : accès au service, comportement attendu, abonnements et résiliation.",
       },
     ],
     links: [{ rel: "canonical", href: `${SITE_URL}/conditions` }],
@@ -19,7 +19,7 @@ const SECTIONS = [
   {
     h: "1. Objet",
     p: [
-      "AgapeMeet est un service de mise en relation destiné à des personnes majeures de confession chrétienne recherchant une relation sérieuse orientée vers le mariage.",
+      "Eden Rencontre est un service de mise en relation destiné à des personnes majeures de confession chrétienne recherchant une relation sérieuse orientée vers le mariage.",
       "L'utilisation du service implique l'acceptation pleine et entière des présentes conditions.",
     ],
   },
@@ -42,9 +42,9 @@ const SECTIONS = [
   {
     h: "4. Abonnements et paiements",
     p: [
-      "Les formules Premium et VIP sont vendues sous forme de durées déterminées, réglées en une seule fois. Aucune reconduction automatique n'est appliquée et aucun prélèvement récurrent n'est effectué.",
+      "La formule Premium est vendue sous forme de durées déterminées, réglées en une seule fois. Aucune reconduction automatique n'est appliquée et aucun prélèvement récurrent n'est effectué.",
       "Un achat effectué pendant une période active prolonge celle-ci au lieu de la remplacer.",
-      "Les paiements sont traités par un prestataire tiers. AgapeMeet ne conserve aucune donnée bancaire.",
+      "Les paiements sont traités par un prestataire tiers. Eden Rencontre ne conserve aucune donnée bancaire.",
       "Les fonctionnalités incluses dans chaque formule sont décrites sur la page Tarifs et peuvent évoluer. Toute évolution défavorable ne s'applique pas aux durées déjà achetées.",
     ],
   },
@@ -58,7 +58,7 @@ const SECTIONS = [
   {
     h: "6. Responsabilité",
     p: [
-      "AgapeMeet met en relation des personnes mais n'intervient pas dans les échanges ni dans les rencontres qui en découlent. Chaque membre reste responsable de ses décisions et de sa sécurité.",
+      "Eden Rencontre met en relation des personnes mais n'intervient pas dans les échanges ni dans les rencontres qui en découlent. Chaque membre reste responsable de ses décisions et de sa sécurité.",
       "Nous mettons en œuvre des moyens de vérification et de modération, sans pouvoir garantir l'exactitude de toutes les informations publiées par les membres.",
       "Il est recommandé d'observer les précautions d'usage lors d'une première rencontre : lieu public, information d'un proche, moyen de retour autonome.",
     ],
@@ -66,8 +66,8 @@ const SECTIONS = [
   {
     h: "7. Propriété intellectuelle",
     p: [
-      "L'ensemble des éléments composant la plateforme — marque, interface, textes, éléments graphiques — demeure la propriété d'AgapeMeet.",
-      "Vous conservez la propriété des contenus que vous publiez et accordez à AgapeMeet le droit de les afficher aux autres membres dans le cadre du service.",
+      "L'ensemble des éléments composant la plateforme – marque, interface, textes, éléments graphiques – demeure la propriété d'Eden Rencontre.",
+      "Vous conservez la propriété des contenus que vous publiez et accordez à Eden Rencontre le droit de les afficher aux autres membres dans le cadre du service.",
     ],
   },
   {
@@ -82,7 +82,7 @@ function ConditionsPage() {
   return (
     <PublicLayout
       title="Conditions d'utilisation"
-      intro="Les règles qui encadrent l'usage d'AgapeMeet."
+      intro="Les règles qui encadrent l'usage d'Eden Rencontre."
       breadcrumb={[{ label: "Conditions", to: "/conditions" }]}
     >
       <div className="space-y-7">

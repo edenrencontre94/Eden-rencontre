@@ -22,7 +22,7 @@ export const Route = createFileRoute("/rencontre-chretienne/$pays")({
     const url = `${SITE_URL}/rencontre-chretienne/${c.slug}`;
     return {
       meta: [
-        { title: `${c.title} | AgapeMeet` },
+        { title: `${c.title} | Eden Rencontre` },
         { name: "description", content: c.metaDescription },
         { property: "og:title", content: c.title },
         { property: "og:description", content: c.metaDescription },
@@ -73,7 +73,7 @@ function CountryPage() {
           <MapPin className="w-5 h-5 text-primary" /> Où sont nos membres
         </h2>
         <p className="text-sm text-muted-foreground mt-2">
-          AgapeMeet est accessible depuis tout le pays. Les principales villes couvertes :
+          Eden Rencontre est accessible depuis tout le pays. Les principales villes couvertes :
         </p>
         <div className="flex flex-wrap gap-2 mt-3">
           {c.cities.map(city => (
@@ -107,7 +107,7 @@ function CountryPage() {
       <div className="mt-8 rounded-2xl bg-gradient-to-br from-primary to-primary/85 text-primary-foreground p-6 text-center">
         <ShieldCheck className="w-8 h-8 mx-auto opacity-90" />
         <h2 className="font-serif text-xl font-semibold mt-2">
-          Rejoignez AgapeMeet {c.name === "France" ? "en" : "au"} {c.name}
+          Rejoignez Eden Rencontre {c.name === "France" ? "en" : "au"} {c.name}
         </h2>
         <p className="text-sm opacity-90 mt-1.5">
           Inscription gratuite, profil visible uniquement des membres.

@@ -81,7 +81,7 @@ export function applyQuotaSettings<T extends Record<string, any>>(
     return level >= (typeof v === "number" ? v : fallback);
   };
 
-  const boosts = num(`quota_boosts_l${level}`, features.boostsPerMonth);
+
   const voice = gate("min_level_voice_message", 1);
   const calls = gate("min_level_audio_call", 1);
 
@@ -91,15 +91,14 @@ export function applyQuotaSettings<T extends Record<string, any>>(
     dailyLikes: num(`quota_likes_l${level}`, features.dailyLikes),
     superLikesPerDay: num(`quota_superlikes_l${level}`, features.superLikesPerDay),
     superLikeCooldownDays: num(`superlike_cooldown_l${level}`, features.superLikeCooldownDays),
-    boostsPerMonth: boosts,
-    canBoost: boosts !== 0 && num(`boost_minutes_l${level}`, 30) > 0,
+
     unlimitedLikes: num(`quota_likes_l${level}`, features.dailyLikes) === -1,
     voiceMessages: voice,
     calls,
-    videoCalls: gate("min_level_video_call", 4),
-    videoMessages: gate("min_level_video_message", 4),
+    videoCalls: gate("min_level_video_call", 3),
+    videoMessages: gate("min_level_video_message", 3),
     communityMedia: gate("min_level_post_image", 1),
-    communityVideo: gate("min_level_post_video", 4),
+    communityVideo: gate("min_level_post_video", 3),
   };
 }
 

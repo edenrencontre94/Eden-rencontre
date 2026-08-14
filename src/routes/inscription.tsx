@@ -12,18 +12,18 @@ import { useSetting } from "@/lib/appSettings";
 export const Route = createFileRoute("/inscription")({
   head: () => ({
     meta: [
-      { title: "Créer votre compte — AgapeMeet" },
+      { title: "Créer votre compte — Eden Rencontre" },
       {
         name: "description",
         content:
-          "Créez votre compte AgapeMeet gratuitement et rejoignez une communauté de chrétiens qui cherchent une relation sérieuse orientée vers le mariage.",
+          "Créez votre compte Eden Rencontre gratuitement et rejoignez une communauté de chrétiens qui cherchent une relation sérieuse orientée vers le mariage.",
       },
-      { property: "og:title", content: "Créer votre compte — AgapeMeet" },
-      { property: "og:url", content: "https://agapemeet.com/inscription" },
+      { property: "og:title", content: "Créer votre compte — Eden Rencontre" },
+      { property: "og:url", content: "https://edenrencontre.com/inscription" },
       { property: "og:type", content: "website" },
     ],
     // Absolue, pour la même raison que sur la page d'accueil
-    links: [{ rel: "canonical", href: "https://agapemeet.com/inscription" }],
+    links: [{ rel: "canonical", href: "https://edenrencontre.com/inscription" }],
   }),
   component: InscriptionPage,
 });
@@ -94,15 +94,28 @@ function InscriptionPage() {
 
       if (authError) throw authError;
 
-      // Stocker l'ID et les metadonnées dans sessionStorage
-      // pour l'onboarding (même si l'email n'est pas encore confirmé)
-      const userId = authData.user?.id || authData.session?.user?.id;
-      if (userId) {
-        sessionStorage.setItem("agape_pending_user_id", userId);
-        sessionStorage.setItem("agape_pending_first_name", prenom);
-        sessionStorage.setItem("agape_pending_last_name", nom);
+      // Effacer toute ancienne session / sessionStorage résiduel de
+      // l'ancien projet Supabase avant de créer la nouvelle session.
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.removeItem("eden_pending_user_id");
+          sessionStorage.removeItem("eden_pending_first_name");
+          sessionStorage.removeItem("eden_pending_last_name");
+        } catch {}
       }
-      
+
+      // Connexion explicite pour créer une session JWT valide immédiatement,
+      // indépendamment de la configuration de confirmation d'email.
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) throw signInError;
+
+      const userId = signInData.user?.id;
+      if (userId) {
+        sessionStorage.setItem("eden_pending_user_id", userId);
+        sessionStorage.setItem("eden_pending_first_name", prenom);
+        sessionStorage.setItem("eden_pending_last_name", nom);
+      }
+
       toast.success("Compte créé avec succès !");
       navigate({ to: "/onboarding" });
     } catch (err: any) {
@@ -117,8 +130,8 @@ function InscriptionPage() {
       <header className="absolute top-0 left-0 right-0 z-40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <img src={logoAsset} alt="AgapeMeet" className="w-10 h-10 object-contain" />
-            <span className="font-serif text-xl font-semibold">AgapeMeet</span>
+            <img src={logoAsset} alt="Eden Rencontre" className="w-10 h-10 object-contain" />
+            <span className="font-serif text-xl font-semibold">Eden Rencontre</span>
           </Link>
         </div>
       </header>
@@ -255,7 +268,7 @@ function InscriptionPage() {
                   </div>
                 </div>
                 <span className="text-sm text-muted-foreground leading-relaxed select-none">
-                  J'accepte les <a href="#" onClick={(e) => e.preventDefault()} className="text-primary hover:underline font-medium">termes et conditions</a> d'utilisation de AgapeMeet
+                  J'accepte les <a href="#" onClick={(e) => e.preventDefault()} className="text-primary hover:underline font-medium">termes et conditions</a> d'utilisation de Eden Rencontre
                 </span>
               </label>
 

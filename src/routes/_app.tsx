@@ -1,14 +1,7 @@
 import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-router";
 import { BottomNav } from "@/components/app/BottomNav";
 import { Bell, Crown, Rocket, Shield, User } from "lucide-react";
-import {
-  BOOST_DURATION_MIN,
-  boostErrorMessage,
-  fetchBoostStatus,
-  minutesLeft,
-  startBoost,
-  type BoostStatus,
-} from "@/lib/boost";
+
 import { SubscriptionProvider } from "@/lib/subscription";
 import logo from "@/assets/logo.png";
 import { useEffect, useState } from "react";
@@ -38,7 +31,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { usePresence } from "@/hooks/usePresence";
 import { IncomingCallListener } from "@/components/app/IncomingCallListener";
-import { BoostPicker } from "@/components/app/BoostPicker";
+
 import { useIsAdmin } from "@/lib/auth";
 import { useSetting } from "@/lib/appSettings";
 import { MaintenanceScreen } from "@/components/MaintenanceScreen";
@@ -64,95 +57,7 @@ export const Route = createFileRoute("/_app")({
   }),
 });
 
-/**
- * Bouton Boost de l'en-tête.
- * Pendant un boost actif, l'icône reste allumée avec le décompte —
- * sinon l'utilisateur ne saurait pas que son boost tourne.
- */
-function BoostButton() {
-  const [status, setStatus] = useState<BoostStatus | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [, forceTick] = useState(0);
-  const [pickerReason, setPickerReason] = useState<"plan" | "quota" | null>(null);
 
-  const refresh = async () => setStatus(await fetchBoostStatus());
-
-  useEffect(() => { refresh(); }, []);
-
-  // Rafraîchit le décompte chaque minute tant qu'un boost tourne
-  useEffect(() => {
-    if (!status?.activeUntil) return;
-    const t = setInterval(() => {
-      if (minutesLeft(status.activeUntil) <= 0) refresh();
-      else forceTick(n => n + 1);
-    }, 60000);
-    return () => clearInterval(t);
-  }, [status?.activeUntil]);
-
-  const active = minutesLeft(status?.activeUntil ?? null) > 0;
-
-  const handleClick = async () => {
-    if (busy) return;
-
-    if (active) {
-      toast.info(`Boost actif encore ${minutesLeft(status!.activeUntil)} min`, {
-        description: "Votre profil est mis en avant dans les découvertes.",
-      });
-      return;
-    }
-
-    setBusy(true);
-    const res = await startBoost();
-    setBusy(false);
-
-    if (res.ok) {
-      toast.success(`Boost activé pour ${BOOST_DURATION_MIN} minutes 🚀`, {
-        description: "Votre profil passe en tête des découvertes.",
-      });
-      refresh();
-      return;
-    }
-
-    // Pas de Boost disponible → on propose l'achat plutôt qu'un simple refus
-    if (res.reason === "plan" || res.reason === "quota") {
-      setPickerReason(res.reason);
-      return;
-    }
-
-    toast.error(boostErrorMessage(res.reason, res.expiresAt));
-    refresh();
-  };
-
-  return (
-    <>
-      <button
-        onClick={handleClick}
-        disabled={busy}
-        aria-label="Boost"
-        title={active ? `Boost actif — ${minutesLeft(status!.activeUntil)} min` : "Booster mon profil"}
-        className={`relative w-9 h-9 rounded-full flex items-center justify-center transition-transform hover:scale-105 disabled:opacity-60 ${
-          active
-            ? "bg-primary text-primary-foreground shadow-elegant"
-            : "border border-border bg-background hover:bg-secondary"
-        }`}
-      >
-        <Rocket className={`w-4 h-4 ${active ? "animate-pulse" : ""}`} />
-        {active && (
-          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 rounded-full bg-primary text-primary-foreground text-[8px] font-bold leading-tight">
-            {minutesLeft(status!.activeUntil)}
-          </span>
-        )}
-        {!active && status && status.left !== 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-gold border border-background" />
-        )}
-      </button>
-
-      {pickerReason && (
-        <BoostPicker reason={pickerReason} onClose={() => { setPickerReason(null); refresh(); }} />
-      )}
-    </>
-  );
-}
 
 function AppLayout() {
   usePresence();
@@ -317,7 +222,7 @@ function AppLayout() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <img src={logo} alt="AgapeMeet" className="w-12 h-12 object-contain animate-pulse" />
+          <img src={logo} alt="Eden Rencontre" className="w-12 h-12 object-contain animate-pulse" />
           <p className="text-sm text-muted-foreground">Chargement...</p>
         </div>
       </div>
@@ -332,8 +237,8 @@ function AppLayout() {
         <header className="sticky top-0 z-30 bg-background/85 backdrop-blur-xl border-b border-border/50">
           <div className="max-w-2xl mx-auto flex items-center justify-between px-4 py-3">
             <Link to="/" className="flex items-center gap-2">
-              <img src={logo} alt="AgapeMeet" className="w-9 h-9 object-contain" />
-              <span className="font-serif text-lg font-semibold">AgapeMeet</span>
+              <img src={logo} alt="Eden Rencontre" className="w-9 h-9 object-contain" />
+              <span className="font-serif text-lg font-semibold">Eden Rencontre</span>
             </Link>
             <div className="flex items-center gap-2">
               {/* Visible des seuls administrateurs. C'est la porte d'entrée
@@ -356,7 +261,7 @@ function AppLayout() {
               >
                 <Crown className="w-4 h-4" />
               </Link>
-              <BoostButton />
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button

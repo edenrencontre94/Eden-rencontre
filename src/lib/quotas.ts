@@ -54,12 +54,12 @@ export function quotaErrorMessage(error: unknown): string | null {
 
   if (raw.includes("FREE_MESSAGE_QUOTA") || raw.includes("MESSAGE_QUOTA_REACHED"))
     return "Vous avez atteint votre quota de messages du jour";
-  if (raw.includes("VIP_ONLY_VIDEO_MESSAGE"))
-    return "Envoyer une vidéo en conversation est réservé aux membres VIP";
-  if (raw.includes("VIP_ONLY_VIDEO_CALL"))
-    return "Les appels vidéo sont réservés aux membres VIP";
-  if (raw.includes("VIP_ONLY_VIDEO_POST"))
-    return "Publier une vidéo est réservé aux membres VIP";
+  if (raw.includes("VIP_ONLY_VIDEO_MESSAGE") || raw.includes("PREMIUM_ONLY_VIDEO_MESSAGE"))
+    return "Envoyer une vidéo en conversation est réservé aux membres Premium";
+  if (raw.includes("VIP_ONLY_VIDEO_CALL") || raw.includes("PREMIUM_ONLY_VIDEO_CALL"))
+    return "Les appels vidéo sont réservés aux membres Premium";
+  if (raw.includes("VIP_ONLY_VIDEO_POST") || raw.includes("PREMIUM_ONLY_VIDEO_POST"))
+    return "Publier une vidéo est réservé aux membres Premium";
   if (raw.includes("FREE_NO_VOICE"))
     return "Les messages vocaux sont réservés aux membres Premium";
   if (raw.includes("FREE_LIKE_QUOTA"))

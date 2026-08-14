@@ -17,8 +17,8 @@ export const Route = createFileRoute("/admin/parametres")({
 /**
  * Réglages réellement appliqués.
  *
- * Cette page simulait un enregistrement — `await new Promise(r =>
- * setTimeout(r, 800))` suivi d'un message de succès — sans rien écrire.
+ * Cette page simulait un enregistrement – `await new Promise(r =>
+ * setTimeout(r, 800))` suivi d'un message de succès – sans rien écrire.
  * Chaque valeur est désormais stockée dans `app_settings` et LUE par les
  * fonctions de la base : modifier un quota ici change immédiatement le
  * comportement de l'application, sans redéploiement.
@@ -26,13 +26,12 @@ export const Route = createFileRoute("/admin/parametres")({
 
 type Settings = Record<string, any>;
 
-/** 0 = Gratuit, 1 à 3 = paliers Premium, 4 = VIP. */
+/** 0 = Gratuit, 1 à 3 = paliers Premium. */
 const LEVELS = [
   { lvl: 0, label: "Gratuit",  short: "Gratuit",  tone: "muted" },
-  { lvl: 1, label: "Premium — 15 jours", short: "15 j", tone: "premium" },
-  { lvl: 2, label: "Premium — 1 mois",   short: "1 mois", tone: "premium" },
-  { lvl: 3, label: "Premium — 3 mois",   short: "3 mois", tone: "premium" },
-  { lvl: 4, label: "VIP",      short: "VIP",      tone: "vip" },
+  { lvl: 1, label: "Premium – 15 jours", short: "15 j", tone: "premium" },
+  { lvl: 2, label: "Premium – 1 mois",   short: "1 mois", tone: "premium" },
+  { lvl: 3, label: "Premium – 3 mois",   short: "3 mois", tone: "premium" },
 ] as const;
 
 /** Une ligne de la grille = un quota, décliné sur les cinq paliers. */
@@ -61,18 +60,7 @@ const QUOTA_ROWS: { prefix: string; label: string; hint: string; icon: any }[] =
     hint: "En jours. Mettre 0 pour appliquer le quota journalier à la place.",
     icon: Users2,
   },
-  {
-    prefix: "quota_boosts_l",
-    label: "Boosts inclus par mois",
-    hint: "Ne concerne pas les Boosts achetés à l'unité, qui restent ouverts à tous.",
-    icon: Rocket,
-  },
-  {
-    prefix: "boost_minutes_l",
-    label: "Durée du Boost inclus",
-    hint: "En minutes. Une durée de 0 désactive le Boost inclus pour ce palier.",
-    icon: Rocket,
-  },
+
 ];
 
 /** Fonctionnalités ouvertes à partir d'un palier donné. */
@@ -181,7 +169,7 @@ function AdminParametres() {
         </div>
       )}
 
-      {/* ── Accès à la plateforme ─────────────────────────────── */}
+      {/* â”€â”€ Accès à la plateforme â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="rounded-2xl border border-border bg-card p-5">
         <h2 className="font-serif text-lg font-semibold flex items-center gap-2">
           <Wrench className="w-5 h-5 text-primary" /> Accès à la plateforme
@@ -227,7 +215,7 @@ function AdminParametres() {
         )}
       </section>
 
-      {/* ── Quotas par offre ──────────────────────────────────── */}
+      {/* â”€â”€ Quotas par offre â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="rounded-2xl border border-border bg-card p-5">
         <h2 className="font-serif text-lg font-semibold flex items-center gap-2">
           <Shield className="w-5 h-5 text-primary" /> Limites et quotas par offre
@@ -235,7 +223,7 @@ function AdminParametres() {
         <p className="text-xs text-muted-foreground mt-1 max-w-2xl">
           Saisissez <strong className="text-foreground">-1</strong> pour « illimité »
           et <strong className="text-foreground">0</strong> pour « aucun accès ».
-          Ces limites sont imposées par des triggers en base — elles ne se
+          Ces limites sont imposées par des triggers en base – elles ne se
           contournent pas depuis le navigateur.
         </p>
 
@@ -294,22 +282,22 @@ function AdminParametres() {
         <div className="mt-5 rounded-xl bg-secondary/60 p-3.5 flex gap-2.5">
           <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Les quotas Premium et VIP s'appliquent aussi aux abonnés{" "}
+            Les quotas Premium s'appliquent aussi aux abonnés{" "}
             <strong className="text-foreground">déjà payants</strong>. Réduire une
-            valeur revient à modifier ce qu'ils ont acheté — à la hausse, en
+            valeur revient à modifier ce qu'ils ont acheté – à la hausse, en
             revanche, personne ne s'en plaindra.
           </p>
         </div>
       </section>
 
-      {/* ── Ouverture des fonctionnalités ─────────────────────── */}
+      {/* â”€â”€ Ouverture des fonctionnalités â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="rounded-2xl border border-border bg-card p-5">
         <h2 className="font-serif text-lg font-semibold flex items-center gap-2">
           <Users2 className="w-5 h-5 text-primary" /> Ouverture des fonctionnalités
         </h2>
         <p className="text-xs text-muted-foreground mt-1 max-w-2xl">
           Palier minimum requis pour chaque fonctionnalité. Abaisser une valeur
-          l'ouvre immédiatement aux paliers inférieurs — pratique pour une
+          l'ouvre immédiatement aux paliers inférieurs – pratique pour une
           opération commerciale limitée dans le temps.
         </p>
 
@@ -337,14 +325,14 @@ function AdminParametres() {
         </div>
       </section>
 
-      {/* ── Contact assistance ────────────────────────────────── */}
+      {/* â”€â”€ Contact assistance â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="rounded-2xl border border-border bg-card p-5">
         <h2 className="font-serif text-lg font-semibold flex items-center gap-2">
           <LifeBuoy className="w-5 h-5 text-primary" /> Contact assistance
         </h2>
         <p className="text-xs text-muted-foreground mt-1 max-w-2xl">
           Coordonnées affichées aux membres sur la page d'aide. Laisser un champ
-          vide masque la ligne correspondante — mieux vaut ne rien annoncer que
+          vide masque la ligne correspondante – mieux vaut ne rien annoncer que
           promettre un canal que personne ne surveille.
         </p>
 
@@ -357,7 +345,7 @@ function AdminParametres() {
               type="email"
               value={settings.support_email ?? ""}
               onChange={e => setValue("support_email", e.target.value)}
-              placeholder="contact@agapemeet.com"
+              placeholder="contact@edenrencontre.com"
               className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
             {settings.support_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(settings.support_email) && (
@@ -414,7 +402,7 @@ function AdminParametres() {
         </div>
       </section>
 
-      {/* ── Communauté WhatsApp ───────────────────────────────── */}
+      {/* â”€â”€ Communauté WhatsApp â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="rounded-2xl border border-border bg-card p-5">
         <h2 className="font-serif text-lg font-semibold flex items-center gap-2">
           <Users className="w-5 h-5 text-primary" /> Communauté WhatsApp
@@ -437,7 +425,7 @@ function AdminParametres() {
               placeholder="https://whatsapp.com/channel/…"
               className="mt-1.5 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
-            {/* Une URL mal formée n'échoue qu'au clic, chez le membre —
+            {/* Une URL mal formée n'échoue qu'au clic, chez le membre –
                 donc jamais sous vos yeux. */}
             {settings.community_whatsapp &&
               !/^https:\/\/(chat\.)?whatsapp\.com\//.test(String(settings.community_whatsapp)) && (
@@ -480,7 +468,7 @@ function AdminParametres() {
         </div>
       </section>
 
-      {/* ── E-mails ───────────────────────────────────────────── */}
+      {/* â”€â”€ E-mails â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="rounded-2xl border border-border bg-card p-5">
         <h2 className="font-serif text-lg font-semibold flex items-center gap-2">
           <Mail className="w-5 h-5 text-primary" /> E-mails
@@ -508,29 +496,29 @@ function AdminParametres() {
           <p className="text-xs leading-relaxed text-muted-foreground">
             C'est ce plafond qui protège la réputation du domaine. Dix e-mails
             quotidiens sur une application de rencontre, et le taux de plainte
-            dépasse le seuil de Gmail — vos confirmations d'inscription cessent
+            dépasse le seuil de Gmail – vos confirmations d'inscription cessent
             alors d'arriver, puisqu'elles partent de la même adresse.
           </p>
         </div>
       </section>
 
-      {/* ── Hors interface ────────────────────────────────────── */}
+      {/* â”€â”€ Hors interface â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="rounded-2xl border border-border bg-secondary/40 p-5">
         <h2 className="font-serif text-lg font-semibold flex items-center gap-2">
           <Settings className="w-5 h-5 text-muted-foreground" /> Réglages non modifiables ici
         </h2>
         <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
           <li>
-            <strong className="text-foreground">Tarifs des formules</strong> — définis sur Chariow.
+            <strong className="text-foreground">Tarifs des formules</strong> – définis sur Chariow.
             Les modifier ici n'aurait aucun effet : c'est le prix du produit Chariow qui est
             réellement encaissé.
           </li>
           <li>
-            <strong className="text-foreground">Durées vendues</strong> — 15 jours, 1 mois,
+            <strong className="text-foreground">Durées vendues</strong> – 15 jours, 1 mois,
             3 mois. Liées aux produits Chariow et aux paiements déjà enregistrés.
           </li>
           <li>
-            <strong className="text-foreground">Rôles administrateurs</strong> — attribués en base,
+            <strong className="text-foreground">Rôles administrateurs</strong> – attribués en base,
             volontairement hors interface pour éviter toute promotion accidentelle.
           </li>
         </ul>

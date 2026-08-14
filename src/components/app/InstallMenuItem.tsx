@@ -12,8 +12,8 @@ import logoAsset from "@/assets/logo.png";
 /**
  * « Installer l'application » dans le menu du profil.
  *
- * Le bandeau automatique n'apparaît qu'au 3ᵉ passage, et se tait 60
- * jours après un refus — de bonnes règles, mais qui laissaient sans
+ * Le bandeau automatique n'apparaît qu'au 3áµ‰ passage, et se tait 60
+ * jours après un refus – de bonnes règles, mais qui laissaient sans
  * recours quiconque décidait d'installer à un autre moment.
  *
  * Ici, l'entrée est disponible en permanence : elle ne vient pas vers
@@ -37,7 +37,7 @@ export function InstallMenuItem() {
       return;
     }
     const ok = await installer();
-    if (ok) toast.success("AgapeMeet est installé sur votre appareil");
+    if (ok) toast.success("Eden Rencontre est installé sur votre appareil");
   };
 
   return (

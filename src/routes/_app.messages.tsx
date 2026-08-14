@@ -30,8 +30,8 @@ import { useNavigate } from "@tanstack/react-router";
 export const Route = createFileRoute("/_app/messages")({
   head: () => ({
     meta: [
-      { title: "Messages — AgapeMeet" },
-      { name: "description", content: "Vos conversations sur AgapeMeet." },
+      { title: "Messages — Eden Rencontre" },
+      { name: "description", content: "Vos conversations sur Eden Rencontre." },
       { name: "robots", content: "noindex" },
     ],
   }),

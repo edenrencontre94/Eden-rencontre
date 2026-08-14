@@ -6,13 +6,13 @@ import { ArrowRight } from "lucide-react";
 export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
-      { title: "Questions fréquentes — AgapeMeet" },
+      { title: "Questions fréquentes – Eden Rencontre" },
       {
         name: "description",
         content:
-          "Toutes les réponses sur AgapeMeet : inscription gratuite, fonctionnement des matchs, Super Likes, Boost, sécurité des profils, paiement Mobile Money et abonnements sans reconduction.",
+          "Toutes les réponses sur Eden Rencontre : inscription gratuite, fonctionnement des matchs, Super Likes, sécurité des profils, paiement Mobile Money et abonnements sans reconduction.",
       },
-      { property: "og:title", content: "Questions fréquentes — AgapeMeet" },
+      { property: "og:title", content: "Questions fréquentes – Eden Rencontre" },
       { property: "og:url", content: `${SITE_URL}/faq` },
       { property: "og:type", content: "website" },
     ],
@@ -41,7 +41,7 @@ function FaqPage() {
   return (
     <PublicLayout
       title="Questions fréquentes"
-      intro="Tout ce qu'il faut savoir avant de rejoindre AgapeMeet — et après."
+      intro="Tout ce qu'il faut savoir avant de rejoindre Eden Rencontre – et après."
       breadcrumb={[{ label: "FAQ", to: "/faq" }]}
     >
       <div className="space-y-10">
@@ -71,7 +71,7 @@ function FaqPage() {
       <div className="mt-12 rounded-2xl bg-gradient-to-br from-primary to-primary/85 text-primary-foreground p-6 text-center">
         <h2 className="font-serif text-xl font-semibold">Une autre question ?</h2>
         <p className="text-sm opacity-90 mt-1.5">
-          Le plus simple reste encore d'essayer — l'inscription est gratuite.
+          Le plus simple reste encore d'essayer – l'inscription est gratuite.
         </p>
         <Link
           to="/inscription"

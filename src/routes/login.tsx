@@ -11,8 +11,8 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Se connecter — AgapeMeet" },
-      { name: "description", content: "Connectez-vous a votre compte AgapeMeet." },
+      { title: "Se connecter – Eden Rencontre" },
+      { name: "description", content: "Connectez-vous a votre compte Eden Rencontre." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -60,8 +60,8 @@ function LoginPage() {
       <header className="border-b border-border/40 backdrop-blur-md bg-background/80 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <img src={logoAsset} alt="AgapeMeet" className="w-10 h-10 object-contain" />
-            <span className="font-serif text-xl font-semibold">AgapeMeet</span>
+            <img src={logoAsset} alt="Eden Rencontre" className="w-10 h-10 object-contain" />
+            <span className="font-serif text-xl font-semibold">Eden Rencontre</span>
           </Link>
         </div>
       </header>
@@ -82,7 +82,7 @@ function LoginPage() {
 
             <div className="text-center mb-8">
               <h1 className="font-serif text-2xl sm:text-3xl font-semibold">Content de vous revoir</h1>
-              <p className="text-muted-foreground mt-2 text-sm">Connectez-vous a votre compte AgapeMeet</p>
+              <p className="text-muted-foreground mt-2 text-sm">Connectez-vous a votre compte Eden Rencontre</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">

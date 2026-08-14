@@ -72,7 +72,7 @@ export function PushToggle() {
     return (
       <Encadre
         icone={<Smartphone className="w-5 h-5" />}
-        titre="Ajoutez AgapeMeet à votre écran d'accueil"
+        titre="Ajoutez Eden Rencontre à votre écran d'accueil"
         ton="info"
       >
         Sur iPhone, les notifications ne fonctionnent qu'une fois

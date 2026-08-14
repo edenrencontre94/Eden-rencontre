@@ -24,30 +24,30 @@ import {
 } from "@/components/landing/motion";
 
 /** Domaine canonique. Toute URL de référencement doit en découler. */
-export const SITE_URL = "https://agapemeet.com";
+export const SITE_URL = "https://edenrencontre.com";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "AgapeMeet — La rencontre chrétienne sérieuse №1 en Afrique francophone" },
+      { title: "Eden Rencontre — La rencontre chrétienne sérieuse №1 en Afrique francophone" },
       {
         name: "description",
         content:
-          "AgapeMeet est la plateforme de rencontres chrétiennes sérieuses dédiée au mariage. Profils vérifiés, appels audio & vidéo, Stories, messagerie riche. Rejoignez 1 200 chrétiens en Afrique et dans le monde.",
+          "Eden Rencontre est la plateforme de rencontres chrétiennes sérieuses dédiée au mariage. Profils vérifiés, appels audio & vidéo, Stories, messagerie riche. Rejoignez 1 200 chrétiens en Afrique et dans le monde.",
       },
-      { name: "keywords", content: "rencontre chrétienne, mariage chrétien, rencontres sérieuses chrétiens, application rencontre chrétienne Afrique, site de rencontre chrétien, rencontre foi, AgapeMeet" },
-      { property: "og:title", content: "AgapeMeet — La rencontre chrétienne sérieuse №1 en Afrique francophone" },
+      { name: "keywords", content: "rencontre chrétienne, mariage chrétien, rencontres sérieuses chrétiens, application rencontre chrétienne Afrique, site de rencontre chrétien, rencontre foi, Eden Rencontre" },
+      { property: "og:title", content: "Eden Rencontre — La rencontre chrétienne sérieuse №1 en Afrique francophone" },
       {
         property: "og:description",
-        content: "Profils vérifiés, appels audio & vidéo avec votre match, Stories, GIFs, emojis, messagerie riche. Trouvez votre futur conjoint chrétien sur AgapeMeet.",
+        content: "Profils vérifiés, appels audio & vidéo avec votre match, Stories, GIFs, emojis, messagerie riche. Trouvez votre futur conjoint chrétien sur Eden Rencontre.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "AgapeMeet — La rencontre chrétienne sérieuse №1 en Afrique francophone" },
-      { name: "twitter:description", content: "Rencontres chrétiennes sérieuses. Profils vérifiés, appels vidéo, communauté chrétienne active. Rejoignez AgapeMeet gratuitement." },
+      { name: "twitter:title", content: "Eden Rencontre — La rencontre chrétienne sérieuse №1 en Afrique francophone" },
+      { name: "twitter:description", content: "Rencontres chrétiennes sérieuses. Profils vérifiés, appels vidéo, communauté chrétienne active. Rejoignez Eden Rencontre gratuitement." },
       // og:url absolue, sinon les partages sociaux pointent dans le vide
       { property: "og:url", content: `${SITE_URL}/` },
-      { property: "og:site_name", content: "AgapeMeet" },
+      { property: "og:site_name", content: "Eden Rencontre" },
       { property: "og:locale", content: "fr_FR" },
       // Visuel de partage dédié, 1200×630 et 55 Ko. L'ancien pointait sur
       // /favicon.png : un carré de 1254×1254 pesant 964 Ko. WhatsApp
@@ -56,11 +56,11 @@ export const Route = createFileRoute("/")({
       { property: "og:image", content: `${SITE_URL}/og-image.jpg` },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
-      { property: "og:image:alt", content: "AgapeMeet — Trouvez la personne que Dieu vous destine" },
+      { property: "og:image:alt", content: "Eden Rencontre — Trouvez la personne que Dieu vous destine" },
       { name: "twitter:image", content: `${SITE_URL}/og-image.jpg` },
     ],
     // ABSOLUE, impérativement. Un canonical relatif (« / ») se résout contre
-    // l'URL courante : http://www.agapemeet.com/ se déclarait alors canonique
+    // l'URL courante : http://www.edenrencontre.com/ se déclarait alors canonique
     // de lui-même, et Google indexait cette variante au lieu du vrai domaine.
     links: [{ rel: "canonical", href: `${SITE_URL}/` }],
     scripts: [
@@ -69,7 +69,7 @@ export const Route = createFileRoute("/")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "WebApplication",
-          name: "AgapeMeet",
+          name: "Eden Rencontre",
           applicationCategory: "SocialNetworkingApplication",
           description: "Plateforme de rencontres chrétiennes sérieuses en Afrique francophone et à l'international. Profils vérifiés, appels audio/vidéo, communauté chrétienne.",
           url: "/",
@@ -101,9 +101,9 @@ function Nav() {
         {/* shrink-0 sur le logo : sans lui, flex comprime le nom de la
             plateforme pour laisser la place au bouton sur petit écran. */}
         <a href="#top" className="flex items-center gap-2 shrink-0">
-          <img src={logoAsset} alt="AgapeMeet – rencontres chrétiennes sérieuses" className="w-9 h-9 sm:w-10 sm:h-10 object-contain" />
+          <img src={logoAsset} alt="Eden Rencontre – rencontres chrétiennes sérieuses" className="w-9 h-9 sm:w-10 sm:h-10 object-contain" />
           <span className="font-serif text-lg sm:text-xl font-semibold tracking-tight">
-            Agape<span className="text-gold">Meet</span>
+            Eden Rencontre
           </span>
         </a>
         <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground" aria-label="Navigation principale">
@@ -139,7 +139,7 @@ function Hero() {
   return (
     <section
       id="top"
-      aria-label="Introduction AgapeMeet"
+      aria-label="Introduction Eden Rencontre"
       className="relative pt-32 pb-20 md:pt-44 md:pb-36 overflow-hidden"
     >
       {/* Fond animé : deux halos qui dérivent lentement. Douze secondes
@@ -171,15 +171,15 @@ function Hero() {
               <span className="absolute inline-flex h-full w-full rounded-full bg-gold opacity-75 animate-ping" />
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-gold" />
             </span>
-            Plateforme №1 de rencontres chrétiennes en Afrique francophone
+            Le lieu de rencontre privilégié pour un mariage fondé sur la foi
           </motion.div>
 
           {/* Le titre reste un seul `h1` : le découpage est décoratif,
               les moteurs de recherche lisent le texte complet. */}
-          <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight text-foreground">
-            <TitreCinetique texte="Votre âme sœur" delay={0.15} />
+          <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight text-foreground drop-shadow-sm">
+            <TitreCinetique texte="L'Amour authentique" delay={0.15} />
             <br />
-            <TitreCinetique texte="vous attend en Christ." delay={0.35} motsColores={[2, 3]} />
+            <TitreCinetique texte="selon Son plan divin." delay={0.35} motsColores={[1, 2]} />
           </h1>
 
           <motion.p
@@ -188,9 +188,9 @@ function Hero() {
             transition={{ duration: 0.7, delay: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="mt-6 text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed"
           >
-            AgapeMeet est la première plateforme de rencontres chrétiennes sérieuses pensée pour le mariage.
-            Des profils vérifiés, une communauté de foi vivante, et des outils de communication modernes
-            pour bâtir une relation qui glorifie Dieu.
+            Eden Rencontre vous aide à bâtir une relation solide et durable, centrée sur Christ. 
+            Découvrez des profils vérifiés, échangez en profondeur grâce à des outils immersifs, 
+            et trouvez enfin la personne avec qui partager votre foi et votre vie.
           </motion.p>
 
           <motion.div
@@ -254,7 +254,7 @@ function Hero() {
             >
               <img
                 src={heroCouple}
-                alt="Couple chrétien heureux trouvé sur AgapeMeet"
+                alt="Couple chrétien heureux trouvé sur Eden Rencontre"
                 className="w-full h-full object-cover"
                 width={1400}
                 height={1600}
@@ -342,7 +342,7 @@ function Stats() {
   ];
 
   return (
-    <section className="relative border-y border-border/60 bg-secondary/40 overflow-hidden" aria-label="Chiffres clés AgapeMeet">
+    <section className="relative border-y border-border/60 bg-secondary/40 overflow-hidden" aria-label="Chiffres clés Eden Rencontre">
       {/* Filet doré traversant : un trait suffit à marquer la rupture
           entre deux sections, sans ajouter de bloc. */}
       <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent" />
@@ -385,7 +385,7 @@ function BandeauPays() {
   );
 
   return (
-    <section className="py-12 md:py-16 overflow-hidden" aria-label="Pays couverts par AgapeMeet">
+    <section className="py-12 md:py-16 overflow-hidden" aria-label="Pays couverts par Eden Rencontre">
       <p className="text-center text-xs font-medium text-muted-foreground uppercase tracking-[0.2em] mb-8">
         Une communauté sans frontières
       </p>
@@ -422,7 +422,7 @@ function MessagingFeature() {
     { icon: Gift, title: "Stickers chrétiens", desc: "Des stickers uniques inspirés de la foi : croix dorées, colombes, versets illustrés — pour sanctifier chaque conversation." },
   ];
   return (
-    <section id="messagerie" aria-label="Fonctionnalités de messagerie AgapeMeet" className="py-24 md:py-32">
+    <section id="messagerie" aria-label="Fonctionnalités de messagerie Eden Rencontre" className="py-24 md:py-32">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <p className="text-sm font-medium text-gold uppercase tracking-widest">Messagerie ultra-riche</p>
@@ -430,7 +430,7 @@ function MessagingFeature() {
             Communiquez comme <span className="italic">jamais auparavant</span>
           </h2>
           <p className="mt-5 text-muted-foreground text-lg leading-relaxed">
-            Fini les échanges fades et maladroits. Sur AgapeMeet, votre messagerie est un espace de connexion
+            Fini les échanges fades et maladroits. Sur Eden Rencontre, votre messagerie est un espace de connexion
             profonde — audio, vidéo, vocaux, photos, GIFs, emojis, stickers — tout ce dont vous avez besoin
             pour laisser votre cœur s'exprimer librement.
           </p>
@@ -443,7 +443,7 @@ function MessagingFeature() {
                   où elle se déclencherait pendant le défilement. */}
               <CarteInclinable
                 intensite={5}
-                className="h-full rounded-3xl bg-card border border-border p-8 hover:border-primary/40 hover:shadow-elegant transition-all duration-500 group"
+                className="h-full rounded-3xl bg-card/70 backdrop-blur-sm border border-border/60 p-8 hover:border-primary/50 hover:bg-card hover:shadow-[0_0_30px_-5px_rgba(var(--primary),0.15)] transition-all duration-500 group"
               >
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 grid place-items-center mb-5 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
                   <f.icon className="w-6 h-6 text-primary group-hover:text-primary-foreground" />
@@ -480,12 +480,7 @@ function AllFeatures() {
       desc: "Avec Premium, découvrez exactement qui a consulté votre profil. Si leur cœur s'est tourné vers vous, ne le ratez pas.",
       tag: "Premium"
     },
-    {
-      icon: Zap,
-      title: "Boost de profil",
-      desc: "Propulsez votre profil en tête des découvertes pendant 30 minutes. Soyez vu par 10× plus de membres au moment où vous le décidez.",
-      tag: "Premium"
-    },
+
     {
       icon: Star,
       title: "Super Like",
@@ -537,7 +532,7 @@ function AllFeatures() {
   ];
 
   return (
-    <section id="fonctionnalites" aria-label="Toutes les fonctionnalités AgapeMeet" className="py-24 md:py-32 bg-secondary/40">
+    <section id="fonctionnalites" aria-label="Toutes les fonctionnalités Eden Rencontre" className="py-24 md:py-32 bg-secondary/40">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <p className="text-sm font-medium text-gold uppercase tracking-widest">Fonctionnalités</p>
@@ -545,7 +540,7 @@ function AllFeatures() {
             Tout ce dont <span className="italic">votre cœur a besoin</span>
           </h2>
           <p className="mt-5 text-muted-foreground text-lg leading-relaxed">
-            AgapeMeet n'est pas une app de rencontre de plus. C'est un écosystème complet pour rencontrer,
+            Eden Rencontre n'est pas une app de rencontre de plus. C'est un écosystème complet pour rencontrer,
             communiquer, se découvrir et cheminer vers le mariage — le tout dans un cadre chrétien sécurisé.
           </p>
         </div>
@@ -599,7 +594,7 @@ function HowItWorks() {
     },
   ];
   return (
-    <section id="comment" aria-label="Comment fonctionne AgapeMeet" className="py-24 md:py-32">
+    <section id="comment" aria-label="Comment fonctionne Eden Rencontre" className="py-24 md:py-32">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <p className="text-sm font-medium text-gold uppercase tracking-widest">Comment ça marche</p>
@@ -626,33 +621,34 @@ function HowItWorks() {
   );
 }
 
-// ─── Why AgapeMeet (Differentiators) ─────────────────────────────────────────
+// ─── Why Eden Rencontre (Differentiators) ─────────────────────────────────────────
 function Why() {
   return (
-    <section id="pourquoi" aria-label="Pourquoi choisir AgapeMeet" className="py-24 md:py-32 bg-secondary/40">
+    <section id="pourquoi" aria-label="Pourquoi choisir Eden Rencontre" className="py-24 md:py-32 bg-secondary/40">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <p className="text-sm font-medium text-gold uppercase tracking-widest">Notre différence</p>
+          <p className="text-sm font-medium text-gold uppercase tracking-widest">Notre Promesse</p>
           <h2 className="mt-3 font-serif text-4xl md:text-5xl text-foreground">
-            Ce que personne d'autre <span className="italic">ne vous offre</span>
+            L'exigence au service de <span className="italic">votre foi</span>
           </h2>
           <p className="mt-5 text-muted-foreground text-lg">
-            AgapeMeet n'est pas une application généraliste avec une case «&nbsp;chrétien&nbsp;». C'est une plateforme construite de A à Z
-            pour les hommes et femmes qui placent Dieu au cœur de leur vie amoureuse.
+            Eden Rencontre n'est pas une simple application. C'est un sanctuaire numérique conçu de A à Z 
+            pour les célibataires qui refusent de faire des compromis sur leurs valeurs spirituelles 
+            et qui placent Christ au centre de leur futur foyer.
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 items-center mb-16">
           <div className="space-y-6">
             {[
-              { icon: Church, title: "Foi, pas option — Foi, fondement", desc: "Sur AgapeMeet, votre dénomination, vos pratiques spirituelles et votre projet de vie en Christ sont au cœur de chaque recommandation. Vous êtes ici parmi les vôtres." },
-              { icon: ShieldCheck, title: "Aucun faux profil. Promis.", desc: "Vérification par pièce d'identité + selfie vidéo obligatoire. Notre modération active bloque et supprime les comptes frauduleux sous 24h. Une sécurité digne des grandes plateformes mondiales." },
-              { icon: HeartHandshake, title: "Orienté mariage, pas divertissement", desc: "Contrairement aux apps généralistes qui jouent avec vos émotions, AgapeMeet vous guide vers une relation sérieuse. Notre algorithme priorise la durabilité." },
-              { icon: Globe, title: "Une diaspora africaine unie", desc: "De Douala à Paris, d'Abidjan à Montréal, de Dakar à Bruxelles — AgapeMeet connecte les chrétiens africains du monde entier, sans frontières." },
+              { icon: Church, title: "La Foi comme unique boussole", desc: "Votre dénomination, votre vision biblique du mariage et votre engagement rythment nos recommandations. Ici, on ne cherche pas seulement un partenaire, on trouve son complice spirituel." },
+              { icon: ShieldCheck, title: "Pureté et Sécurité absolues", desc: "Chaque membre passe par une vérification biométrique stricte. Notre modération intraitable garantit un environnement sain, respectueux, et digne de votre confiance." },
+              { icon: HeartHandshake, title: "Le Mariage comme seule destination", desc: "Pas de perte de temps, pas de relations éphémères. Notre vocation est d'accompagner des célibataires intentionnels vers l'autel, guidés par la volonté de Dieu." },
+              { icon: Globe, title: "Une communion sans frontières", desc: "De l'Afrique à l'Europe, en passant par les Amériques, Eden Rencontre abolit les distances pour unir la diaspora chrétienne mondiale autour d'une même espérance." },
             ].map((item, i) => (
               <motion.div key={item.title} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }} transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="flex gap-5 p-5 rounded-2xl bg-card border border-border hover:border-gold/40 transition-all duration-300">
+                className="flex gap-5 p-5 rounded-2xl bg-card/60 backdrop-blur-md border border-border/50 hover:border-gold/50 hover:bg-card/90 hover:shadow-elegant transition-all duration-500">
                 <div className="w-11 h-11 rounded-xl bg-gold-soft grid place-items-center shrink-0">
                   <item.icon className="w-5 h-5 text-gold-foreground" />
                 </div>
@@ -675,7 +671,7 @@ function Why() {
               « Recherchez d'abord le Royaume de Dieu… <span className="italic text-gold">et tout le reste vous sera donné. »</span>
             </h3>
             <p className="text-primary-foreground/80 leading-relaxed mb-8">
-              Matthieu 6:33. Ce verset guide tout ce que nous faisons. AgapeMeet croit profondément que quand deux
+              Matthieu 6:33. Ce verset guide tout ce que nous faisons. Eden Rencontre croit profondément que quand deux
               personnes cherchent Dieu en premier, leur rencontre devient un miracle orchestré par Lui.
             </p>
             <Link to="/inscription" className="inline-flex items-center gap-2 bg-gold text-gold-foreground rounded-full px-6 py-3 text-sm font-semibold hover:brightness-105 transition">
@@ -693,7 +689,7 @@ function Testimonials() {
   const items = [
     {
       img: testimonial3,
-      quote: "Nous nous sommes rencontrés sur AgapeMeet et mariés 14 mois plus tard. Dieu a écrit notre histoire d'une façon si merveilleuse. La vérification des profils m'avait mis en confiance dès le premier jour.",
+      quote: "Nous nous sommes rencontrés sur Eden Rencontre et mariés 14 mois plus tard. Dieu a écrit notre histoire d'une façon si merveilleuse. La vérification des profils m'avait mis en confiance dès le premier jour.",
       name: "Grâce & David",
       role: "Abidjan 🇨🇮 — Mariés en 2024",
     },
@@ -711,7 +707,7 @@ function Testimonials() {
     },
   ];
   return (
-    <section id="temoignages" aria-label="Témoignages de membres AgapeMeet" className="py-24 md:py-32">
+    <section id="temoignages" aria-label="Témoignages de membres Eden Rencontre" className="py-24 md:py-32">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <p className="text-sm font-medium text-gold uppercase tracking-widest">Témoignages</p>
@@ -726,7 +722,7 @@ function Testimonials() {
               viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.6, delay: i * 0.1 }}
               className="rounded-3xl overflow-hidden bg-card border border-border shadow-soft hover:shadow-elegant transition-all duration-500">
               <div className="aspect-[4/3] overflow-hidden">
-                <img src={t.img} alt={`Témoignage AgapeMeet — ${t.name}`} loading="lazy"
+                <img src={t.img} alt={`Témoignage Eden Rencontre — ${t.name}`} loading="lazy"
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
               </div>
               <figcaption className="p-6">
@@ -750,8 +746,7 @@ function Testimonials() {
  * Tarifs — lus depuis `OFFERS`, jamais réécrits ici.
  *
  * Cette section annonçait « Premium 9 990 FCFA / mois » et « VIP 1 500
- * FCFA / jour ». Aucun de ces deux prix n'existe dans le catalogue : le
- * Premium mensuel est à 4 000 FCFA et le VIP à 12 000 FCFA par mois.
+ * Premium mensuel est à 4 000 FCFA.
  *
  * Un visiteur découvrait donc un tarif sur la page d'accueil, et un autre
  * au moment de payer. C'est le genre d'écart qui fait abandonner un
@@ -763,7 +758,6 @@ function Testimonials() {
  */
 function Pricing() {
   const premium = OFFERS.filter(o => o.planId === "premium");
-  const vip = OFFERS.find(o => o.planId === "vip")!;
 
   // Le mensuel sert de référence pour calculer l'économie des autres durées.
   const ref = premium.find(o => o.duration === "1m")!;
@@ -775,25 +769,16 @@ function Pricing() {
 
   const avantagesPremium = [
     "Voir qui a aimé votre profil",
-    "Appels audio illimités",
-    "Messages vocaux et vidéos",
+    "Appels audio et vidéo",
+    "Messages illimités, vocaux et vidéos",
     "Filtres avancés — dénomination, ville, études",
     "Voir les visiteurs de votre profil",
-    "Boost de profil inclus",
+    "Publications photo et vidéo en communauté",
     "Badge Premium sur votre profil",
   ];
 
-  const avantagesVIP = [
-    "Tout le Premium, sans limite",
-    "Appels vidéo",
-    "Messages illimités",
-    "Super Likes illimités",
-    "Publications photo et vidéo en communauté",
-    "Badge VIP doré",
-  ];
-
   return (
-    <section id="tarifs" aria-label="Tarifs et abonnements AgapeMeet" className="py-24 md:py-32 bg-secondary/40">
+    <section id="tarifs" aria-label="Tarifs et abonnements Eden Rencontre" className="py-24 md:py-32 bg-secondary/40">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <p className="text-sm font-medium text-gold uppercase tracking-widest">Tarifs</p>
@@ -805,8 +790,8 @@ function Pricing() {
           </p>
         </div>
 
-        {/* ── Gratuit et VIP encadrent les trois durées Premium ── */}
-        <div className="grid lg:grid-cols-3 gap-6 items-start">
+        {/* ── Gratuit et Premium encadrent les trois durées Premium ── */}
+        <div className="grid lg:grid-cols-2 gap-6 items-start">
 
           {/* Gratuit */}
           <Reveal>
@@ -908,40 +893,6 @@ function Pricing() {
             </div>
           </Reveal>
 
-          {/* VIP */}
-          <Reveal delay={0.2}>
-            <div className="rounded-3xl p-8 border border-gold/40 bg-card hover:shadow-soft transition-all duration-500 h-full flex flex-col">
-              <div className="flex items-center gap-2">
-                <h3 className="font-serif text-2xl">VIP</h3>
-                <Crown className="w-4 h-4 text-gold" />
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                L'accès complet, sans aucune limite.
-              </p>
-              <div className="mt-6 flex items-baseline gap-1">
-                <span className="font-serif text-4xl font-semibold tabular-nums">
-                  {new Intl.NumberFormat("fr-FR").format(vip.priceXOF)}
-                </span>
-                <span className="text-sm text-muted-foreground"> FCFA / mois</span>
-              </div>
-
-              <ul className="mt-8 space-y-3 flex-1">
-                {avantagesVIP.map(f => (
-                  <li key={f} className="flex items-start gap-2 text-sm">
-                    <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-gold" />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Link
-                to="/inscription"
-                className="mt-8 inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition"
-              >
-                Devenir VIP <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </Reveal>
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-8">
@@ -980,7 +931,7 @@ function Blog() {
   ];
 
   return (
-    <section id="blog" aria-label="Blog AgapeMeet — conseils rencontres chrétiennes" className="py-24 md:py-32">
+    <section id="blog" aria-label="Blog Eden Rencontre — conseils rencontres chrétiennes" className="py-24 md:py-32">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between mb-12 flex-wrap gap-4">
           <div>
@@ -1019,8 +970,8 @@ function Blog() {
 function FAQ() {
   const faqs = [
     {
-      q: "AgapeMeet est-elle réservée à une seule dénomination chrétienne ?",
-      a: "Non ! AgapeMeet accueille tous les chrétiens sincères : protestants, catholiques, évangéliques, pentecôtistes, adventistes… Notre algorithme vous met en relation avec des personnes qui partagent vos valeurs profondes, quelle que soit votre dénomination.",
+      q: "Eden Rencontre est-elle réservée à une seule dénomination chrétienne ?",
+      a: "Non ! Eden Rencontre accueille tous les chrétiens sincères : protestants, catholiques, évangéliques, pentecôtistes, adventistes… Notre algorithme vous met en relation avec des personnes qui partagent vos valeurs profondes, quelle que soit votre dénomination.",
     },
     {
       q: "Comment fonctionne la vérification des profils ?",
@@ -1032,11 +983,11 @@ function FAQ() {
     },
     {
       q: "C'est vraiment gratuit ? Qu'est-ce qui est inclus ?",
-      a: "Oui, l'inscription et les fonctions de base sont 100% gratuites : profil complet, swipe, messagerie simple, accès à la communauté et verset du jour. Le Premium débloque les appels, Stories, Boost, Rewind, et l'affichage des profils qui vous ont aimé(e).",
+      a: "Oui, l'inscription et les fonctions de base sont 100% gratuites : profil complet, swipe, messagerie simple, accès à la communauté et verset du jour. Le Premium débloque les appels, Stories, Rewind, et l'affichage des profils qui vous ont aimé(e).",
     },
     {
       q: "Est-ce disponible en dehors de l'Afrique ?",
-      a: "Oui ! AgapeMeet est utilisé dans plus de 24 pays. France, Belgique, Canada, USA, UK et dans toute l'Afrique francophone. Nos membres de la diaspora trouvent souvent leur moitié dans un autre pays.",
+      a: "Oui ! Eden Rencontre est utilisé dans plus de 24 pays. France, Belgique, Canada, USA, UK et dans toute l'Afrique francophone. Nos membres de la diaspora trouvent souvent leur moitié dans un autre pays.",
     },
     {
       q: "Comment puis-je supprimer mon compte ?",
@@ -1045,7 +996,7 @@ function FAQ() {
   ];
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <section id="faq" aria-label="Foire aux questions AgapeMeet" className="py-24 md:py-32 bg-secondary/40">
+    <section id="faq" aria-label="Foire aux questions Eden Rencontre" className="py-24 md:py-32 bg-secondary/40">
       <div className="max-w-3xl mx-auto px-6">
         <div className="text-center mb-14">
           <p className="text-sm font-medium text-gold uppercase tracking-widest">Questions fréquentes</p>
@@ -1079,7 +1030,7 @@ function FAQ() {
 // ─── Final CTA ────────────────────────────────────────────────────────────────
 function FinalCTA() {
   return (
-    <section id="cta" aria-label="Rejoindre AgapeMeet" className="py-24 md:py-32">
+    <section id="cta" aria-label="Rejoindre Eden Rencontre" className="py-24 md:py-32">
       <div className="max-w-5xl mx-auto px-6">
         <div className="relative rounded-[2.5rem] overflow-hidden p-10 md:p-16 text-center shadow-elegant"
           style={{ backgroundImage: "var(--gradient-hero)" }}>
@@ -1095,7 +1046,7 @@ function FinalCTA() {
               <span className="italic text-gradient-gold">commence ici.</span>
             </h2>
             <p className="mt-6 text-primary-foreground/80 max-w-2xl mx-auto text-lg leading-relaxed">
-              Gratuit. Sécurisé. Chrétien. AgapeMeet est la plateforme que vous attendiez —
+              Gratuit. Sécurisé. Chrétien. Eden Rencontre est la plateforme que vous attendiez —
               celle qui prend votre foi aussi au sérieux que votre désir d'aimer.
               Votre futur conjoint est peut-être déjà inscrit.
             </p>
@@ -1134,7 +1085,7 @@ function FooterContact() {
       <WhatsAppButton
         label="WhatsApp"
         compact
-        message="Bonjour, je vous écris depuis le site AgapeMeet."
+        message="Bonjour, je vous écris depuis le site Eden Rencontre."
         className="inline-flex items-center gap-2 px-3.5 py-2 text-sm rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors"
       />
       {email && (
@@ -1162,7 +1113,7 @@ function Footer() {
           La rencontre chrétienne près de chez vous
         </h2>
         <p className="text-sm text-muted-foreground text-center mt-2">
-          Découvrez la communauté AgapeMeet dans votre pays.
+          Découvrez la communauté Eden Rencontre dans votre pays.
         </p>
         <div className="flex flex-wrap justify-center gap-2 mt-6">
           {COUNTRIES.map(c => (
@@ -1179,13 +1130,13 @@ function Footer() {
       </div>
     </section>
 
-    <footer className="border-t border-border bg-secondary/30" aria-label="Pied de page AgapeMeet">
+    <footer className="border-t border-border bg-secondary/30" aria-label="Pied de page Eden Rencontre">
       <div className="max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-5 gap-10">
         {/* Brand */}
         <div className="md:col-span-2">
           <div className="flex items-center gap-2">
-            <img src={logoAsset} alt="AgapeMeet — rencontres chrétiennes" className="w-10 h-10 object-contain" />
-            <span className="font-serif text-xl font-semibold">Agape<span className="text-gold">Meet</span></span>
+            <img src={logoAsset} alt="Eden Rencontre — rencontres chrétiennes" className="w-10 h-10 object-contain" />
+            <span className="font-serif text-xl font-semibold">Eden Rencontre</span>
           </div>
           <p className="mt-4 text-sm text-muted-foreground max-w-sm leading-relaxed">
             La plateforme de rencontres chrétiennes sérieuses pour le mariage.
@@ -1196,10 +1147,10 @@ function Footer() {
           </p>
           <div className="mt-6 flex items-center gap-3">
             {[
-              { Icon: Instagram, label: "Instagram AgapeMeet" },
-              { Icon: Facebook, label: "Facebook AgapeMeet" },
-              { Icon: Twitter, label: "Twitter AgapeMeet" },
-              { Icon: Mail, label: "Contact AgapeMeet" },
+              { Icon: Instagram, label: "Instagram Eden Rencontre" },
+              { Icon: Facebook, label: "Facebook Eden Rencontre" },
+              { Icon: Twitter, label: "Twitter Eden Rencontre" },
+              { Icon: Mail, label: "Contact Eden Rencontre" },
             ].map(({ Icon, label }, k) => (
               <a key={k} href="#" aria-label={label}
                 className="w-9 h-9 rounded-full border border-border grid place-items-center text-muted-foreground hover:text-primary hover:border-primary transition">
@@ -1256,7 +1207,7 @@ function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-border">
         <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} AgapeMeet. Tous droits réservés. — Rencontres chrétiennes sérieuses en Afrique francophone et dans le monde.</p>
+          <p>© {new Date().getFullYear()} Eden Rencontre. Tous droits réservés. — Rencontres chrétiennes sérieuses en Afrique francophone et dans le monde.</p>
           <p className="italic font-serif text-sm">« Là où la foi unit les cœurs. »</p>
         </div>
       </div>
@@ -1278,13 +1229,13 @@ function Index() {
       <Nav />
       <main>
         <Hero />
-        <Stats />
         <BandeauPays />
-        <MessagingFeature />
-        <AllFeatures />
         <HowItWorks />
         <Why />
+        <Stats />
         <Testimonials />
+        <MessagingFeature />
+        <AllFeatures />
         <Pricing />
         <Blog />
         <FAQ />

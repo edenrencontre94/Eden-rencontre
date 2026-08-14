@@ -29,8 +29,8 @@ export const Route = createFileRoute("/admin/utilisateurs")({
 /**
  * Membres, répartis par offre et par segment.
  *
- * Cette page affichait des effectifs INVENTÉS — `premium: 1840`,
- * `vip: 350`, puis `Math.floor(total * 0.15)` — et attribuait les badges
+ * Cette page affichait des effectifs INVENTÉS – `premium: 1840`,
+ * `vip: 350`, puis `Math.floor(total * 0.15)` – et attribuait les badges
  * selon la position dans la liste : `i % 7 === 0` pour Premium. Le nombre
  * de matchs venait d'un `Math.random()`.
  *
@@ -42,7 +42,6 @@ const PLANS = [
   { key: "all", label: "Tous", icon: Users },
   { key: "gratuit", label: "Gratuit", icon: User },
   { key: "premium", label: "Premium", icon: Crown },
-  { key: "vip", label: "VIP", icon: Gem },
 ] as const;
 
 function AdminUtilisateurs() {
@@ -114,7 +113,7 @@ function AdminUtilisateurs() {
           <button
             onClick={() => {
               if (users.length === 0) { toast.error("Rien à exporter"); return; }
-              downloadCsv(users, `agapemeet-${f.plan}${f.segment ? `-${f.segment}` : ""}`);
+              downloadCsv(users, `edenrencontre-${f.plan}${f.segment ? `-${f.segment}` : ""}`);
               toast.success(`${users.length} ligne(s) exportée(s)`);
             }}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card text-sm hover:bg-secondary transition-colors"
@@ -137,7 +136,7 @@ function AdminUtilisateurs() {
         </div>
       )}
 
-      {/* ── Composition ───────────────────────────────────────── */}
+      {/* â”€â”€ Composition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Kpi icon={Users} label="Membres inscrits" value={counts?.total}
              hint={counts ? `+${counts.nouveaux_7j} sur 7 jours` : undefined} />
@@ -150,7 +149,7 @@ function AdminUtilisateurs() {
              hint={counts ? `${counts.non_verifies} en attente` : undefined} />
       </div>
 
-      {/* ── Économie ──────────────────────────────────────────── */}
+      {/* â”€â”€ Économie â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Kpi icon={Percent} label="Taux de conversion"
              valueText={counts ? `${counts.taux_conversion} %` : undefined}
@@ -164,14 +163,13 @@ function AdminUtilisateurs() {
              hint="Ont déjà payé une fois" />
       </div>
 
-      {/* ── Onglets par offre ─────────────────────────────────── */}
+      {/* â”€â”€ Onglets par offre â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="flex flex-wrap gap-2">
         {PLANS.map(p => {
           const n = !counts ? null
             : p.key === "all" ? counts.total
             : p.key === "gratuit" ? counts.gratuit
-            : p.key === "premium" ? counts.premium
-            : counts.vip;
+            : counts.premium;
           return (
             <button
               key={p.key}
@@ -190,7 +188,7 @@ function AdminUtilisateurs() {
         })}
       </div>
 
-      {/* ── Segments transversaux ─────────────────────────────── */}
+      {/* â”€â”€ Segments transversaux â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div>
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -257,7 +255,7 @@ function AdminUtilisateurs() {
         </div>
       </div>
 
-      {/* ── Recherche ─────────────────────────────────────────── */}
+      {/* â”€â”€ Recherche â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="relative">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
@@ -269,7 +267,7 @@ function AdminUtilisateurs() {
         />
       </div>
 
-      {/* ── Tableau ───────────────────────────────────────────── */}
+      {/* â”€â”€ Tableau â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left min-w-[1080px]">
@@ -332,7 +330,7 @@ function AdminUtilisateurs() {
                             {displayName(u.first_name, u.last_name)}
                           </div>
                           <div className="text-[11px] text-muted-foreground truncate">
-                            {[u.city, u.country].filter(Boolean).join(", ") || "—"}
+                            {[u.city, u.country].filter(Boolean).join(", ") || "–"}
                             {u.gender && ` · ${u.gender === "female" ? "F" : "H"}`}
                           </div>
                         </div>
@@ -398,7 +396,7 @@ function AdminUtilisateurs() {
                         )}
                         {u.nb_signalements === 0 && u.nb_blocages === 0 && u.nb_tickets === 0
                           && !isSuspended(u) && (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-muted-foreground">–</span>
                         )}
                       </div>
                     </td>
@@ -480,7 +478,7 @@ function AdminUtilisateurs() {
         <div className="px-6 py-4 border-t border-border/50 bg-secondary/20 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
           <span>
             {total > 0
-              ? `${f.page * PAGE_SIZE + 1}–${Math.min((f.page + 1) * PAGE_SIZE, total)} sur ${total}`
+              ? `${f.page * PAGE_SIZE + 1}—${Math.min((f.page + 1) * PAGE_SIZE, total)} sur ${total}`
               : "Aucun résultat"}
           </span>
           <div className="flex items-center gap-2">
@@ -516,7 +514,7 @@ function AdminUtilisateurs() {
   );
 }
 
-// ─── Cellules ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Cellules â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function depuis(d: string): string {
   const days = Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
@@ -562,8 +560,8 @@ function PlanCell({ user }: { user: UserRow }) {
   if (user.is_founder) {
     return (
       <div>
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gold/20 text-gold border border-gold/30 text-[10px] font-bold">
-          <Gem className="w-3 h-3" /> VIP
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/25 text-[10px] font-bold">
+          <Crown className="w-3 h-3" /> Premium
         </span>
         <div className="text-[11px] text-muted-foreground mt-1">Fondateur · à vie</div>
       </div>
@@ -583,15 +581,12 @@ function PlanCell({ user }: { user: UserRow }) {
     );
   }
 
-  const vip = user.public_plan === "vip";
   const jours = Math.ceil((new Date(user.premium_until!).getTime() - Date.now()) / 86400000);
   return (
     <div>
-      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[10px] font-bold ${
-        vip ? "bg-gold/20 text-gold border-gold/30" : "bg-primary/15 text-primary border-primary/25"
-      }`}>
-        {vip ? <Gem className="w-3 h-3" /> : <Crown className="w-3 h-3" />}
-        {vip ? "VIP" : "Premium"}
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-[10px] font-bold bg-primary/15 text-primary border-primary/25">
+        <Crown className="w-3 h-3" />
+        Premium
       </span>
       <div className={`text-[11px] mt-1 ${jours <= 7 ? "text-gold font-medium" : "text-muted-foreground"}`}>
         {jours} jour{jours > 1 ? "s" : ""} restant{jours > 1 ? "s" : ""}
@@ -600,14 +595,14 @@ function PlanCell({ user }: { user: UserRow }) {
   );
 }
 
-// ─── Cartes ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Cartes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Ratio femmes / hommes.
  *
  * C'est l'indicateur le plus déterminant d'une application de rencontre :
- * un déséquilibre ruine l'expérience du côté majoritaire — plus personne
- * ne reçoit de réponse, donc plus personne ne reste — bien avant que le
+ * un déséquilibre ruine l'expérience du côté majoritaire – plus personne
+ * ne reçoit de réponse, donc plus personne ne reste – bien avant que le
  * chiffre d'affaires ne bouge.
  */
 function GenderKpi({ counts }: { counts: Counts | null }) {
@@ -627,7 +622,7 @@ function GenderKpi({ counts }: { counts: Counts | null }) {
       </div>
 
       {!counts ? (
-        <div className="text-2xl font-bold font-serif mt-2">—</div>
+        <div className="text-2xl font-bold font-serif mt-2">–</div>
       ) : connus === 0 ? (
         <div className="text-sm text-muted-foreground mt-2">Genre non renseigné</div>
       ) : (
@@ -668,7 +663,7 @@ function Kpi({ icon: Icon, label, value, valueText, hint, tone }: {
       </div>
       <div className="min-w-0">
         <div className="text-2xl font-bold font-serif truncate">
-          {valueText ?? value ?? "—"}
+          {valueText ?? value ?? "–"}
         </div>
         <div className="text-xs text-muted-foreground">{label}</div>
         {hint && <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{hint}</div>}

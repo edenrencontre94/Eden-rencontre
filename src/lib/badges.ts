@@ -10,7 +10,7 @@
  * distinguerait rien et stigmatiserait ceux qui ne paient pas.
  */
 
-export type PublicPlan = "premium" | "vip" | null;
+export type PublicPlan = "premium" | null;
 
 export type BadgeSource = {
   public_plan?: string | null;
@@ -22,21 +22,17 @@ export function publicPlanOf(p?: BadgeSource | null): PublicPlan {
   if (!p) return null;
 
   // Les membres fondateurs ont l'accès complet à vie, sans échéance.
-  if (p.is_founder) return "vip";
+  if (p.is_founder) return "premium";
 
   const until = p.premium_until ? new Date(p.premium_until).getTime() : 0;
   if (until <= Date.now()) return null;
 
-  return p.public_plan === "vip" ? "vip" : p.public_plan === "premium" ? "premium" : null;
+  return p.public_plan === "premium" ? "premium" : null;
 }
 
-export const PLAN_BADGE: Record<"premium" | "vip", { label: string; cls: string }> = {
+export const PLAN_BADGE: Record<"premium", { label: string; cls: string }> = {
   premium: {
     label: "Premium",
     cls: "bg-primary/15 text-primary border-primary/25",
-  },
-  vip: {
-    label: "VIP",
-    cls: "bg-gold/20 text-gold border-gold/30",
   },
 };

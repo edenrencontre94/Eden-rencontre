@@ -43,7 +43,7 @@ export type UserRow = {
 
 export type Counts = {
   total: number;
-  gratuit: number; premium: number; vip: number;
+  gratuit: number; premium: number;
   fondateurs: number; expires: number;
   nouveaux_7j: number;
   femmes: number; hommes: number; genre_absent: number;
@@ -91,7 +91,6 @@ export const OFFER_LABELS: Record<string, string> = {
   premium_15j: "Premium 15 j",
   premium_1m: "Premium 1 mois",
   premium_3m: "Premium 3 mois",
-  vip_1m: "VIP 1 mois",
   boost_24h: "Boost 24 h",
   boost_3j: "Boost 3 jours",
   boost_7j: "Boost 7 jours",
@@ -144,7 +143,7 @@ export async function fetchUserDetail(id: string): Promise<UserDetail | null> {
 }
 
 export async function grantDays(
-  userId: string, days: number, reason: string, plan: "premium" | "vip",
+  userId: string, days: number, reason: string, plan: "premium",
 ) {
   const { data, error } = await supabase.rpc("admin_grant_days", {
     p_user_id: userId,
@@ -231,7 +230,7 @@ export function toCsv(rows: UserRow[]): string {
     ["Ville", (r: UserRow) => r.city ?? ""],
     ["Pays", (r: UserRow) => r.country ?? ""],
     ["Genre", (r: UserRow) => (r.gender === "female" ? "Femme" : r.gender === "male" ? "Homme" : "")],
-    ["Offre", (r: UserRow) => (r.is_founder ? "VIP (fondateur)" : r.public_plan)],
+    ["Offre", (r: UserRow) => (r.is_founder ? "Premium (fondateur)" : r.public_plan)],
     ["Expire le", (r: UserRow) => (r.premium_until ? new Date(r.premium_until).toLocaleDateString("fr-FR") : "")],
     ["Vérifié", (r: UserRow) => (r.is_verified ? "oui" : "non")],
     ["Profil %", (r: UserRow) => String(r.completion)],

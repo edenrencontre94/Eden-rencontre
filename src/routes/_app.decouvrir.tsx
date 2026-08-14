@@ -29,8 +29,7 @@ import { compatibilityScore, rankProfiles } from "@/lib/matching";
 import { DEFAULT_FILTERS, fetchDeck, countActiveFilters, type Filters } from "@/lib/filtres";
 import { FilterSheet } from "@/components/app/FilterSheet";
 import { Drapeau } from "@/components/app/Drapeau";
-import { BOOST_DURATION_MIN, boostErrorMessage, fetchBoostStatus, startBoost, type BoostStatus } from "@/lib/boost";
-import { BoostPicker } from "@/components/app/BoostPicker";
+
 import { daysUntilSuperLike, fetchQuotas, quotaErrorMessage, type Quotas } from "@/lib/quotas";
 
 
@@ -41,7 +40,7 @@ import { ProfileExtrasBlocks } from "@/components/app/ProfileExtras";
 export const Route = createFileRoute("/_app/decouvrir")({
   head: () => ({
     meta: [
-      { title: "Découvrir — AgapeMeet" },
+      { title: "Découvrir — Eden Rencontre" },
       { name: "description", content: "Swipez et découvrez des profils compatibles." },
       { name: "robots", content: "noindex" },
     ],
@@ -67,10 +66,7 @@ function DiscoverPage() {
   const [quotas, setQuotas] = useState<Quotas | null>(null);
   const refreshQuotas = () => fetchQuotas().then(setQuotas);
   useEffect(() => { refreshQuotas(); }, []);
-  const [boostStatus, setBoostStatus] = useState<BoostStatus | null>(null);
-  const [boostPicker, setBoostPicker] = useState<"plan" | "quota" | null>(null);
-  useEffect(() => { fetchBoostStatus().then(setBoostStatus); }, []);
-  const boostsLeft = boostStatus?.left ?? 0;
+
   const [showMessageModal, setShowMessageModal] = useState<Profile | null>(null);
   const [messageText, setMessageText] = useState("");
 
@@ -132,7 +128,7 @@ function DiscoverPage() {
             // Score réel, calculé sur la confession, la pratique, la vision
             // du mariage, les enfants, la proximité et l'écart d'âge
             compatibility: compatibilityScore(currentUserData ?? {}, p),
-            boostedUntil: p.boosted_until ?? null,
+            boostedUntil: null,
             verified: p.is_verified || false,
             plan: p.public_plan ?? null,
             planUntil: p.premium_until ?? null,
@@ -164,7 +160,7 @@ function DiscoverPage() {
         }
       } catch (err) {
         console.error("Erreur chargement profils:", err);
-        toast.error("Impossible de charger les profils");
+        toast.error(`Impossible de charger : ${(err as Error)?.message || "Erreur inconnue"}`);
       } finally {
         setLoading(false);
       }
@@ -174,19 +170,9 @@ function DiscoverPage() {
     // sélectionne, pas un tri local sur un lot déjà chargé.
   }, [filters]);
 
-  // Un boost peut expirer pendant que l'utilisateur swipe : ce tick fait
-  // retomber l'étiquette et le classement à la seconde près, sans refetch.
-  const [boostTick, setBoostTick] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setBoostTick(Date.now()), 30000);
-    return () => clearInterval(t);
-  }, []);
-
-  // Le deck arrive déjà filtré par la base. Il ne reste qu'à reclasser
-  // localement à l'expiration d'un Boost, sans repasser par le réseau.
   const filteredDeck = useMemo(
-    () => rankProfiles(deck, boostTick),
-    [deck, boostTick],
+    () => rankProfiles(deck),
+    [deck],
   );
 
   const currentFiltered = filteredDeck[index];
@@ -313,25 +299,7 @@ function DiscoverPage() {
     toast.info("Action annulée");
   };
 
-  // Le quota et la mise en avant sont décidés en base : rien n'est
-  // contournable depuis le navigateur.
-  const boost = async () => {
-    const res = await startBoost();
 
-    if (res.ok) {
-      toast.success(`Boost activé pour ${BOOST_DURATION_MIN} minutes 🚀`, {
-        description: "Votre profil passe en tête des découvertes.",
-      });
-      setBoostStatus(await fetchBoostStatus());
-      return;
-    }
-
-    if (res.reason === "plan" || res.reason === "quota") {
-      upsell(boostErrorMessage(res.reason, res.expiresAt));
-    } else {
-      toast.info(boostErrorMessage(res.reason, res.expiresAt));
-    }
-  };
 
   // ── Message pré-match ──
   const sendPreMatchMessage = async () => {
@@ -406,11 +374,6 @@ function DiscoverPage() {
           <span className="inline-flex items-center gap-1">
             <Star className="w-3 h-3 text-primary" fill="currentColor" />
             {superLikesLeft === -1 ? "∞" : superLikesLeft} Super Likes
-          </span>
-          <span className="w-px h-3 bg-border" />
-          <span className="inline-flex items-center gap-1">
-            <Zap className="w-3 h-3 text-gold" />
-            {boostsLeft === -1 ? "∞" : boostsLeft} Boosts
           </span>
         </div>
       </div>
@@ -704,15 +667,7 @@ function DiscoverPage() {
         {detail && <ProfileDetailModal profile={detail} onClose={() => setDetail(null)} />}
       </AnimatePresence>
 
-      {boostPicker && (
-        <BoostPicker
-          reason={boostPicker}
-          onClose={() => {
-            setBoostPicker(null);
-            fetchBoostStatus().then(setBoostStatus);
-          }}
-        />
-      )}
+
 
       {/* FILTRES DRAWER */}
       <AnimatePresence>

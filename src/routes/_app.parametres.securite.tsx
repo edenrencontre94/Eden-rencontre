@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_app/parametres/securite")({
   head: () => ({
-    meta: [{ title: "Sécurité — AgapeMeet" }],
+    meta: [{ title: "Sécurité — Eden Rencontre" }],
   }),
   component: SecurityPage,
 });
@@ -91,7 +91,7 @@ function SecurityPage() {
             Pour modifier l'adresse email associée à votre compte, veuillez contacter le support client.
           </p>
           <a
-            href="mailto:contact@agapemeet.com"
+            href="mailto:contact@edenrencontre.com"
             className="w-full h-11 flex items-center justify-center bg-secondary text-foreground font-medium rounded-xl hover:bg-secondary/80 transition-colors"
           >
             Contacter le support

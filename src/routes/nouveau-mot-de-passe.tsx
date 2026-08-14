@@ -11,7 +11,7 @@ import logoAsset from "@/assets/logo.png";
 export const Route = createFileRoute("/nouveau-mot-de-passe")({
   head: () => ({
     meta: [
-      { title: "Nouveau mot de passe — AgapeMeet" },
+      { title: "Nouveau mot de passe – Eden Rencontre" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -29,7 +29,7 @@ function NewPasswordPage() {
   /**
    * En arrivant depuis le lien reçu par e-mail, Supabase place un jeton de
    * récupération dans l'URL et ouvre une session temporaire. Sans elle,
-   * `updateUser` échouerait — on vérifie donc avant d'afficher le formulaire,
+   * `updateUser` échouerait – on vérifie donc avant d'afficher le formulaire,
    * plutôt que de laisser l'utilisateur saisir un mot de passe pour rien.
    */
   useEffect(() => {
@@ -73,7 +73,7 @@ function NewPasswordPage() {
       return;
     }
 
-    toast.success("Mot de passe modifié — vous êtes connecté");
+    toast.success("Mot de passe modifié – vous êtes connecté");
     navigate({ to: "/accueil" });
   };
 
@@ -82,7 +82,7 @@ function NewPasswordPage() {
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <div className="bg-card border border-border/60 rounded-3xl p-7 shadow-elegant">
           <div className="flex flex-col items-center text-center">
-            <img src={logoAsset} alt="AgapeMeet" className="w-12 h-12 object-contain" />
+            <img src={logoAsset} alt="Eden Rencontre" className="w-12 h-12 object-contain" />
 
             {ready === false ? (
               <>

@@ -62,20 +62,5 @@ export function excludePaused(query: any) {
   return query.or("visibility.is.null,visibility.neq.pause");
 }
 
-/**
- * Remonte en tête les profils dont le Boost est encore actif.
- * C'est ce qui donne sa valeur au Boost : sans ce tri, l'achat ne
- * produirait aucun effet visible.
- */
-export function boostedFirst<T extends { boosted_until?: string | null }>(profiles: T[]): T[] {
-  const now = Date.now();
-  const isBoosted = (p: T) =>
-    Boolean(p.boosted_until) && new Date(p.boosted_until as string).getTime() > now;
 
-  return [...profiles].sort((a, b) => {
-    const ba = isBoosted(a);
-    const bb = isBoosted(b);
-    if (ba === bb) return 0;
-    return ba ? -1 : 1;
-  });
-}
+

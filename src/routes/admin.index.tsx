@@ -28,7 +28,6 @@ type Stats = {
   revenueTotal: number;
   revenueMonth: number;
   activeSubs: number;
-  vipSubs: number;
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -201,7 +200,7 @@ export default function AdminDashboard() {
     totalUsers: 0, newUsersToday: 0, newUsersThisWeek: 0, newUsersThisMonth: 0,
     verifiedUsers: 0, maleUsers: 0, femaleUsers: 0,
     totalMatches: 0, totalMessages: 0, openReports: 0,
-    revenueTotal: 0, revenueMonth: 0, activeSubs: 0, vipSubs: 0,
+    revenueTotal: 0, revenueMonth: 0, activeSubs: 0,
   });
   const [recentUsers, setRecentUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -242,7 +241,7 @@ export default function AdminDashboard() {
           // Revenus, abonnés et signalements : ces chiffres manquaient alors
           // que les données existent depuis la mise en place des paiements.
           supabase.from("payments").select("amount_xof, completed_at").eq("status", "completed"),
-          supabase.from("subscriptions").select("plan_id").gt("expires_at", new Date().toISOString()),
+          supabase.from("profiles").select("public_plan").gt("premium_until", new Date().toISOString()),
           supabase.from("reports").select("id", { count: "exact", head: true }).eq("status", "pending"),
         ]);
 
@@ -266,7 +265,6 @@ export default function AdminDashboard() {
           revenueTotal,
           revenueMonth,
           activeSubs: (subs ?? []).length,
-          vipSubs: (subs ?? []).filter((x: any) => x.plan_id === "vip").length,
         });
         setRecentUsers(recent || []);
 
@@ -329,10 +327,6 @@ export default function AdminDashboard() {
     premium_15j: "Premium 15 j",
     premium_1m: "Premium 1 mois",
     premium_3m: "Premium 3 mois",
-    vip_1m: "VIP 1 mois",
-    boost_24h: "Boost 24 h",
-    boost_3j: "Boost 3 jours",
-    boost_7j: "Boost 7 jours",
   };
 
   const planSegments = (analytics?.by_offer ?? []).map((o: any) => ({
@@ -355,7 +349,7 @@ export default function AdminDashboard() {
         <div>
           <h1 className="text-3xl font-serif font-bold">Vue d'ensemble</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Tableau de bord complet AgapeMeet — <span className="font-medium text-foreground">Mise à jour en temps réel</span>
+            Tableau de bord complet Eden Rencontre — <span className="font-medium text-foreground">Mise à jour en temps réel</span>
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground bg-card border border-border/50 px-4 py-2 rounded-full">
@@ -387,10 +381,6 @@ export default function AdminDashboard() {
             <div>
               <p className="text-2xl font-serif font-bold">{loading ? "—" : stats.activeSubs}</p>
               <p className="text-[11px] opacity-80">Abonnés actifs</p>
-            </div>
-            <div>
-              <p className="text-2xl font-serif font-bold">{loading ? "—" : stats.vipSubs}</p>
-              <p className="text-[11px] opacity-80">dont VIP</p>
             </div>
             <div>
               <p className="text-2xl font-serif font-bold">
@@ -601,7 +591,7 @@ export default function AdminDashboard() {
         <div className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
           <h3 className="font-semibold text-base mb-1">Ventes par offre</h3>
           <p className="text-xs text-muted-foreground mb-4">
-            Depuis le lancement, toutes formules et Boosts confondus
+            Depuis le lancement, toutes formules confondues
           </p>
 
           {totalVentes === 0 ? (

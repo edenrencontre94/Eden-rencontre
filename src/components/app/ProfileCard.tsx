@@ -4,7 +4,7 @@ import { Avatar } from "@/components/app/Avatar";
 import type { Profile } from "@/lib/mock-data";
 import { displayName } from "@/lib/utils";
 import { Drapeau } from "@/components/app/Drapeau";
-import { isBoosted } from "@/lib/matching";
+
 
 export function ProfileCard({ profile, size = "md" }: { profile: Profile; size?: "sm" | "md" | "lg" }) {
   return (
@@ -21,12 +21,7 @@ export function ProfileCard({ profile, size = "md" }: { profile: Profile; size?:
         {/* Top badges */}
         <div className="absolute top-2 left-2 right-2 flex items-start justify-between gap-2">
           <div className="flex flex-col gap-1">
-            {isBoosted(profile.boostedUntil) && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold shadow-elegant">
-                <Rocket className="w-3 h-3" />
-                En Avant
-              </span>
-            )}
+
             {profile.verified && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/90 backdrop-blur text-[10px] font-semibold text-primary shadow-soft">
                 <CheckCircle2 className="w-3 h-3" />

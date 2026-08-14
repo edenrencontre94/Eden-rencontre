@@ -21,8 +21,8 @@ import { Lock } from "lucide-react";
 export const Route = createFileRoute("/_app/accueil")({
   head: () => ({
     meta: [
-      { title: "Accueil — AgapeMeet" },
-      { name: "description", content: "Vos profils recommandés et suggestions du jour sur AgapeMeet." },
+      { title: "Accueil — Eden Rencontre" },
+      { name: "description", content: "Vos profils recommandés et suggestions du jour sur Eden Rencontre." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -83,14 +83,13 @@ function HomePage() {
           .from('profiles')
           .select(
             'id, first_name, last_name, birth_date, city, country, denomination, photos, bio, ' +
-            'is_verified, boosted_until, practice_level, church_attendance, ' +
+            'is_verified, practice_level, church_attendance, ' +
             'marriage_intent, wants_children, gender, ' +
             'marital_status, marriage_vision, looking_for, education, height_cm, ' +
             'public_plan, premium_until, is_founder, ' +
             'interests, qualities, flaws, dealbreakers',
           )
           .neq('id', user.id)
-          .order('boosted_until', { ascending: false, nullsFirst: false })
           .limit(50);
 
         // Respecte le réglage de visibilité de chacun
@@ -127,10 +126,8 @@ function HomePage() {
             city: p.city || "Ville inconnue",
             country: p.country || "",
             denomination: p.denomination || "Non précisé",
-            // Score réel : confession, pratique, vision du mariage, enfants,
-            // proximité géographique et écart d'âge
             compatibility: compatibilityScore(currentUserData ?? {}, p),
-            boostedUntil: p.boosted_until ?? null,
+            boostedUntil: null,
             verified: true,
             plan: p.public_plan ?? null,
             planUntil: p.premium_until ?? null,
@@ -544,7 +541,7 @@ function HomePage() {
                   <Crown className="w-5 h-5" />
                   <span className="text-base font-bold">Premium</span>
                 </div>
-                <span className="text-xs font-medium opacity-80">Débloque tout AgapeMeet</span>
+                <span className="text-xs font-medium opacity-80">Débloque tout Eden Rencontre</span>
               </Link>
             </motion.div>
 

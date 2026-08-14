@@ -3,8 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Heart, MessageCircle, Share2, Bookmark, Flag, BookOpen, Flame,
-  Sparkles, Image as ImageIcon, Send, CheckCircle2, Crown, X,
-  AlertTriangle, ChevronDown, ChevronUp, Video, Play, Loader2,
+  Sparkles, Image as ImageIcon, Send, CheckCircle2, X,
+  AlertTriangle, ChevronDown, ChevronUp, Play, Loader2,
   UploadCloud, Lock, MoreHorizontal, Pencil, Trash2,
 } from "lucide-react";
 import {
@@ -29,7 +29,7 @@ import { markCommunityRead } from "@/lib/badgesNav";
 export const Route = createFileRoute("/_app/communaute")({
   head: () => ({
     meta: [
-      { title: "Communauté — AgapeMeet" },
+      { title: "Communauté — Eden Rencontre" },
       { name: "description", content: "Témoignages, prières, encouragements et versets." },
       { name: "robots", content: "noindex" },
     ],
@@ -698,7 +698,7 @@ function CommunityPage() {
     const url = `${window.location.origin}/communaute?post=${id}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: "AgapeMeet", text: "Voir cette publication sur AgapeMeet", url });
+        await navigator.share({ title: "Eden Rencontre", text: "Voir cette publication sur Eden Rencontre", url });
       } else {
         await navigator.clipboard.writeText(url);
         toast.success("Lien copié dans le presse-papier !");
@@ -941,7 +941,7 @@ function CommunityPage() {
       <div className="mb-5">
         <div className="flex items-center gap-2 mb-2">
           <Sparkles className="w-4 h-4 text-primary" />
-          <h3 className="font-serif text-lg font-semibold">Couples AgapeMeet</h3>
+          <h3 className="font-serif text-lg font-semibold">Couples Eden Rencontre</h3>
         </div>
         <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-none">
           {coupleTestimonials.map(c => (
@@ -1034,35 +1034,7 @@ function CommunityPage() {
               <span className="hidden sm:inline">Image</span>
             </button>
 
-            {/* Vidéo */}
-            <button
-              id="composer-video-btn"
-              onClick={() => {
-                if (!features.communityVideo) {
-                  toast.error("Publier une vidéo est réservé aux membres VIP", {
-                    action: { label: "Voir les formules", onClick: () => navigate({ to: "/abonnement" }) },
-                  });
-                  return;
-                }
-                videoInputRef.current?.click();
-              }}
-              disabled={uploadingMedia || publishing}
-              title={features.communityVideo
-                ? "Ajouter une vidéo (max 25 MB)"
-                : "Réservé aux membres VIP"}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all disabled:opacity-40 ${
-                composerMediaType === "video"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : !features.communityVideo
-                    ? "border-border text-muted-foreground/60"
-                    : "border-border text-muted-foreground hover:border-primary/40 hover:text-primary"
-              }`}
-            >
-              {features.communityVideo
-                ? <Video className="w-3.5 h-3.5" />
-                : <Lock className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">Vidéo</span>
-            </button>
+
 
             {/* Publish button */}
             <button
@@ -1084,7 +1056,7 @@ function CommunityPage() {
         {/* Hint */}
         {!composerMedia && (
           <p className="text-[10px] text-muted-foreground/60 mt-1.5 text-right">
-            📷 Image max 5 MB · 🎬 Vidéo max 25 MB
+            📷 Image max 5 MB
           </p>
         )}
       </div>
@@ -1101,10 +1073,10 @@ function CommunityPage() {
         }}
       />
       <input
-        ref={videoInputRef}
         type="file"
-        accept="video/mp4,video/webm,video/quicktime,video/x-msvideo"
+        accept="video/mp4,video/webm,video/quicktime"
         className="hidden"
+        style={{ display: 'none' }}
         onChange={e => {
           const file = e.target.files?.[0];
           if (file) handleFileSelect(file, "video");

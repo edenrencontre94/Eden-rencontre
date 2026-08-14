@@ -11,7 +11,7 @@ export const Route = createFileRoute("/blog/$slug")({
     // L'article du code est résolu d'abord, sans réseau : les quatre
     // existants restent servis instantanément même si la base est
     // indisponible. Un nouvel article écrit depuis le back-office passe
-    // par la requête, mais toujours DANS le loader — donc rendu côté
+    // par la requête, mais toujours DANS le loader – donc rendu côté
     // serveur, donc indexable sans exécution de JavaScript.
     const statique = getArticle(params.slug);
     if (statique) return statique;
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/blog/$slug")({
     const url = `${SITE_URL}/blog/${a.slug}`;
     return {
       meta: [
-        { title: `${a.title} — AgapeMeet` },
+        { title: `${a.title} – Eden Rencontre` },
         { name: "description", content: a.metaDescription },
         { property: "og:title", content: a.title },
         { property: "og:description", content: a.metaDescription },
@@ -44,8 +44,8 @@ export const Route = createFileRoute("/blog/$slug")({
             headline: a.title,
             description: a.metaDescription,
             datePublished: a.publishedAt,
-            author: { "@type": "Organization", name: "AgapeMeet" },
-            publisher: { "@type": "Organization", name: "AgapeMeet" },
+            author: { "@type": "Organization", name: "Eden Rencontre" },
+            publisher: { "@type": "Organization", name: "Eden Rencontre" },
             mainEntityOfPage: url,
           }),
         },
@@ -96,7 +96,7 @@ function ArticlePage() {
       <div className="mt-10 rounded-2xl bg-gradient-to-br from-primary to-primary/85 text-primary-foreground p-6 text-center">
         <h2 className="font-serif text-xl font-semibold">Prêt à rencontrer quelqu'un ?</h2>
         <p className="text-sm opacity-90 mt-1.5">
-          AgapeMeet réunit des célibataires chrétiens décidés à bâtir un foyer.
+          Eden Rencontre réunit des célibataires chrétiens décidés à bâtir un foyer.
         </p>
         <Link
           to="/inscription"

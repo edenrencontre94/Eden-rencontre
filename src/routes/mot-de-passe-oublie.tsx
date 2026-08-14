@@ -11,7 +11,7 @@ import logoAsset from "@/assets/logo.png";
 export const Route = createFileRoute("/mot-de-passe-oublie")({
   head: () => ({
     meta: [
-      { title: "Mot de passe oublié — AgapeMeet" },
+      { title: "Mot de passe oublié – Eden Rencontre" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -44,7 +44,7 @@ function ForgotPasswordPage() {
       }
     }
 
-    // Même écran que l'adresse existe ou non — c'est volontaire.
+    // Même écran que l'adresse existe ou non – c'est volontaire.
     setSent(true);
   };
 
@@ -61,7 +61,7 @@ function ForgotPasswordPage() {
 
         <div className="bg-card border border-border/60 rounded-3xl p-7 shadow-elegant">
           <div className="flex flex-col items-center text-center">
-            <img src={logoAsset} alt="AgapeMeet" className="w-12 h-12 object-contain" />
+            <img src={logoAsset} alt="Eden Rencontre" className="w-12 h-12 object-contain" />
 
             {sent ? (
               <>

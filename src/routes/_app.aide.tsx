@@ -141,7 +141,7 @@ function AidePage() {
     }
   };
 
-  // ── Conversation ───────────────────────────────────────────
+  // â”€â”€ Conversation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (selected) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
@@ -173,7 +173,7 @@ function AidePage() {
                   : "bg-primary text-primary-foreground rounded-br-md"
               }`}>
                 {m.is_staff && (
-                  <p className="text-[11px] font-semibold text-primary mb-1">Équipe AgapeMeet</p>
+                  <p className="text-[11px] font-semibold text-primary mb-1">Équipe Eden Rencontre</p>
                 )}
                 <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.body}</p>
                 <p className="text-[10px] opacity-60 mt-1.5">
@@ -215,7 +215,7 @@ function AidePage() {
     );
   }
 
-  // ── Liste et création ──────────────────────────────────────
+  // â”€â”€ Liste et création â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
       <div>
@@ -244,8 +244,8 @@ function AidePage() {
       <SupportContactBlock
         title="Nous joindre directement"
         description="Pour une réponse rapide, WhatsApp est le canal le plus direct."
-        message="Bonjour, j'ai besoin d'aide sur AgapeMeet."
-        subject="Demande d'aide — AgapeMeet"
+        message="Bonjour, j'ai besoin d'aide sur Eden Rencontre."
+        subject="Demande d'aide – Eden Rencontre"
         compact
       />
 

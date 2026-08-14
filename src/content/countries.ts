@@ -45,7 +45,7 @@ export const COUNTRIES: Country[] = [
     metaDescription:
       "Rencontres chrétiennes sérieuses au Togo. Rejoignez des célibataires chrétiens de Lomé, Kara et Sokodé qui cherchent un mariage fondé sur la foi.",
     intro:
-      "Au Togo, la foi se vit au quotidien — dans les assemblées du dimanche comme dans les cellules de prière en semaine. AgapeMeet réunit des célibataires togolais qui ne cherchent pas une aventure, mais une alliance.",
+      "Au Togo, la foi se vit au quotidien — dans les assemblées du dimanche comme dans les cellules de prière en semaine. Eden Rencontre réunit des célibataires togolais qui ne cherchent pas une aventure, mais une alliance.",
     cities: ["Lomé", "Sokodé", "Kara", "Kpalimé", "Atakpamé", "Dapaong", "Tsévié", "Aného"],
     paysage:
       "Le paysage chrétien togolais est marqué par une forte présence évangélique et pentecôtiste, aux côtés d'une Église catholique bien implantée et des Églises méthodistes et presbytériennes historiques du sud du pays. Cette diversité fait que la question de la confession se pose très concrètement au moment du mariage : deux familles peuvent porter une même foi et des pratiques très différentes.",
@@ -71,7 +71,7 @@ export const COUNTRIES: Country[] = [
     metaDescription:
       "Site de rencontre chrétien au Bénin. Rencontrez des célibataires de Cotonou, Porto-Novo et Parakou décidés à bâtir un foyer chrétien.",
     intro:
-      "Au Bénin, se dire chrétien engage souvent face à toute une famille. AgapeMeet s'adresse à celles et ceux qui veulent que ce choix soit aussi celui de leur couple.",
+      "Au Bénin, se dire chrétien engage souvent face à toute une famille. Eden Rencontre s'adresse à celles et ceux qui veulent que ce choix soit aussi celui de leur couple.",
     cities: ["Cotonou", "Porto-Novo", "Parakou", "Abomey", "Bohicon", "Natitingou", "Djougou", "Ouidah"],
     paysage:
       "Le Bénin présente une mosaïque religieuse singulière : christianisme, islam et religions traditionnelles y coexistent étroitement, parfois au sein d'une même famille. Pour un célibataire chrétien, la question du conjoint devient alors moins celle de la dénomination que celle d'un socle commun clairement assumé, souvent discuté avec les aînés avant tout engagement.",
@@ -97,7 +97,7 @@ export const COUNTRIES: Country[] = [
     metaDescription:
       "Rencontres chrétiennes sérieuses en Côte d'Ivoire. Célibataires chrétiens d'Abidjan, Bouaké et Yamoussoukro tournés vers le mariage.",
     intro:
-      "Abidjan concentre une vie chrétienne intense — grandes assemblées, groupes de jeunes, veillées. Et pourtant, y trouver un conjoint qui partage réellement sa foi reste difficile. AgapeMeet existe pour ça.",
+      "Abidjan concentre une vie chrétienne intense — grandes assemblées, groupes de jeunes, veillées. Et pourtant, y trouver un conjoint qui partage réellement sa foi reste difficile. Eden Rencontre existe pour ça.",
     cities: ["Abidjan", "Bouaké", "Yamoussoukro", "Daloa", "San-Pédro", "Korhogo", "Man", "Gagnoa"],
     paysage:
       "La Côte d'Ivoire abrite certaines des plus grandes assemblées évangéliques d'Afrique de l'Ouest, aux côtés d'une Église catholique très structurée et d'un réseau dense d'Églises de réveil. Le paradoxe est connu : dans une assemblée de plusieurs milliers de personnes, beaucoup de célibataires ne rencontrent personne, faute d'un cadre qui permette de se parler autrement qu'en groupe.",
@@ -149,7 +149,7 @@ export const COUNTRIES: Country[] = [
     metaDescription:
       "Site de rencontre chrétien au Cameroun. Célibataires chrétiens de Douala, Yaoundé et Bafoussam en quête d'un mariage selon la foi.",
     intro:
-      "Du littoral aux hauts plateaux de l'Ouest, le Cameroun est profondément marqué par le christianisme. AgapeMeet y réunit des célibataires qui veulent un foyer bâti sur cette foi.",
+      "Du littoral aux hauts plateaux de l'Ouest, le Cameroun est profondément marqué par le christianisme. Eden Rencontre y réunit des célibataires qui veulent un foyer bâti sur cette foi.",
     cities: ["Douala", "Yaoundé", "Bafoussam", "Bamenda", "Garoua", "Buea", "Kribi", "Ngaoundéré"],
     paysage:
       "Le Cameroun réunit catholiques, protestants — presbytériens, baptistes, évangéliques luthériens — et un mouvement pentecôtiste en forte croissance dans les grandes villes. La dimension bilingue du pays ajoute une réalité concrète : les communautés anglophones et francophones se croisent parfois peu, y compris entre chrétiens d'une même ville.",

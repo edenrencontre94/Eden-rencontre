@@ -8,7 +8,7 @@ import { useSetting } from "@/lib/appSettings";
 
 export const Route = createFileRoute("/_app/guide")({
   head: () => ({
-    meta: [{ title: "Guide — AgapeMeet" }],
+    meta: [{ title: "Guide – Eden Rencontre" }],
   }),
   component: GuidePage,
 });
@@ -23,7 +23,7 @@ type Conseil = {
  * Six conseils, pas vingt.
  *
  * Une liste exhaustive n'est jamais lue en entier. Chacun porte une
- * action concrète — pas « soyez authentique », qui ne dit à personne quoi
+ * action concrète – pas « soyez authentique », qui ne dit à personne quoi
  * faire ensuite.
  */
 const CONSEILS: Conseil[] = [
@@ -31,7 +31,7 @@ const CONSEILS: Conseil[] = [
     icone: Camera,
     titre: "Soignez votre photo principale",
     texte:
-      "Un portrait net, le visage bien visible, dans une lumière naturelle. C'est la première chose que l'on voit — et souvent la seule si elle ne donne pas envie d'en savoir plus. Évitez les photos de groupe : personne ne devrait avoir à deviner qui vous êtes.",
+      "Un portrait net, le visage bien visible, dans une lumière naturelle. C'est la première chose que l'on voit – et souvent la seule si elle ne donne pas envie d'en savoir plus. Évitez les photos de groupe : personne ne devrait avoir à deviner qui vous êtes.",
   },
   {
     icone: PenLine,
@@ -49,7 +49,7 @@ const CONSEILS: Conseil[] = [
     icone: MessageCircle,
     titre: "Écrivez un premier message qui appelle une réponse",
     texte:
-      "« Salut » n'engage à rien et n'obtient presque jamais de réponse. Relevez un détail de son profil — une conviction, un centre d'intérêt, une phrase — et posez une vraie question dessus.",
+      "« Salut » n'engage à rien et n'obtient presque jamais de réponse. Relevez un détail de son profil – une conviction, un centre d'intérêt, une phrase – et posez une vraie question dessus.",
   },
   {
     icone: Clock,
@@ -78,7 +78,7 @@ function GuidePage() {
   //
   // La valeur par défaut est le canal réel, pas une chaîne vide : tant
   // que la migration 53 n'a pas été exécutée, `app_settings` ne contient
-  // pas la clé — et un défaut vide faisait disparaître le bouton.
+  // pas la clé – et un défaut vide faisait disparaître le bouton.
   const lienCommunaute = useSetting<string>(
     "community_whatsapp",
     "https://whatsapp.com/channel/0029Vb93f4D35fLrflJx9g0U",
@@ -90,7 +90,7 @@ function GuidePage() {
 
   return (
     <div className="pb-12">
-      {/* ── En-tête ─────────────────────────────────────────── */}
+      {/* â”€â”€ En-tête â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/80 text-primary-foreground">
         <div
           aria-hidden
@@ -117,7 +117,7 @@ function GuidePage() {
               Réussir votre recherche
             </h1>
             <p className="text-primary-foreground/85 mt-3 text-sm sm:text-base leading-relaxed">
-              AgapeMeet n'est pas une application de rencontre comme les autres.
+              Eden Rencontre n'est pas une application de rencontre comme les autres.
               On n'y cherche pas une distraction, mais un conjoint. Voici ce qui
               fait la différence entre un profil que l'on survole et un profil
               auquel on écrit.
@@ -127,7 +127,7 @@ function GuidePage() {
       </div>
 
       <div className="px-4 max-w-2xl mx-auto">
-        {/* ── Le parcours ───────────────────────────────────── */}
+        {/* â”€â”€ Le parcours â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <section className="mt-8">
           <h2 className="font-serif text-xl font-semibold">Comment ça se passe</h2>
           <div className="mt-4 grid grid-cols-2 gap-3">
@@ -151,7 +151,7 @@ function GuidePage() {
           </div>
         </section>
 
-        {/* ── Les conseils ──────────────────────────────────── */}
+        {/* â”€â”€ Les conseils â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <section className="mt-10">
           <h2 className="font-serif text-xl font-semibold">Six conseils qui changent tout</h2>
           <div className="mt-4 space-y-3">
@@ -177,7 +177,7 @@ function GuidePage() {
           </div>
         </section>
 
-        {/* ── Le verset ─────────────────────────────────────── */}
+        {/* â”€â”€ Le verset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <section className="mt-10">
           <div className="rounded-3xl border border-gold/30 bg-gold/5 p-6 text-center">
             <Sparkles className="w-5 h-5 text-gold mx-auto" />
@@ -191,7 +191,7 @@ function GuidePage() {
           </div>
         </section>
 
-        {/* ── La communauté ───────────────────────────────────
+        {/* â”€â”€ La communauté â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             Masquée si aucun lien n'est configuré : un bouton
             « Rejoindre » menant vers un canal supprimé ferait croire à
             une panne de l'application. */}
@@ -231,7 +231,7 @@ function GuidePage() {
           </section>
         )}
 
-        {/* ── Retour à l'action ─────────────────────────────── */}
+        {/* â”€â”€ Retour à l'action â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <section className="mt-8 grid sm:grid-cols-2 gap-3">
           <Link
             to="/decouvrir"
@@ -266,7 +266,7 @@ function GuidePage() {
   );
 }
 
-/** Logo WhatsApp — lucide n'en fournit aucun. */
+/** Logo WhatsApp – lucide n'en fournit aucun. */
 function WhatsAppIcon({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">

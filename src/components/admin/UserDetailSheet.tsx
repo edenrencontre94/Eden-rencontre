@@ -517,7 +517,7 @@ function GrantDialog({ userId, nom, onClose, onDone }: {
   userId: string; nom: string; onClose: () => void; onDone: () => void;
 }) {
   const [days, setDays] = useState(7);
-  const [plan, setPlan] = useState<"premium" | "vip">("premium");
+  const [plan] = useState<"premium">("premium");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -552,25 +552,6 @@ function GrantDialog({ userId, nom, onClose, onDone }: {
         </p>
 
         <div className="mt-4 space-y-3">
-          <div>
-            <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Offre
-            </label>
-            <div className="flex gap-2 mt-1.5">
-              {(["premium", "vip"] as const).map(pl => (
-                <button
-                  key={pl}
-                  onClick={() => setPlan(pl)}
-                  className={`flex-1 py-2 rounded-xl text-sm font-semibold border ${
-                    plan === pl ? "border-primary bg-primary/10 text-primary" : "border-border"
-                  }`}
-                >
-                  {pl === "vip" ? "VIP" : "Premium"}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Durée

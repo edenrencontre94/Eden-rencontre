@@ -9,12 +9,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-// Session persistante dans localStorage — l'utilisateur reste connecté entre les visites
+// Session persistante dans localStorage – l'utilisateur reste connecté entre les visites
 export const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
-        storageKey: "agapemeet-auth",
+        storageKey: "edenrencontre-auth",
         storage: typeof window !== "undefined" ? window.localStorage : undefined,
         autoRefreshToken: true,
         detectSessionInUrl: true,

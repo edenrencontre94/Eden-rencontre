@@ -4,11 +4,11 @@ import { PublicLayout, SITE_URL } from "@/components/public/PublicLayout";
 export const Route = createFileRoute("/confidentialite")({
   head: () => ({
     meta: [
-      { title: "Politique de confidentialité — AgapeMeet" },
+      { title: "Politique de confidentialité – Eden Rencontre" },
       {
         name: "description",
         content:
-          "Comment AgapeMeet collecte, utilise et protège vos données personnelles. Vos profils ne sont pas indexés par les moteurs de recherche.",
+          "Comment Eden Rencontre collecte, utilise et protège vos données personnelles. Vos profils ne sont pas indexés par les moteurs de recherche.",
       },
     ],
     links: [{ rel: "canonical", href: `${SITE_URL}/confidentialite` }],

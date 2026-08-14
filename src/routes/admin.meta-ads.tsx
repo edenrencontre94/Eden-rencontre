@@ -14,17 +14,17 @@ export const Route = createFileRoute("/admin/meta-ads")({
 });
 
 /**
- * Meta Ads — mesure, pas gestion de campagnes.
+ * Meta Ads – mesure, pas gestion de campagnes.
  *
  * Les campagnes se créent dans Meta Business Suite. Ce module répond à la
  * seule question que Meta ne sait pas traiter : que produisent ces
- * campagnes DANS l'application — inscriptions, profils, matchs,
+ * campagnes DANS l'application – inscriptions, profils, matchs,
  * abonnements, revenus.
  *
  * CE QUI N'EST PAS AFFICHÉ, ET POURQUOI. Dépenses, impressions, clics,
  * CTR, CPC n'existent que dans l'API Marketing de Meta, qui exige une
  * autorisation OAuth sur un compte publicitaire. Tant qu'elle n'est pas
- * établie, ces chiffres — et donc le ROAS et le coût par abonné — ne sont
+ * établie, ces chiffres – et donc le ROAS et le coût par abonné – ne sont
  * pas calculables. On l'écrit plutôt que d'afficher un nombre inventé :
  * un budget se décide sur ces valeurs.
  */
@@ -112,7 +112,7 @@ function AdminMetaAds() {
           <h1 className="text-3xl font-serif font-bold">Meta Ads</h1>
           <p className="text-muted-foreground mt-1 text-sm max-w-xl">
             Suivez les performances de vos campagnes Meta et mesurez leur
-            impact réel sur AgapeMeet.
+            impact réel sur Eden Rencontre.
           </p>
         </div>
 
@@ -149,7 +149,7 @@ function AdminMetaAds() {
         </div>
       )}
 
-      {/* Onglets internes — jamais des menus du sidebar. */}
+      {/* Onglets internes – jamais des menus du sidebar. */}
       <div className="flex flex-wrap gap-2">
         {ONGLETS.map(o => (
           <button
@@ -189,7 +189,7 @@ function AdminMetaAds() {
   );
 }
 
-/* ═══════════════ Vue d'ensemble ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• Vue d'ensemble â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 function Vue({ d, pixelOk, capiOk, enProd }: {
   d: Donnees; pixelOk: boolean; capiOk: boolean; enProd: boolean;
@@ -212,8 +212,8 @@ function Vue({ d, pixelOk, capiOk, enProd }: {
       ) : !capiOk ? (
         <Encart ton="attention" titre="Pixel actif, Conversions API inactive">
           Votre Pixel fonctionne, mais l'envoi serveur n'est pas activé. Une
-          part importante des conversions échappe à Meta — bloqueurs de
-          publicité et traitement iOS — et vos campagnes s'optimisent sur une
+          part importante des conversions échappe à Meta – bloqueurs de
+          publicité et traitement iOS – et vos campagnes s'optimisent sur une
           vision partielle.
         </Encart>
       ) : achatsManquants ? (
@@ -226,7 +226,7 @@ function Vue({ d, pixelOk, capiOk, enProd }: {
       ) : (
         <Encart ton="ok" titre="Votre tracking Meta est opérationnel">
           Pixel connecté, Conversions API active
-          {enProd ? ", mode production." : ", mode test — les événements n'alimentent pas encore vos campagnes."}
+          {enProd ? ", mode production." : ", mode test – les événements n'alimentent pas encore vos campagnes."}
         </Encart>
       )}
 
@@ -256,7 +256,7 @@ function Vue({ d, pixelOk, capiOk, enProd }: {
           <Carte v={String(e.abonnes)} l="Abonnements" />
           <Carte v={formatPrice(e.revenus)} l="Revenus" accent />
           <Carte
-            v={e.abonnes > 0 ? formatPrice(Math.round(e.revenus / e.abonnes)) : "—"}
+            v={e.abonnes > 0 ? formatPrice(Math.round(e.revenus / e.abonnes)) : "–"}
             l="Revenu par abonné"
           />
         </div>
@@ -275,7 +275,7 @@ function Vue({ d, pixelOk, capiOk, enProd }: {
           Dépenses, impressions et clics ne sont accessibles que par l'API
           Marketing de Meta, qui exige une autorisation sur votre compte
           publicitaire. Sans elle, ni le ROAS ni le coût par abonné ne peuvent
-          être calculés — et afficher un nombre inventé serait pire que de ne
+          être calculés – et afficher un nombre inventé serait pire que de ne
           rien afficher, puisque c'est sur ces valeurs qu'un budget se décide.
           <br /><br />
           En attendant, retrouvez-les dans <strong>Meta Business Suite</strong>,
@@ -288,7 +288,7 @@ function Vue({ d, pixelOk, capiOk, enProd }: {
   );
 }
 
-/* ═══════════════ Entonnoir ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• Entonnoir â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 function Entonnoir({ e }: { e: Donnees["entonnoir"] }) {
   const etapes = [
@@ -307,7 +307,7 @@ function Entonnoir({ e }: { e: Donnees["entonnoir"] }) {
         <Target className="w-9 h-9 text-muted-foreground/30 mx-auto" />
         <p className="text-sm text-muted-foreground mt-3 max-w-md mx-auto leading-relaxed">
           Aucune donnée disponible. L'entonnoir se remplira dès qu'une
-          campagne enverra du trafic avec des paramètres UTM — voir l'onglet
+          campagne enverra du trafic avec des paramètres UTM – voir l'onglet
           <strong> UTM &amp; Tracking</strong>.
         </p>
       </section>
@@ -340,7 +340,7 @@ function Entonnoir({ e }: { e: Donnees["entonnoir"] }) {
               </div>
               {i > 0 && perte > 0 && (
                 <p className={`text-[11px] mt-1 ${taux < 50 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
-                  −{perte} à cette étape
+                  âˆ’{perte} à cette étape
                 </p>
               )}
             </div>
@@ -355,12 +355,12 @@ function Entonnoir({ e }: { e: Donnees["entonnoir"] }) {
   );
 }
 
-/* ═══════════════ Pixel & Conversions ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• Pixel & Conversions â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 function Pixel({ reglages, onSave }: { reglages: Record<string, any>; onSave: () => void }) {
   const [v, setV] = useState({
     meta_pixel_id: String(reglages.meta_pixel_id ?? ""),
-    meta_domain: String(reglages.meta_domain ?? "agapemeet.com"),
+    meta_domain: String(reglages.meta_domain ?? "edenrencontre.com"),
     meta_test_code: String(reglages.meta_test_code ?? ""),
     meta_mode: String(reglages.meta_mode ?? "test"),
     meta_capi_active: reglages.meta_capi_active === true,
@@ -481,7 +481,7 @@ function Pixel({ reglages, onSave }: { reglages: Record<string, any>; onSave: ()
   );
 }
 
-/* ═══════════════ Événements ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• Événements â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 const ATTENDUS = [
   "PageView", "ViewContent", "CompleteRegistration", "CompleteProfile",
@@ -524,12 +524,12 @@ function Evenements({ d }: { d: Donnees }) {
                     )}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground text-xs">
-                    {e?.sources?.length ? e.sources.join(" + ") : "—"}
+                    {e?.sources?.length ? e.sources.join(" + ") : "–"}
                   </td>
                   <td className="px-4 py-3 tabular-nums">{e?.jour ?? 0}</td>
                   <td className="px-4 py-3 tabular-nums text-muted-foreground">{e?.total ?? 0}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {e?.dernier ? depuis(e.dernier) : "—"}
+                    {e?.dernier ? depuis(e.dernier) : "–"}
                   </td>
                 </tr>
               );
@@ -539,14 +539,14 @@ function Evenements({ d }: { d: Donnees }) {
       </div>
 
       <Encart ton="info" titre="Quand chaque événement part">
-        <strong>CompleteRegistration</strong> — le profil est écrit en base,
+        <strong>CompleteRegistration</strong> – le profil est écrit en base,
         pas au clic sur « Créer mon compte ».<br />
-        <strong>CompleteProfile</strong> — la complétion atteint 60 %.<br />
-        <strong>Like</strong> et <strong>Match</strong> — après confirmation
+        <strong>CompleteProfile</strong> – la complétion atteint 60 %.<br />
+        <strong>Like</strong> et <strong>Match</strong> – après confirmation
         par la base, jamais sur l'intention.<br />
-        <strong>InitiateCheckout</strong> — la commande est créée chez le
+        <strong>InitiateCheckout</strong> – la commande est créée chez le
         prestataire.<br />
-        <strong>Purchase</strong> — <em>uniquement</em> depuis le webhook de
+        <strong>Purchase</strong> – <em>uniquement</em> depuis le webhook de
         paiement, après encaissement confirmé. Il est refusé s'il vient d'un
         navigateur.
       </Encart>
@@ -573,7 +573,7 @@ function Evenements({ d }: { d: Donnees }) {
   );
 }
 
-/* ═══════════════ Audiences ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• Audiences â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 const AUDIENCES: { k: string; l: string; q: string }[] = [
   { k: "visiteurs", l: "Visiteurs venus d'une publicité", q: "Retargeting court" },
@@ -592,7 +592,7 @@ function Audiences({ d }: { d: Donnees }) {
     <div className="space-y-5">
       <Titre icone={Users2} titre="Segments mobilisables">
         Effectifs réels, calculés depuis la base. La création des audiences
-        se fait dans Meta Business Suite — AgapeMeet prépare les segments et
+        se fait dans Meta Business Suite – Eden Rencontre prépare les segments et
         mesure ce qu'ils produisent.
       </Titre>
 
@@ -612,7 +612,7 @@ function Audiences({ d }: { d: Donnees }) {
 
       <Encart ton="attention" titre="Ne transmettez jamais de fichier de membres">
         Exporter des adresses e-mail vers une audience personnalisée
-        transmettrait à Meta la liste de vos membres — sur une plateforme de
+        transmettrait à Meta la liste de vos membres – sur une plateforme de
         rencontre chrétienne, cela révèle une orientation religieuse et une
         situation matrimoniale. Le tracking d'événements suffit à construire
         des audiences comportementales, sans jamais livrer d'identités.
@@ -621,11 +621,11 @@ function Audiences({ d }: { d: Donnees }) {
   );
 }
 
-/* ═══════════════ UTM ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• UTM â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 function Utm({ d }: { d: Donnees }) {
   const exemple =
-    "https://agapemeet.com/?utm_source=facebook&utm_medium=paid_social" +
+    "https://edenrencontre.com/?utm_source=facebook&utm_medium=paid_social" +
     "&utm_campaign=celibataires_chretiens_togo&utm_content=video_01";
 
   const copier = () => {
@@ -654,11 +654,11 @@ function Utm({ d }: { d: Donnees }) {
         </button>
 
         <div className="mt-5 space-y-2 text-xs text-muted-foreground">
-          <p><code className="text-foreground">utm_source</code> — la plateforme : <em>facebook</em>, <em>instagram</em></p>
-          <p><code className="text-foreground">utm_medium</code> — le type : <em>paid_social</em></p>
-          <p><code className="text-foreground">utm_campaign</code> — le nom de campagne, tel qu'il apparaîtra ici</p>
-          <p><code className="text-foreground">utm_content</code> — la création : <em>video_01</em>, <em>image_femme_30</em></p>
-          <p><code className="text-foreground">utm_term</code> — facultatif, mot-clé ou ciblage</p>
+          <p><code className="text-foreground">utm_source</code> – la plateforme : <em>facebook</em>, <em>instagram</em></p>
+          <p><code className="text-foreground">utm_medium</code> – le type : <em>paid_social</em></p>
+          <p><code className="text-foreground">utm_campaign</code> – le nom de campagne, tel qu'il apparaîtra ici</p>
+          <p><code className="text-foreground">utm_content</code> – la création : <em>video_01</em>, <em>image_femme_30</em></p>
+          <p><code className="text-foreground">utm_term</code> – facultatif, mot-clé ou ciblage</p>
         </div>
       </section>
 
@@ -690,7 +690,7 @@ function Utm({ d }: { d: Donnees }) {
   );
 }
 
-/* ═══════════════ Attribution ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• Attribution â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 function Attribution({ d }: { d: Donnees }) {
   if (d.campagnes.length === 0) {
@@ -699,7 +699,7 @@ function Attribution({ d }: { d: Donnees }) {
         <Target className="w-9 h-9 text-muted-foreground/30 mx-auto" />
         <p className="text-sm text-muted-foreground mt-3 max-w-md mx-auto leading-relaxed">
           Aucune donnée disponible. Marquez vos publicités avec des paramètres
-          UTM — onglet <strong>UTM &amp; Tracking</strong> — et les campagnes
+          UTM – onglet <strong>UTM &amp; Tracking</strong> – et les campagnes
           apparaîtront ici dès les premières visites.
         </p>
       </div>
@@ -751,14 +751,14 @@ function Attribution({ d }: { d: Donnees }) {
       <Encart ton="info" titre="Le coût par abonné manque encore">
         Rapprochez la colonne <strong>Revenus</strong> de la dépense affichée
         dans Meta Business Suite pour le même nom de campagne. Le rapport des
-        deux vous donne le ROAS réel — celui qui compte, puisqu'il repose sur
+        deux vous donne le ROAS réel – celui qui compte, puisqu'il repose sur
         des paiements encaissés et non sur des conversions déclarées.
       </Encart>
     </div>
   );
 }
 
-/* ═══════════════ Rapports ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• Rapports â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 function Rapports({ d }: { d: Donnees }) {
   const max = Math.max(1, ...d.campagnes.map(c => c.revenus));
@@ -802,7 +802,7 @@ function Rapports({ d }: { d: Donnees }) {
   );
 }
 
-/* ═══════════════ Tests & Diagnostic ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• Tests & Diagnostic â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 function Tests({ d, pixelOk, capiOk }: { d: Donnees; pixelOk: boolean; capiOk: boolean }) {
   const [busy, setBusy] = useState<string | null>(null);
@@ -828,7 +828,7 @@ function Tests({ d, pixelOk, capiOk }: { d: Donnees; pixelOk: boolean; capiOk: b
           message: ok
             ? `Reçu par Meta${r?.test ? " (mode test)" : ""}`
             : r?.raison === "non_configure"
-              ? "Meta n'est pas configuré — renseignez le Pixel et activez Conversions API"
+              ? "Meta n'est pas configuré – renseignez le Pixel et activez Conversions API"
               : r?.message ?? error?.message ?? "Échec de l'envoi",
         },
         ...prev.slice(0, 9),
@@ -906,7 +906,7 @@ function Tests({ d, pixelOk, capiOk }: { d: Donnees; pixelOk: boolean; capiOk: b
                   : <XCircle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />}
                 <span className="min-w-0">
                   <strong>{r.nom}</strong>
-                  <span className="text-muted-foreground"> — {r.message}</span>
+                  <span className="text-muted-foreground"> – {r.message}</span>
                 </span>
               </div>
             ))}
@@ -932,7 +932,7 @@ function calculerSante(d: Donnees, pixelOk: boolean, capiOk: boolean) {
   else { note -= 30; points.push({ ton: "erreur", texte: "Pixel non configuré" }); }
 
   if (capiOk) points.push({ ton: "ok", texte: "Conversions API active" });
-  else { note -= 25; points.push({ ton: "attention", texte: "Conversions API inactive — une part des conversions échappe à Meta" }); }
+  else { note -= 25; points.push({ ton: "attention", texte: "Conversions API inactive – une part des conversions échappe à Meta" }); }
 
   const s = d.sante;
   if (s.envoyes_24h > 0) {
@@ -949,7 +949,7 @@ function calculerSante(d: Donnees, pixelOk: boolean, capiOk: boolean) {
     note -= 35;
     points.push({
       ton: "erreur",
-      texte: `${s.paiements_24h} paiement(s) encaissé(s) et aucun Purchase transmis — vos campagnes optimisent à l'aveugle`,
+      texte: `${s.paiements_24h} paiement(s) encaissé(s) et aucun Purchase transmis – vos campagnes optimisent à l'aveugle`,
     });
   } else if (s.achats_24h > 0) {
     points.push({ ton: "ok", texte: `${s.achats_24h} achat(s) transmis à Meta sur 24 h` });
@@ -958,7 +958,7 @@ function calculerSante(d: Donnees, pixelOk: boolean, capiOk: boolean) {
   return { note: Math.max(0, note), points };
 }
 
-/* ═══════════════ Éléments réutilisés ═══════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• Éléments réutilisés â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 function Titre({ icone: I, titre, children }: { icone: any; titre: string; children?: React.ReactNode }) {
   return (
@@ -984,7 +984,7 @@ function Carte({ v, l, accent }: { v: string; l: string; accent?: boolean }) {
 function CarteVide({ l }: { l: string }) {
   return (
     <div className="rounded-2xl border border-dashed border-border p-4">
-      <div className="text-2xl font-serif font-bold text-muted-foreground/40">—</div>
+      <div className="text-2xl font-serif font-bold text-muted-foreground/40">–</div>
       <div className="text-xs text-muted-foreground mt-0.5">{l}</div>
       <div className="text-[10px] text-muted-foreground/70 mt-1">Connexion Meta requise</div>
     </div>

@@ -9,7 +9,7 @@ import { PushToggle } from "@/components/app/PushToggle";
 
 export const Route = createFileRoute("/_app/parametres/notifications")({
   head: () => ({
-    meta: [{ title: "Notifications — AgapeMeet" }],
+    meta: [{ title: "Notifications – Eden Rencontre" }],
   }),
   component: NotificationsPage,
 });
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_app/parametres/notifications")({
 /**
  * Préférences d'e-mail.
  *
- * Elles vivaient dans le localStorage — donc invisibles du serveur, qui
+ * Elles vivaient dans le localStorage – donc invisibles du serveur, qui
  * n'aurait pas pu les respecter au moment d'envoyer. Elles sont désormais
  * en base, dans `email_preferences`, lue par les Edge Functions avant
  * chaque envoi facultatif.
@@ -148,7 +148,7 @@ function NotificationsPage() {
             </div>
           </div>
 
-          {/* Ce que l'utilisateur ne peut pas désactiver — annoncé clairement
+          {/* Ce que l'utilisateur ne peut pas désactiver – annoncé clairement
               plutôt que découvert dans sa boîte mail. */}
           <div className="mt-4 rounded-2xl border border-border/60 bg-secondary/40 p-4 flex gap-3">
             <ShieldCheck className="w-4 h-4 text-primary shrink-0 mt-0.5" />

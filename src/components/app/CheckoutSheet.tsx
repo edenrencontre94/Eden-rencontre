@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { formatPrice } from "@/lib/plans";
 import { startCheckout } from "@/lib/checkout";
 
-/** Indicatifs les plus courants pour l'audience d'AgapeMeet. */
+/** Indicatifs les plus courants pour l'audience d'Eden Rencontre. */
 export const COUNTRIES = [
   { code: "TG", dial: "+228", label: "Togo" },
   { code: "BJ", dial: "+229", label: "Bénin" },
@@ -153,7 +153,7 @@ export function CheckoutSheet({
           </button>
 
           <p className="text-[10px] text-muted-foreground text-center flex items-center justify-center gap-1">
-            <ShieldCheck className="w-3 h-3" /> Paiement sécurisé — nous ne stockons aucune donnée bancaire.
+            <ShieldCheck className="w-3 h-3" /> Paiement sécurisé – nous ne stockons aucune donnée bancaire.
           </p>
         </div>
       </motion.div>

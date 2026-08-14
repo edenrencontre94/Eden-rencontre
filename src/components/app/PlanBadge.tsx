@@ -13,7 +13,7 @@ export function PlanBadge({ profile, compact }: { profile?: BadgeSource | null; 
   if (!plan) return null;
 
   const { label, cls } = PLAN_BADGE[plan];
-  const Icon = plan === "vip" ? Gem : Crown;
+  const Icon = Crown;
 
   if (compact) {
     // Icône seule : sur les vignettes étroites, le libellé pousserait le

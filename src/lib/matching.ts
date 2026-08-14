@@ -134,27 +134,13 @@ export function compatibilityScore(me: ScoringProfile, other: ScoringProfile): n
   return Math.round(40 + ratio * 59); // 40 → 99
 }
 
-/** Un boost est-il encore valide ? */
-export function isBoosted(boostedUntil?: string | null, now = Date.now()): boolean {
-  if (!boostedUntil) return false;
-  const t = new Date(boostedUntil).getTime();
-  return !Number.isNaN(t) && t > now;
-}
 
 /**
- * Classement final du deck : les profils boostés d'abord, puis par
- * compatibilité décroissante. Au sein des boostés, le plus récemment
- * activé passe devant — sinon un boost de 7 jours écraserait
- * indéfiniment les boosts de 24 h.
+ * Classement final du deck : par compatibilité décroissante.
  */
-export function rankProfiles<T extends { compatibility: number; boostedUntil?: string | null }>(
+export function rankProfiles<T extends { compatibility: number }>(
   profiles: T[],
-  now = Date.now(),
 ): T[] {
-  return [...profiles].sort((a, b) => {
-    const ba = isBoosted(a.boostedUntil, now);
-    const bb = isBoosted(b.boostedUntil, now);
-    if (ba !== bb) return ba ? -1 : 1;
-    return b.compatibility - a.compatibility;
-  });
+  return [...profiles].sort((a, b) => b.compatibility - a.compatibility);
 }
+

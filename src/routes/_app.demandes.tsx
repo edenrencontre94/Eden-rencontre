@@ -29,7 +29,7 @@ import {
 export const Route = createFileRoute("/_app/demandes")({
   head: () => ({
     meta: [
-      { title: "Demandes — AgapeMeet" },
+      { title: "Demandes — Eden Rencontre" },
       { name: "description", content: "Vos likes, super likes et matches." },
       { name: "robots", content: "noindex" },
     ],

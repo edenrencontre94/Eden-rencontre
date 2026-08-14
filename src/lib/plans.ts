@@ -1,5 +1,5 @@
 /**
- * Catalogue des formules AgapeMeet.
+ * Catalogue des formules Eden Rencontre.
  *
  * Modèle retenu : vente de DURÉES en paiement unique (pas de prélèvement
  * récurrent), car Chariow ne gère que le paiement à l'acte. À l'expiration,
@@ -7,7 +7,7 @@
  * PROLONGE la date de fin au lieu de l'écraser.
  */
 
-export type PlanId = "gratuit" | "premium" | "vip";
+export type PlanId = "gratuit" | "premium";
 export type DurationId = "15j" | "1m" | "3m";
 
 /**
@@ -15,7 +15,7 @@ export type DurationId = "15j" | "1m" | "3m";
  *
  * Ces valeurs pilotent l'INTERFACE. Les limites qui comptent vraiment
  * (messages, likes, Super Likes, appels, médias, visibilité) sont en plus
- * imposées par des triggers en base — voir 26_limites_gratuit.sql. Sans
+ * imposées par des triggers en base – voir 26_limites_gratuit.sql. Sans
  * cette double barrière, il suffirait d'appeler l'API depuis la console.
  */
 export type PlanFeatures = {
@@ -25,7 +25,7 @@ export type PlanFeatures = {
    * Consulter l'onglet Super Likes reçus.
    *
    * Ne couvre plus « M'ont aimé », désormais ouvert à tous : verrouiller
-   * cet onglet sur un compte neuf — qui n'a encore aucun match — ne
+   * cet onglet sur un compte neuf – qui n'a encore aucun match – ne
    * laissait qu'un écran vide et un cadenas, au moment précis où il faut
    * donner une raison de revenir.
    */
@@ -37,9 +37,6 @@ export type PlanFeatures = {
   dailyLikes: number;
   /** Messages envoyés par jour : -1 = illimité */
   dailyMessages: number;
-  boostsPerMonth: number; // -1 = illimité
-  /** Droit d'utiliser le Boost inclus */
-  canBoost: boolean;
   unlimitedLikes: boolean;
   advancedFilters: boolean;
   readReceipts: boolean;
@@ -57,29 +54,24 @@ export type PlanFeatures = {
   visibilityControl: boolean;
   /** Publier des photos dans la communauté */
   communityMedia: boolean;
-  /** Publier des vidéos dans la communauté — VIP uniquement */
+  /** Publier des vidéos dans la communauté */
   communityVideo: boolean;
-  /** Envoyer une vidéo en conversation — VIP uniquement */
+  /** Envoyer une vidéo en conversation */
   videoMessages: boolean;
-  /** Appel vidéo — VIP uniquement (l'audio suffit en Premium) */
+  /** Appel vidéo */
   videoCalls: boolean;
-  /** Vidéo de présentation sur le profil — VIP uniquement */
+  /** Vidéo de présentation sur le profil */
   profileVideo: boolean;
-  /** Assistant coach IA — VIP uniquement */
+  /** Assistant coach IA */
   aiCoach: boolean;
 };
 
-/** Palier : 0 = gratuit, 1 = 15 j, 2 = 1 mois, 3 = 3 mois, 4 = VIP. */
-export type PlanLevel = 0 | 1 | 2 | 3 | 4;
+/** Palier : 0 = gratuit, 1 = 15 j, 2 = 1 mois, 3 = 3 mois. */
+export type PlanLevel = 0 | 1 | 2 | 3;
 
 /** Messages par jour selon le palier. -1 = illimité. */
 export const MESSAGES_BY_LEVEL: Record<PlanLevel, number> = {
-  0: 5, 1: 20, 2: 35, 3: 55, 4: -1,
-};
-
-/** Boosts par mois selon le palier. -1 = illimité. */
-export const BOOSTS_BY_LEVEL: Record<PlanLevel, number> = {
-  0: 0, 1: 1, 2: 2, 3: 4, 4: -1,
+  0: 5, 1: 20, 2: 35, 3: -1,
 };
 
 export const LEVEL_LABELS: Record<PlanLevel, string> = {
@@ -87,13 +79,12 @@ export const LEVEL_LABELS: Record<PlanLevel, string> = {
   1: "Premium 15 jours",
   2: "Premium 1 mois",
   3: "Premium 3 mois",
-  4: "VIP",
 };
 
 /**
  * Droits effectifs, ajustés au palier réellement acheté.
  *
- * Les quotas de messages et de Boosts varient d'un palier Premium à
+ * Les quotas de messages varient d'un palier Premium à
  * l'autre ; tout le reste dépend seulement de la formule.
  */
 export function featuresFor(planId: PlanId, level: PlanLevel): PlanFeatures {
@@ -101,8 +92,6 @@ export function featuresFor(planId: PlanId, level: PlanLevel): PlanFeatures {
   return {
     ...base,
     dailyMessages: MESSAGES_BY_LEVEL[level] ?? base.dailyMessages,
-    boostsPerMonth: BOOSTS_BY_LEVEL[level] ?? base.boostsPerMonth,
-    canBoost: (BOOSTS_BY_LEVEL[level] ?? 0) !== 0,
   };
 }
 
@@ -125,7 +114,7 @@ export type Plan = {
   /** Promesse en une ligne, affichée en tête de carte. */
   promise: string;
   perks: string[];
-  /** Ce que la formule ne couvre pas — crée le contraste avec la suivante. */
+  /** Ce que la formule ne couvre pas – crée le contraste avec la suivante. */
   limits?: string[];
   features: PlanFeatures;
   highlight?: boolean;
@@ -138,8 +127,6 @@ export const FREE_FEATURES: PlanFeatures = {
   superLikeCooldownDays: 7,
   dailyLikes: 25,
   dailyMessages: 5,
-  boostsPerMonth: 0,
-  canBoost: false,
   unlimitedLikes: false,
   advancedFilters: false,
   readReceipts: false,
@@ -164,7 +151,6 @@ const PAID_BASE = {
   superLikeCooldownDays: 0,
   dailyLikes: -1,
   dailyMessages: -1,
-  canBoost: true,
   unlimitedLikes: true,
   advancedFilters: true,
   readReceipts: true,
@@ -174,12 +160,12 @@ const PAID_BASE = {
   preMatchMessage: true,
   visibilityControl: true,
   communityMedia: true,
-  // Tout ce qui touche à la vidéo, plus le coach IA, reste au VIP
-  communityVideo: false,
-  videoMessages: false,
-  videoCalls: false,
-  profileVideo: false,
-  aiCoach: false,
+  // Tout ce qui touche à la vidéo, plus le coach IA
+  communityVideo: true,
+  videoMessages: true,
+  videoCalls: true,
+  profileVideo: true,
+  aiCoach: true,
 } as const;
 
 export const PLANS: Plan[] = [
@@ -203,7 +189,7 @@ export const PLANS: Plan[] = [
       "Vous ne voyez pas qui a visité votre profil, ni vos Super Likes reçus",
       "Ni appels audio ou vidéo, ni messages vocaux",
       "Publications sans photo ni vidéo",
-      "Ni Boost, ni filtres avancés, ni réglage de visibilité",
+      "Ni filtres avancés, ni réglage de visibilité",
     ],
     features: FREE_FEATURES,
   },
@@ -214,47 +200,17 @@ export const PLANS: Plan[] = [
     promise: "Ne laissez plus passer la bonne personne faute d'être vu.",
     highlight: true,
     perks: [
-      "Découvrez qui visite votre profil — un intérêt sincère ne vous échappera plus",
+      "Découvrez qui visite votre profil – un intérêt sincère ne vous échappera plus",
       "Likes illimités : plus aucun frein pour trouver la bonne personne",
       "5 Super Likes par jour pour vous démarquer dès le premier regard",
-      "Un Boost offert chaque mois : votre profil mis en avant",
-      "Filtres avancés — confession, pratique, ville, distance",
+      "Filtres avancés – confession, pratique, ville, distance",
       "Accusés de lecture : sachez quand votre message a été lu",
     ],
     features: {
       ...PAID_BASE,
       superLikesPerDay: 5,
-      boostsPerMonth: 1,
       incognito: false,
       priorityVerification: false,
-    },
-  },
-  {
-    id: "vip",
-    name: "VIP",
-    tagline: "À l'image de l'amour inconditionnel de Dieu",
-    promise: "Tout Premium, sans aucune limite — et quelqu'un à vos côtés.",
-    perks: [
-      "Tout ce que contient Premium, sans la moindre restriction",
-      "Super Likes et Boosts illimités — soyez visible chaque jour",
-      "Mode incognito : visitez les profils sans laisser de trace",
-      "Vérification prioritaire de votre identité et de votre foi",
-      "Le badge certifié qui inspire confiance au premier coup d'œil",
-      "Mise en avant permanente auprès des profils les plus compatibles",
-      "Un conseiller dédié pour vous accompagner jusqu'à la rencontre",
-    ],
-    features: {
-      ...PAID_BASE,
-      superLikesPerDay: -1,
-      boostsPerMonth: -1,
-      incognito: true,
-      priorityVerification: true,
-      // Le VIP a accès à tout, sans exception
-      communityVideo: true,
-      videoMessages: true,
-      videoCalls: true,
-      profileVideo: true,
-      aiCoach: true,
     },
   },
 ];
@@ -285,56 +241,8 @@ export const OFFERS: Offer[] = [
     days: 90,
     priceXOF: 10500,
   },
-  {
-    id: "vip_1m",
-    planId: "vip",
-    duration: "1m",
-    label: "1 mois",
-    days: 30,
-    priceXOF: 12000,
-  },
 ];
 
-/**
- * Boosts à l'unité.
- *
- * Le Boost inclus dans Premium dure 30 minutes et se renouvelle chaque mois.
- * Ceux-ci s'achètent séparément, durent bien plus longtemps, et sont ouverts
- * à tous — y compris aux membres gratuits, pour qui c'est souvent la
- * première dépense.
- */
-export type BoostOffer = {
-  id: string;
-  label: string;
-  duration: string;
-  hours: number;
-  priceXOF: number;
-  popular?: boolean;
-};
-
-export const BOOST_OFFERS: BoostOffer[] = [
-  { id: "boost_24h", label: "Boost 24h", duration: "24 heures", hours: 24, priceXOF: 1000 },
-  { id: "boost_3j", label: "Boost 3 jours", duration: "3 jours", hours: 72, priceXOF: 2000, popular: true },
-  { id: "boost_7j", label: "Boost 7 jours", duration: "7 jours", hours: 168, priceXOF: 3500 },
-];
-
-export function getBoostOffer(id: string): BoostOffer | undefined {
-  return BOOST_OFFERS.find(o => o.id === id);
-}
-
-/** Prix ramené à la journée — met en valeur les formules longues. */
-export function boostPricePerDay(offer: BoostOffer) {
-  return Math.round(offer.priceXOF / (offer.hours / 24));
-}
-
-/** Économie en % face au Boost 24h. */
-export function boostSavings(offer: BoostOffer): number {
-  const ref = BOOST_OFFERS[0];
-  if (offer.id === ref.id) return 0;
-  const refPerDay = ref.priceXOF / (ref.hours / 24);
-  const mine = offer.priceXOF / (offer.hours / 24);
-  return Math.max(0, Math.round((1 - mine / refPerDay) * 100));
-}
 
 export function getPlan(id: PlanId): Plan {
   return PLANS.find(p => p.id === id) ?? PLANS[0];
@@ -352,7 +260,7 @@ export function formatPrice(amount: number) {
   return new Intl.NumberFormat("fr-FR").format(amount) + " FCFA";
 }
 
-/** Prix ramené au jour — sert à afficher l'économie réalisée sur les longues durées. */
+/** Prix ramené au jour – sert à afficher l'économie réalisée sur les longues durées. */
 export function pricePerDay(offer: Offer) {
   return Math.round(offer.priceXOF / offer.days);
 }

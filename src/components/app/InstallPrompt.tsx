@@ -8,21 +8,21 @@ import logoAsset from "@/assets/logo.png";
 /**
  * Invitation à installer l'application.
  *
- * Deux emplacements sur la page d'accueil publique — une barre en haut,
- * une carte en bas — parce que le visiteur qui fait défiler ne remonte
+ * Deux emplacements sur la page d'accueil publique – une barre en haut,
+ * une carte en bas – parce que le visiteur qui fait défiler ne remonte
  * jamais, et que celui qui reste en haut ne descend pas toujours.
  *
- * TROIS RÈGLES :
+ * TROIS RÊGLES :
  *
  *  1. Rien pendant la première minute. Proposer d'installer à quelqu'un
- *     qui vient d'arriver, avant qu'il ait rien vu, fait refuser — et un
+ *     qui vient d'arriver, avant qu'il ait rien vu, fait refuser – et un
  *     refus est presque définitif.
  *  2. Un refus vaut trente jours de silence, et vaut pour LES DEUX
  *     emplacements : les fermer un par un serait une corvée.
  *  3. Rien du tout si l'application est déjà installée.
  */
 
-const CLE_REFUS = "agape_install_refuse";
+const CLE_REFUS = "eden_install_refuse";
 
 /** Délai avant la proposition, en millisecondes. */
 const DELAI_MS = 60_000;
@@ -40,7 +40,7 @@ function refusRecent(): boolean {
 /**
  * État partagé par les deux emplacements.
  *
- * Sans lui, fermer la barre du haut laisserait la carte du bas — deux
+ * Sans lui, fermer la barre du haut laisserait la carte du bas – deux
  * refus pour une seule intention.
  */
 const abonnes = new Set<() => void>();
@@ -85,7 +85,7 @@ function useInvitation() {
   };
 }
 
-/* ─────────────────── Barre haute ─────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Barre haute â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export function InstallBarTop() {
   const { visible, ios, ecarter: fermer, installer } = useInvitation();
@@ -105,8 +105,8 @@ export function InstallBarTop() {
             <img src={logoAsset} alt="" className="w-8 h-8 rounded-lg shrink-0 bg-white/10" />
 
             <p className="text-xs sm:text-sm font-medium min-w-0 flex-1 leading-snug">
-              Installez AgapeMeet sur votre téléphone
-              <span className="hidden sm:inline opacity-80"> — sans passer par un magasin d'applications.</span>
+              Installez Eden Rencontre sur votre téléphone
+              <span className="hidden sm:inline opacity-80"> – sans passer par un magasin d'applications.</span>
             </p>
 
             <button
@@ -148,7 +148,7 @@ export function InstallBarTop() {
   );
 }
 
-/* ─────────────────── Carte basse ─────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Carte basse â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export function InstallPrompt() {
   const { visible, ios, ecarter: fermer, installer } = useInvitation();
@@ -176,7 +176,7 @@ export function InstallPrompt() {
           <div className="flex items-start gap-3 pr-6">
             <img src={logoAsset} alt="" className="w-11 h-11 rounded-xl shrink-0" />
             <div className="min-w-0">
-              <p className="font-serif font-semibold text-sm">Installez AgapeMeet</p>
+              <p className="font-serif font-semibold text-sm">Installez Eden Rencontre</p>
               <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                 {ios
                   ? "Pour recevoir les notifications et ouvrir l'application depuis votre écran d'accueil."
@@ -211,7 +211,7 @@ export function InstallPrompt() {
   );
 }
 
-/* ─────────────── Section dans le flux de la page ─────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Section dans le flux de la page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 /**
  * Variante non flottante, posée avant le pied de page.
@@ -228,7 +228,7 @@ export function InstallSection() {
   // de la page, au même titre que les tarifs ou la foire aux questions.
   //
   // Elle reste donc visible même pour quelqu'un qui a déjà installé
-  // l'application — d'autant que sur iPhone, Safari est de toute façon
+  // l'application – d'autant que sur iPhone, Safari est de toute façon
   // incapable de le savoir : l'application installée et l'onglet ont des
   // espaces de stockage distincts.
   //
@@ -243,7 +243,7 @@ export function InstallSection() {
         </div>
 
         <h2 className="font-serif text-2xl sm:text-3xl font-semibold mt-5">
-          AgapeMeet sur votre téléphone
+          Eden Rencontre sur votre téléphone
         </h2>
         <p className="text-sm sm:text-base text-muted-foreground mt-3 leading-relaxed max-w-xl mx-auto">
           Installez l'application en un geste, sans magasin d'applications et
@@ -262,7 +262,7 @@ export function InstallSection() {
           </button>
         ) : (
           /* Sinon on explique le geste, au lieu d'un bouton qui ne ferait
-             rien. Ce cas couvre l'iPhone — où Safari n'expose aucune API —
+             rien. Ce cas couvre l'iPhone – où Safari n'expose aucune API –
              mais aussi l'application déjà installée et les navigateurs qui
              ne prennent pas l'installation en charge. */
           <>
@@ -281,12 +281,12 @@ export function InstallSection() {
                 ) : (
                   <div className="space-y-2.5 text-xs text-muted-foreground leading-relaxed">
                     <p>
-                      <strong className="text-foreground">Sur Android</strong> —
-                      ouvrez le menu <span className="font-mono">⋮</span> de votre
+                      <strong className="text-foreground">Sur Android</strong> –
+                      ouvrez le menu <span className="font-mono">â‹®</span> de votre
                       navigateur, puis <strong>Installer l'application</strong>.
                     </p>
                     <p>
-                      <strong className="text-foreground">Sur ordinateur</strong> —
+                      <strong className="text-foreground">Sur ordinateur</strong> –
                       cliquez sur l'icône d'installation, à droite de la barre
                       d'adresse.
                     </p>

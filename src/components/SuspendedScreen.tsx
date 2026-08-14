@@ -30,13 +30,13 @@ export function SuspendedScreen({ until, reason, permanent }: {
 
   const sujet = encodeURIComponent("Contestation d'une suspension de compte");
   const message = encodeURIComponent(
-    "Bonjour, mon compte AgapeMeet est suspendu et je souhaite en discuter.",
+    "Bonjour, mon compte Eden Rencontre est suspendu et je souhaite en discuter.",
   );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 flex items-center justify-center px-6 py-12">
       <div className="max-w-md w-full text-center">
-        <img src={logo} alt="AgapeMeet" className="w-14 h-14 object-contain mx-auto" />
+        <img src={logo} alt="Eden Rencontre" className="w-14 h-14 object-contain mx-auto" />
 
         <div className="mt-6 w-14 h-14 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
           <ShieldAlert className="w-7 h-7" />

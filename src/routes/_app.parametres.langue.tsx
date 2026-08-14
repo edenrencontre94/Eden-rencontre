@@ -3,7 +3,7 @@ import { ArrowLeft, Globe, Check, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/_app/parametres/langue")({
   head: () => ({
-    meta: [{ title: "Langue — AgapeMeet" }],
+    meta: [{ title: "Langue – Eden Rencontre" }],
   }),
   component: LanguagePage,
 });
@@ -29,7 +29,7 @@ function LanguagePage() {
           <Globe className="w-8 h-8 text-primary" />
         </div>
         <p className="text-sm text-center text-muted-foreground px-4">
-          AgapeMeet est actuellement disponible en Français. D'autres langues arrivent bientôt !
+          Eden Rencontre est actuellement disponible en Français. D'autres langues arrivent bientôt !
         </p>
       </div>
 
@@ -64,8 +64,8 @@ function LanguagePage() {
       </div>
 
       <p className="text-xs text-center text-muted-foreground mt-6 px-4">
-        Vous souhaitez aider à traduire AgapeMeet ? <br />
-        Contactez-nous à <a href="mailto:contact@agapemeet.com" className="text-primary hover:underline">contact@agapemeet.com</a>
+        Vous souhaitez aider à traduire Eden Rencontre ? <br />
+        Contactez-nous à <a href="mailto:contact@edenrencontre.com" className="text-primary hover:underline">contact@edenrencontre.com</a>
       </p>
     </div>
   );

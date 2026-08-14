@@ -22,11 +22,11 @@ import {
  * une photo en Gratuit, cinq en Premium.
  */
 const PHOTOS_GRATUIT = 1;
-const PHOTOS_PREMIUM = 5;
+const PHOTOS_PREMIUM = 3;
 
 export const Route = createFileRoute("/_app/profil")({
   head: () => ({
-    meta: [{ title: "Mon Profil — AgapeMeet" }],
+    meta: [{ title: "Mon Profil — Eden Rencontre" }],
   }),
   component: ProfilePage,
 });
@@ -145,8 +145,8 @@ function ProfilePage() {
         wants_children: form.wants_children,
         photos: form.photos,
         marital_status: form.marital_status || null,
-        marriage_vision: form.marriage_vision.trim() || null,
-        looking_for: form.looking_for.trim() || null,
+        marriage_vision: form.marriage_vision ? form.marriage_vision.trim() : null,
+        looking_for: form.looking_for ? form.looking_for.trim() : null,
         education: form.education || null,
         height_cm: form.height_cm || null,
         interests: form.interests,
@@ -165,7 +165,7 @@ function ProfilePage() {
       toast.success("Profil mis à jour !");
     } catch (err) {
       console.error(err);
-      toast.error("Erreur lors de la mise à jour");
+      toast.error(`Erreur lors de la mise à jour : ${(err as Error)?.message || "Erreur inconnue"}`);
     } finally {
       setSaving(false);
     }
@@ -388,61 +388,6 @@ function ProfilePage() {
           La première photo est votre photo principale — c'est elle que les
           autres membres voient en premier.
         </p>
-
-        {/* Vidéo de présentation — VIP.
-            Panneau pleine largeur plutôt qu'une case dans la grille : une
-            vidéo n'est pas une photo de plus, et la confondre avec les
-            emplacements photo brouillerait les deux offres. */}
-        <div
-          className={`mt-4 rounded-2xl border p-4 ${
-            plan === "vip"
-              ? "border-gold/40 bg-gold/5"
-              : "border-border bg-secondary/20"
-          }`}
-        >
-          <div className="flex items-start gap-3">
-            <div
-              className={`w-11 h-11 rounded-xl shrink-0 flex items-center justify-center ${
-                plan === "vip" ? "bg-gold/15 text-gold" : "bg-secondary text-muted-foreground"
-              }`}
-            >
-              {plan === "vip" ? <Video className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-sm font-semibold">Vidéo de présentation</h3>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-gold bg-gold/10 border border-gold/25 px-2 py-0.5 rounded-full">
-                  <Crown className="w-3 h-3" /> VIP
-                </span>
-              </div>
-
-              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                Quelques secondes face caméra en disent plus qu'une longue
-                présentation écrite : votre voix, votre sourire, votre manière
-                de parler de votre foi.
-              </p>
-
-              {plan === "vip" ? (
-                /* Membre VIP : le droit est acquis, mais la fonction n'est
-                   pas encore livrée. Afficher un bouton d'envoi qui
-                   échouerait serait pire que l'annoncer. */
-                <p className="text-xs mt-2.5 font-medium text-gold">
-                  Inclus dans votre formule — disponible très prochainement.
-                </p>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => navigate({ to: "/abonnement" })}
-                  className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-semibold text-gold hover:underline"
-                >
-                  <Crown className="w-3.5 h-3.5" />
-                  Passer VIP pour l'activer
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
       </div>
 
       <div className="space-y-6 bg-card border border-border/50 rounded-3xl p-5 sm:p-6 mb-6 shadow-soft">
@@ -688,7 +633,7 @@ function ProfilePage() {
         >
           <Field
             label="Situation matrimoniale"
-            hint="AgapeMeet s'adresse aux personnes libres de se marier."
+            hint="Eden Rencontre s'adresse aux personnes libres de se marier."
           >
             <select
               value={form.marital_status}

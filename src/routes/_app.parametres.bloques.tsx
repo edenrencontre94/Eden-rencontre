@@ -8,7 +8,7 @@ import { unblockUser } from "@/lib/moderation";
 
 export const Route = createFileRoute("/_app/parametres/bloques")({
   head: () => ({
-    meta: [{ title: "Profils bloqués — AgapeMeet" }],
+    meta: [{ title: "Profils bloqués – Eden Rencontre" }],
   }),
   component: BlockedProfilesPage,
 });

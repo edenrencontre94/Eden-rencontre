@@ -1,18 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PublicLayout, SITE_URL } from "@/components/public/PublicLayout";
-import { PLANS, OFFERS, BOOST_OFFERS, formatPrice, offersFor } from "@/lib/plans";
-import { ArrowRight, Check, X, Crown, Rocket } from "lucide-react";
+import { PLANS, OFFERS, formatPrice, offersFor } from "@/lib/plans";
+import { ArrowRight, Check, X, Crown } from "lucide-react";
 
 export const Route = createFileRoute("/tarifs")({
   head: () => ({
     meta: [
-      { title: "Tarifs — AgapeMeet | Formules Gratuite, Premium et VIP" },
+      { title: "Tarifs – Eden Rencontre | Formules Gratuite et Premium" },
       {
         name: "description",
         content:
-          "Tarifs AgapeMeet : formule Gratuite, Premium dès 2 500 FCFA les 15 jours et VIP à 12 000 FCFA. Paiement unique par Mobile Money ou carte, sans reconduction automatique.",
+          "Tarifs Eden Rencontre : formule Gratuite, Premium dès 2 500 FCFA les 15 jours. Paiement unique par Mobile Money ou carte, sans reconduction automatique.",
       },
-      { property: "og:title", content: "Tarifs AgapeMeet — Premium dès 2 500 FCFA" },
+      { property: "og:title", content: "Tarifs Eden Rencontre – Premium dès 2 500 FCFA" },
       { property: "og:url", content: `${SITE_URL}/tarifs` },
       { property: "og:type", content: "website" },
     ],
@@ -23,13 +23,13 @@ export const Route = createFileRoute("/tarifs")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Product",
-          name: "Abonnement AgapeMeet",
+          name: "Abonnement Eden Rencontre",
           description:
-            "Accès aux fonctionnalités avancées d'AgapeMeet : visiteurs, likes illimités, Super Likes, Boosts et filtres avancés.",
-          brand: { "@type": "Brand", name: "AgapeMeet" },
+            "Accès aux fonctionnalités avancées d'Eden Rencontre : visiteurs, likes illimités, Super Likes et filtres avancés.",
+          brand: { "@type": "Brand", name: "Eden Rencontre" },
           offers: OFFERS.map(o => ({
             "@type": "Offer",
-            name: `${o.planId === "vip" ? "VIP" : "Premium"} ${o.label}`,
+            name: `Premium ${o.label}`,
             price: o.priceXOF,
             priceCurrency: "XOF",
             availability: "https://schema.org/InStock",
@@ -67,7 +67,6 @@ function TarifsPage() {
                 <div>
                   <h2 className="font-serif text-2xl font-semibold flex items-center gap-2">
                     {plan.name}
-                    {plan.id === "vip" && <Crown className="w-5 h-5 text-gold" />}
                   </h2>
                   <p className={`text-xs mt-0.5 ${plan.highlight ? "opacity-85" : "text-muted-foreground"}`}>
                     {plan.tagline}
@@ -124,30 +123,11 @@ function TarifsPage() {
         })}
       </div>
 
-      {/* Boosts à l'unité */}
-      <section className="mt-8 rounded-2xl border border-border bg-card p-5">
-        <h2 className="font-serif text-xl font-semibold flex items-center gap-2">
-          <Rocket className="w-5 h-5 text-primary" /> Boosts à l'unité
-        </h2>
-        <p className="text-sm text-muted-foreground mt-1.5">
-          Mettez votre profil en tête des découvertes, sans souscrire d'abonnement.
-          Ouvert à tous, y compris en formule Gratuite.
-        </p>
-        <div className="mt-4 grid gap-2 sm:grid-cols-3">
-          {BOOST_OFFERS.map(b => (
-            <div key={b.id} className="rounded-xl bg-secondary px-3 py-2.5 text-center">
-              <div className="text-xs text-muted-foreground">{b.duration}</div>
-              <div className="font-serif text-lg font-semibold">{formatPrice(b.priceXOF)}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       <section className="mt-8 rounded-2xl border border-border bg-secondary/40 p-5">
         <h2 className="font-serif text-lg font-semibold">Comment payer</h2>
         <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-          Mobile Money — Togocel Money, Moov Money, Orange Money, MTN MoMo, Wave selon
-          votre pays — ainsi que les cartes Visa et Mastercard. Les moyens proposés
+          Mobile Money – Togocel Money, Moov Money, Orange Money, MTN MoMo, Wave selon
+          votre pays – ainsi que les cartes Visa et Mastercard. Les moyens proposés
           s'adaptent automatiquement à l'indicatif téléphonique que vous saisissez.
         </p>
         <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
