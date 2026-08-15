@@ -84,7 +84,7 @@ function AdminSupport() {
 
     if (sErr || tErr || (s as any)?.error) {
       console.error("[admin/support]", sErr ?? tErr ?? s);
-      setError("Lecture impossible. La migration 34 a-t-elle été exécutée ?");
+
       setLoading(false);
       return;
     }

@@ -86,7 +86,7 @@ function AdminMetaAds() {
 
     if (e || (m as any)?.error) {
       console.error("[admin/meta-ads]", e ?? m);
-      setErreur("Lecture impossible. La migration 65 a-t-elle été exécutée, et avez-vous la permission « Réglages » ?");
+
       setLoading(false);
       return;
     }

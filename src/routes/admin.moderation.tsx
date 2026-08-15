@@ -85,7 +85,7 @@ function AdminModeration() {
 
     if (err) {
       console.error("[admin/moderation]", err);
-      setError("Lecture impossible. La migration 31 a-t-elle été exécutée, et votre compte a-t-il le rôle admin ?");
+
       setLoading(false);
       return;
     }
@@ -137,7 +137,7 @@ function AdminModeration() {
     const { data, error: err } = await supabase.rpc("admin_departures", { p_limit: 100 });
     if (err || (data as any)?.error) {
       console.error("[admin/départs]", err ?? data);
-      toast.error("Lecture impossible. La migration 38 a-t-elle été exécutée ?");
+
     } else {
       setDepartures(data as Departures);
     }

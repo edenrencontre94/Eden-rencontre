@@ -20,7 +20,7 @@ import { formatPrice } from "@/lib/plans";
  * a convaincu. Ne regarder que le clic ferait couper les budgets qui
  * alimentent le bouche-à-oreille.
  *
- * Appel séparé de `admin_analytics` : si la migration 66 n'est pas
+ * Appel séparé de `admin_analytics` : si la statistique n'est pas
  * exécutée, seul ce bloc s'excuse, le reste de la page continue.
  */
 

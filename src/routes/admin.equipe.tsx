@@ -44,7 +44,7 @@ function AdminEquipe() {
   const load = async () => {
     const { data, error: err } = await supabase.rpc("admin_team");
     if (err || (data as any)?.error) {
-      setError("Lecture impossible. La migration 51 a-t-elle été exécutée, et avez-vous le rôle administrateur ?");
+
       setLoading(false);
       return;
     }

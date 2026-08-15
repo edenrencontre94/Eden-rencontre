@@ -66,7 +66,7 @@ function AdminAbonnements() {
       // Sans la policy admin, la RLS ne renvoie que ses propres lignes.
       // Mieux vaut le dire que d'afficher un tableau de bord à zéro.
       console.error("[admin/abonnements]", payErr ?? subErr);
-      setError("Lecture impossible. La migration 31 a-t-elle été exécutée, et votre compte a-t-il le rôle admin ?");
+
       setLoading(false);
       return;
     }

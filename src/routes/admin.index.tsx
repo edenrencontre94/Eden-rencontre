@@ -213,6 +213,12 @@ export default function AdminDashboard() {
         const weekStart = new Date(Date.now() - 7 * 86400000).toISOString();
         const monthStart = new Date(Date.now() - 30 * 86400000).toISOString();
 
+        // Chaque requête est isolée : si une table n'existe pas encore (ex:
+        // payments, matches) la promesse renvoie un fallback au lieu de
+        // faire planter tout le tableau de bord.
+        const safe = <T,>(p: Promise<T>, fallback: T): Promise<T> =>
+          p.catch(() => fallback);
+
         const [
           { count: total },
           { count: today },
@@ -228,21 +234,19 @@ export default function AdminDashboard() {
           { data: subs },
           { count: openReports },
         ] = await Promise.all([
-          supabase.from("profiles").select("*", { count: "exact", head: true }),
-          supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", todayStart),
-          supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", weekStart),
-          supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", monthStart),
-          supabase.from("profiles").select("*", { count: "exact", head: true }).eq("is_verified", true),
-          supabase.from("profiles").select("*", { count: "exact", head: true }).eq("gender", "male"),
-          supabase.from("profiles").select("*", { count: "exact", head: true }).eq("gender", "female"),
-          supabase.from("matches").select("*", { count: "exact", head: true }),
-          supabase.from("messages").select("*", { count: "exact", head: true }),
-          supabase.from("profiles").select("id, first_name, city, gender, photos, created_at, is_verified").order("created_at", { ascending: false }).limit(8),
-          // Revenus, abonnés et signalements : ces chiffres manquaient alors
-          // que les données existent depuis la mise en place des paiements.
-          supabase.from("payments").select("amount_xof, completed_at").eq("status", "completed"),
-          supabase.from("profiles").select("public_plan").gt("premium_until", new Date().toISOString()),
-          supabase.from("reports").select("id", { count: "exact", head: true }).eq("status", "pending"),
+          safe(supabase.from("profiles").select("*", { count: "exact", head: true }), { count: 0, data: null, error: null }),
+          safe(supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", todayStart), { count: 0, data: null, error: null }),
+          safe(supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", weekStart), { count: 0, data: null, error: null }),
+          safe(supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", monthStart), { count: 0, data: null, error: null }),
+          safe(supabase.from("profiles").select("*", { count: "exact", head: true }).eq("is_verified", true), { count: 0, data: null, error: null }),
+          safe(supabase.from("profiles").select("*", { count: "exact", head: true }).eq("gender", "male"), { count: 0, data: null, error: null }),
+          safe(supabase.from("profiles").select("*", { count: "exact", head: true }).eq("gender", "female"), { count: 0, data: null, error: null }),
+          safe(supabase.from("matches").select("*", { count: "exact", head: true }), { count: 0, data: null, error: null }),
+          safe(supabase.from("messages").select("*", { count: "exact", head: true }), { count: 0, data: null, error: null }),
+          safe(supabase.from("profiles").select("id, first_name, city, gender, photos, created_at, is_verified").order("created_at", { ascending: false }).limit(8), { count: null, data: [], error: null }),
+          safe(supabase.from("payments").select("amount_xof, completed_at").eq("status", "completed"), { count: null, data: [], error: null }),
+          safe(supabase.from("profiles").select("public_plan").gt("premium_until", new Date().toISOString()), { count: null, data: [], error: null }),
+          safe(supabase.from("reports").select("id", { count: "exact", head: true }).eq("status", "pending"), { count: 0, data: null, error: null }),
         ]);
 
         const revenueTotal = (paid ?? []).reduce((sum: number, p: any) => sum + (p.amount_xof || 0), 0);
@@ -260,7 +264,6 @@ export default function AdminDashboard() {
           femaleUsers: female || 0,
           totalMatches: matches || 0,
           totalMessages: messages || 0,
-          // Chiffre réel : « 12 » était écrit en dur, donc toujours faux
           openReports: openReports || 0,
           revenueTotal,
           revenueMonth,
@@ -268,14 +271,12 @@ export default function AdminDashboard() {
         });
         setRecentUsers(recent || []);
 
-        // Séries et ventes par offre : la même fonction que /admin/analytics,
-        // pour que les deux pages ne racontent pas deux histoires.
         const [
           { data: a, error: aErr },
           { data: o, error: oErr },
         ] = await Promise.all([
-          supabase.rpc("admin_analytics", { p_days: 30 }),
-          supabase.rpc("admin_overview"),
+          safe(supabase.rpc("admin_analytics", { p_days: 30 }), { data: null, error: new Error("rpc missing") }),
+          safe(supabase.rpc("admin_overview"), { data: null, error: new Error("rpc missing") }),
         ]);
         if (!aErr && a && !(a as any).error) setAnalytics(a);
         if (!oErr && o && !(o as any).error) setOv(o);
@@ -287,6 +288,7 @@ export default function AdminDashboard() {
     }
     load();
   }, []);
+
 
   // Séries RÉELLES, calculées en base sur 30 jours.
   //

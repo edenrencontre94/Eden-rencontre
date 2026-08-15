@@ -86,7 +86,7 @@ function AdminAnalytics() {
 
     if (err || (res as any)?.error) {
       console.error("[admin/analytics]", err ?? res);
-      setError("Lecture impossible. La migration 34 a-t-elle été exécutée ?");
+
       setLoading(false);
       return;
     }

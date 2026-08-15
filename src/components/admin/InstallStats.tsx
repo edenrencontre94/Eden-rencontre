@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 /**
  * Installations de l'application sur les appareils des membres.
  *
- * Appel séparé de `admin_analytics` : la migration 59 peut ne pas être
+ * Appel séparé de `admin_analytics` : la statistique peut ne pas être
  * exécutée alors que le reste de la page fonctionne. Une seule requête
  * pour les deux ferait disparaître toute la page d'analyse à cause d'un
  * bloc secondaire.
@@ -62,8 +62,7 @@ export function InstallStats({ days }: { days: number }) {
       <section className="rounded-2xl border border-border bg-card p-5 flex gap-3">
         <AlertTriangle className="w-5 h-5 text-gold shrink-0 mt-0.5" />
         <p className="text-sm text-muted-foreground">
-          Statistiques d'installation indisponibles. La migration 59 a-t-elle
-          été exécutée ?
+          Statistiques d'installation indisponibles.
         </p>
       </section>
     );

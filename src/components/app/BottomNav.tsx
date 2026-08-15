@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Sparkles, MessageSquare, HeartHandshake, Globe } from "lucide-react";
+import { Home, Sparkles, MessageSquare, HeartHandshake, Church } from "lucide-react";
 import { motion } from "motion/react";
 import { useNavBadges, type NavBadges } from "@/lib/badgesNav";
 
@@ -17,7 +17,7 @@ const items: NavItem[] = [
   { to: "/decouvrir", label: "Découvrir", icon: Sparkles },
   { to: "/messages", label: "Messages", icon: MessageSquare, badge: "messages" },
   { to: "/demandes", label: "Demandes", icon: HeartHandshake, badge: "demandes" },
-  { to: "/communaute", label: "Communauté", icon: Globe, badge: "communaute" },
+  { to: "/communaute", label: "Communauté", icon: Church, badge: "communaute" },
 ];
 
 /**

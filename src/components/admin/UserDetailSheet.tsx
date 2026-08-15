@@ -71,7 +71,7 @@ export function UserDetailSheet({ userId, onClose, onChanged }: {
         ) : !detail || !p ? (
           <div className="p-8 text-center">
             <AlertTriangle className="w-8 h-8 text-destructive mx-auto" />
-            <p className="mt-3 text-sm">Fiche introuvable. La migration 44 a-t-elle été exécutée ?</p>
+            <p className="mt-3 text-sm">Fiche introuvable ou vous n'avez pas les droits nécessaires.</p>
             <button onClick={onClose} className="mt-4 px-4 py-2 rounded-xl border border-border text-sm">
               Fermer
             </button>

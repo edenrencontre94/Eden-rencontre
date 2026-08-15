@@ -88,7 +88,7 @@ function BlogTab() {
 
     if (err) {
       console.error("[admin/contenus] blog:", err);
-      setError("Lecture impossible. La migration 47 a-t-elle été exécutée ?");
+
       setLoading(false);
       return;
     }
@@ -516,7 +516,7 @@ function ModerationTab() {
     ]);
 
     if (err || (d as any)?.error) {
-      setError("Lecture impossible. Les migrations 47 et 48 ont-elles été exécutées ?");
+
       setLoading(false);
       return;
     }
@@ -800,7 +800,7 @@ function ConversationsTab() {
     });
 
     if (err || (d as any)?.error) {
-      setError("Lecture impossible. La migration 49 a-t-elle été exécutée ?");
+
       setLoading(false);
       return;
     }

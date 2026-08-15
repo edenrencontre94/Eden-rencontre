@@ -88,7 +88,7 @@ function AdminMarketing() {
 
     if (mErr || (m as any)?.error) {
       console.error("[admin/marketing]", mErr ?? m);
-      setError("Lecture impossible. La migration 63 a-t-elle été exécutée, et avez-vous le rôle administrateur ?");
+
       setLoading(false);
       return;
     }

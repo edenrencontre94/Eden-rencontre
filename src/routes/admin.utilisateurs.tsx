@@ -59,7 +59,7 @@ function AdminUtilisateurs() {
     const [c, { rows, error: err }] = await Promise.all([fetchCounts(), fetchUsers(f)]);
 
     if (err || !c) {
-      setError("Lecture impossible. Les migrations 43 et 44 ont-elles été exécutées ?");
+
       setLoading(false);
       return;
     }

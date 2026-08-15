@@ -54,8 +54,10 @@ CREATE TABLE IF NOT EXISTS public.reports (
 CREATE INDEX IF NOT EXISTS idx_reports_status ON public.reports(status);
 CREATE INDEX IF NOT EXISTS idx_reports_reported ON public.reports(reported_id);
 ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "reports_insert" ON public.reports FOR INSERT TO authenticated WITH CHECK (reporter_id = auth.uid());
-CREATE POLICY IF NOT EXISTS "reports_select_own" ON public.reports FOR SELECT TO authenticated USING (reporter_id = auth.uid());
+DROP POLICY IF EXISTS "reports_insert" ON public.reports;
+CREATE POLICY "reports_insert" ON public.reports FOR INSERT TO authenticated WITH CHECK (reporter_id = auth.uid());
+DROP POLICY IF EXISTS "reports_select_own" ON public.reports;
+CREATE POLICY "reports_select_own" ON public.reports FOR SELECT TO authenticated USING (reporter_id = auth.uid());
 
 -- ─── Table community_posts (si pas déjà créée) ────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.community_posts (
@@ -72,9 +74,12 @@ CREATE TABLE IF NOT EXISTS public.community_posts (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()) NOT NULL
 );
 ALTER TABLE public.community_posts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "community_posts_select" ON public.community_posts FOR SELECT TO authenticated USING (true);
-CREATE POLICY IF NOT EXISTS "community_posts_insert" ON public.community_posts FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
-CREATE POLICY IF NOT EXISTS "community_posts_update_own" ON public.community_posts FOR UPDATE TO authenticated USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "community_posts_select" ON public.community_posts;
+CREATE POLICY "community_posts_select" ON public.community_posts FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "community_posts_insert" ON public.community_posts;
+CREATE POLICY "community_posts_insert" ON public.community_posts FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "community_posts_update_own" ON public.community_posts;
+CREATE POLICY "community_posts_update_own" ON public.community_posts FOR UPDATE TO authenticated USING (user_id = auth.uid());
 
 -- ─── Table community_read_at ──────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.community_read_at (
@@ -82,7 +87,8 @@ CREATE TABLE IF NOT EXISTS public.community_read_at (
   read_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()) NOT NULL
 );
 ALTER TABLE public.community_read_at ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "community_read_manage" ON public.community_read_at FOR ALL TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "community_read_manage" ON public.community_read_at;
+CREATE POLICY "community_read_manage" ON public.community_read_at FOR ALL TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 
 -- ─── Table community_likes ────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.community_likes (
@@ -93,8 +99,10 @@ CREATE TABLE IF NOT EXISTS public.community_likes (
   UNIQUE(post_id, user_id)
 );
 ALTER TABLE public.community_likes ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "community_likes_manage" ON public.community_likes FOR ALL TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
-CREATE POLICY IF NOT EXISTS "community_likes_select" ON public.community_likes FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "community_likes_manage" ON public.community_likes;
+CREATE POLICY "community_likes_manage" ON public.community_likes FOR ALL TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "community_likes_select" ON public.community_likes;
+CREATE POLICY "community_likes_select" ON public.community_likes FOR SELECT TO authenticated USING (true);
 
 -- ─── Table community_comments ─────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.community_comments (
@@ -105,9 +113,12 @@ CREATE TABLE IF NOT EXISTS public.community_comments (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()) NOT NULL
 );
 ALTER TABLE public.community_comments ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "community_comments_select" ON public.community_comments FOR SELECT TO authenticated USING (true);
-CREATE POLICY IF NOT EXISTS "community_comments_insert" ON public.community_comments FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
-CREATE POLICY IF NOT EXISTS "community_comments_delete_own" ON public.community_comments FOR DELETE TO authenticated USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "community_comments_select" ON public.community_comments;
+CREATE POLICY "community_comments_select" ON public.community_comments FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "community_comments_insert" ON public.community_comments;
+CREATE POLICY "community_comments_insert" ON public.community_comments FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+DROP POLICY IF EXISTS "community_comments_delete_own" ON public.community_comments;
+CREATE POLICY "community_comments_delete_own" ON public.community_comments FOR DELETE TO authenticated USING (user_id = auth.uid());
 
 -- ─── Table staff_roles ────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.staff_roles (
@@ -116,7 +127,8 @@ CREATE TABLE IF NOT EXISTS public.staff_roles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()) NOT NULL
 );
 ALTER TABLE public.staff_roles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "staff_roles_select" ON public.staff_roles FOR SELECT TO authenticated USING (user_id = auth.uid());
+DROP POLICY IF EXISTS "staff_roles_select" ON public.staff_roles;
+CREATE POLICY "staff_roles_select" ON public.staff_roles FOR SELECT TO authenticated USING (user_id = auth.uid());
 
 -- ─── 1. update_last_seen ──────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.update_last_seen()

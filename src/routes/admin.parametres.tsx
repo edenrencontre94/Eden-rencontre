@@ -85,7 +85,7 @@ function AdminParametres() {
 
     if (err) {
       console.error("[admin/paramètres]", err);
-      setError("Lecture impossible. Les migrations 32 et 33 ont-elles été exécutées ?");
+
       setLoading(false);
       return;
     }
