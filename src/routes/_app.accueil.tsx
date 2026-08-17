@@ -263,7 +263,7 @@ function HomePage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-foreground font-bold text-base">Passe Premium</h3>
-                    <span className="bg-gold text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full">-40%</span>
+                    <span className="bg-gold text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full">-25%</span>
                   </div>
                   <p className="text-muted-foreground text-xs">Demandes illimitées, profil mis en avant, badge Premium</p>
                 </div>
