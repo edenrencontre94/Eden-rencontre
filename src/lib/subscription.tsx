@@ -171,7 +171,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(t);
   }, [reconcile]);
 
-  // â”€â”€ Temps réel : le webhook crédite, l'écran se met à jour tout seul â”€â”€
+  // ── Temps réel : le webhook crédite profiles, l'écran se met à jour tout seul ──
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
@@ -180,20 +180,20 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       if (!userId) return;
 
       channel = supabase
-        .channel(`subscription:${userId}`)
+        .channel(`profile_plan:${userId}`)
         .on(
           "postgres_changes",
-          { event: "*", schema: "public", table: "subscriptions", filter: `user_id=eq.${userId}` },
+          { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${userId}` },
           (payload: any) => {
             const row = payload.new;
             if (!row) return;
-            // Un fondateur reste Premium quoi qu'il arrive côté abonnements :
-            // sans cette garde, la réception d'une ligne expirée le
-            // rétrograderait en gratuit.
+            // Un fondateur reste Premium quoi qu'il arrive :
+            // sans cette garde, une ligne expirée le rétrograderait en gratuit.
             if (isFounder) return;
-            const expired = row.expires_at ? new Date(row.expires_at).getTime() < Date.now() : true;
-            setPlanId(expired ? "gratuit" : (row.plan_id as PlanId));
-            setExpiresAt(row.expires_at ?? null);
+            const expired = row.premium_until ? new Date(row.premium_until).getTime() < Date.now() : true;
+            const newPlan = (!expired && row.public_plan === 'premium') ? 'premium' : 'gratuit';
+            setPlanId(newPlan as PlanId);
+            setExpiresAt(row.premium_until ?? null);
           },
         )
         .subscribe();
