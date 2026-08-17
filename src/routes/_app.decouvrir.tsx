@@ -451,25 +451,6 @@ function DiscoverPage() {
           <span className="text-[10px] text-muted-foreground font-medium">Passer</span>
         </div>
 
-        <div className="flex flex-col items-center gap-1">
-          <button
-            onClick={() => swipe("super")}
-            className="w-12 h-12 rounded-full border-2 border-primary bg-background flex items-center justify-center text-primary hover:bg-primary/10 transition-transform active:scale-95 shadow-sm"
-          >
-            <Star className="w-5 h-5" fill="currentColor" />
-          </button>
-          <span className="text-[10px] text-primary font-medium">Super like</span>
-        </div>
-
-        <div className="flex flex-col items-center gap-1">
-          <button
-            onClick={() => swipe("right")}
-            className="w-16 h-16 rounded-full border-2 border-gold bg-background shadow-[0_4px_15px_var(--color-gold)]/30 flex items-center justify-center text-gold hover:scale-105 hover:bg-gold/10 transition-all active:scale-95"
-          >
-            <Heart className="w-7 h-7" fill="currentColor" />
-          </button>
-          <span className="text-[10px] text-gold font-medium">J'adore</span>
-        </div>
 
         <div className="flex flex-col items-center gap-1">
           <button

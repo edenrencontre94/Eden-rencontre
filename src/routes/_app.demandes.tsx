@@ -1,18 +1,7 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
-import {
-  Heart,
-  Star,
-  Sparkles,
-  Eye,
-  Check,
-  X,
-  Flag,
-  Ban,
-  Lock,
-  MessageCircle,
-} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { Heart, Star, User, Check, X, ShieldAlert } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getCurrentUser } from "@/lib/auth";
 import { toast } from "sonner";
@@ -25,19 +14,20 @@ import {
   fetchBlockedIds,
   fetchDismissedIds,
 } from "@/lib/moderation";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_app/demandes")({
   head: () => ({
     meta: [
       { title: "Demandes — Eden Rencontre" },
-      { name: "description", content: "Vos likes, super likes et matches." },
+      { name: "description", content: "Vos demandes en attente." },
       { name: "robots", content: "noindex" },
     ],
   }),
   component: RequestsPage,
 });
 
-type LikeEntry = {
+type RequestEntry = {
   id: string;
   swiper_id: string;
   action: "like" | "superlike";
@@ -52,41 +42,6 @@ type LikeEntry = {
   };
 };
 
-type MatchEntry = {
-  id: string;
-  created_at: string;
-  other: {
-    id: string;
-    first_name: string;
-    last_name: string | null;
-    birth_date: string | null;
-    city: string | null;
-    photos: string[] | null;
-  };
-};
-
-type VisitEntry = {
-  id: string;
-  created_at: string;
-  visitor: {
-    id: string;
-    first_name: string;
-    last_name: string | null;
-    birth_date: string | null;
-    city: string | null;
-    photos: string[] | null;
-  } | null;
-};
-
-const tabs = [
-  { id: "match", label: "Matches", icon: Sparkles },
-  { id: "like", label: "M'ont aimé", icon: Heart },
-  { id: "superlike", label: "Super Likes", icon: Star },
-  { id: "visit", label: "Visiteurs", icon: Eye, premium: true },
-] as const;
-
-type TabId = (typeof tabs)[number]["id"];
-
 function getAge(birthDate: string | null) {
   if (!birthDate) return 0;
   const b = new Date(birthDate);
@@ -98,7 +53,6 @@ function getAge(birthDate: string | null) {
   return age > 0 && age < 120 ? age : 0;
 }
 
-/** « il y a 5 min » / « il y a 3 h » / « le 12/03 » */
 function timeAgo(iso: string) {
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
   if (mins < 1) return "à l'instant";
@@ -110,57 +64,19 @@ function timeAgo(iso: string) {
   return `le ${new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}`;
 }
 
-/** Vignette avec repli sur l'initiale — remplace les URLs placehold.co cassées */
-function CardPhoto({ src, name }: { src: string | null | undefined; name: string }) {
-  const [failed, setFailed] = useState(false);
-
-  if (!src || failed) {
-    return (
-      <div className="w-full h-full bg-gradient-to-br from-primary/25 to-gold/25 flex items-center justify-center font-serif text-4xl font-semibold text-primary">
-        {(name || "?").charAt(0).toUpperCase()}
-      </div>
-    );
-  }
-  return <img src={src} alt={name} className="w-full h-full object-cover" onError={() => setFailed(true)} />;
-}
-
 function RequestsPage() {
-  const [active, setActive] = useState<TabId>("match");
-  const [reportTarget, setReportTarget] = useState<{ id: string; name?: string } | null>(null);
-  const [likes, setLikes] = useState<LikeEntry[]>([]);
-  const [superlikes, setSuperlikes] = useState<LikeEntry[]>([]);
-  const [matches, setMatches] = useState<MatchEntry[]>([]);
-  const [visits, setVisits] = useState<VisitEntry[]>([]);
+  const [requests, setRequests] = useState<RequestEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const { features } = useSubscription();
-  const navigate = useNavigate();
-
-  /**
-   * Ce qui reste réservé aux formules payantes.
-   *
-   * « M'ont aimé » est ouvert à tous : voir qu'on plaît est ce qui donne
-   * envie de revenir, et le verrouiller sur un compte neuf — qui n'a
-   * encore aucun match — ne laissait qu'un onglet vide et un cadenas.
-   *
-   * « Super Likes » et « Visiteurs » restent payants : ils sont plus
-   * rares et plus révélateurs.
-   */
-  const tabVerrouille = (id: TabId): boolean => {
-    if (id === "visit") return !features.visitors;
-    if (id === "superlike") return !features.seeAdmirers;
-    return false;
-  };
-
-  const isPremiumLocked = tabVerrouille(active);
+  const [reportTarget, setReportTarget] = useState<{ id: string; name?: string } | null>(null);
+  const { features, isPremium } = useSubscription();
 
   useEffect(() => {
-    async function load() {
+    async function loadRequests() {
       setLoading(true);
       try {
         const user = await getCurrentUser();
         if (!user) return;
 
-        // Tout ce qui ne dépend de rien part en parallèle : 1 ronde au lieu de 2
         const [{ data: swipesData }, blockedIds, dismissedIds] = await Promise.all([
           supabase
             .from("swipes")
@@ -171,10 +87,11 @@ function RequestsPage() {
           fetchBlockedIds(),
           fetchDismissedIds(),
         ]);
+        
         const hidden = new Set([...blockedIds, ...dismissedIds]);
 
         if (swipesData) {
-          const all = swipesData
+          const allRequests = swipesData
             .filter((s: any) => !hidden.has(s.swiper_id))
             .map((s: any) => ({
               id: s.id,
@@ -183,60 +100,7 @@ function RequestsPage() {
               created_at: s.created_at,
               profile: s.profiles,
             }));
-          setLikes(all.filter((s: any) => s.action === "like"));
-          setSuperlikes(all.filter((s: any) => s.action === "superlike"));
-        }
-
-        // Charger les matches
-        const { data: matchesData } = await supabase
-          .from("matches")
-          .select("id, created_at, user1_id, user2_id")
-          .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-          .order("created_at", { ascending: false });
-
-        if (matchesData && matchesData.length > 0) {
-          const otherIds = matchesData.map((m: any) =>
-            m.user1_id === user.id ? m.user2_id : m.user1_id
-          );
-          const { data: profilesData } = await supabase
-            .from("profiles")
-            .select("id, first_name, last_name, birth_date, city, photos")
-            .in("id", otherIds);
-
-          const profileMap = new Map(profilesData?.map((p: any) => [p.id, p]));
-          setMatches(matchesData.map((m: any) => {
-            const otherId = m.user1_id === user.id ? m.user2_id : m.user1_id;
-            return { id: m.id, created_at: m.created_at, other: profileMap.get(otherId) };
-          }));
-        }
-
-        // Charger les visiteurs de mon profil
-        const { data: visitsData, error: visitsError } = await supabase
-          .from("profile_visits")
-          .select("id, visitor_id, created_at")
-          .eq("visited_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(50);
-
-        if (visitsError) console.error("[demandes] visites:", visitsError);
-
-        const visibleVisits = (visitsData ?? []).filter((v: any) => !hidden.has(v.visitor_id));
-
-        if (visibleVisits.length > 0) {
-          const visitorIds = visibleVisits.map((v: any) => v.visitor_id);
-          const { data: visitorProfiles } = await supabase
-            .from("profiles")
-            .select("id, first_name, last_name, birth_date, city, photos")
-            .in("id", visitorIds);
-
-          const visitorMap = new Map(visitorProfiles?.map((p: any) => [p.id, p]));
-          setVisits(
-            visibleVisits.map((v: any) => ({
-              id: v.id,
-              created_at: v.created_at,
-              visitor: visitorMap.get(v.visitor_id) ?? null,
-            })),
-          );
+          setRequests(allRequests);
         }
       } catch (err) {
         console.error("Erreur chargement demandes:", err);
@@ -244,20 +108,17 @@ function RequestsPage() {
         setLoading(false);
       }
     }
-    load();
+    loadRequests();
   }, []);
 
-  const removeFromLists = (id: string) => {
-    setLikes((prev) => prev.filter((l) => l.id !== id));
-    setSuperlikes((prev) => prev.filter((l) => l.id !== id));
+  const removeRequest = (id: string) => {
+    setRequests((prev) => prev.filter((r) => r.id !== id));
   };
 
-  const acceptLike = async (entry: LikeEntry) => {
+  const acceptRequest = async (entry: RequestEntry) => {
     const user = await getCurrentUser();
     if (!user) return;
 
-    // upsert : si j'avais déjà swipé cette personne, on ne veut pas d'erreur
-    // de contrainte d'unicité silencieuse (l'ancien code ignorait le résultat).
     const { error } = await supabase.from("swipes").upsert(
       { swiper_id: user.id, target_id: entry.swiper_id, action: "like" },
       { onConflict: "swiper_id,target_id" },
@@ -269,292 +130,156 @@ function RequestsPage() {
       return;
     }
 
-    // Le match est créé côté base par le trigger on_swipe_create_match
     toast.success(`C'est un match avec ${entry.profile?.first_name} ! 🎉`);
-    removeFromLists(entry.id);
+    removeRequest(entry.id);
   };
 
-  const handleDismiss = async (entry: LikeEntry) => {
-    removeFromLists(entry.id);
+  const declineRequest = async (entry: RequestEntry) => {
+    removeRequest(entry.id);
     const ok = await dismissLike(entry.swiper_id);
-    toast.info(ok ? "Refusé" : "Refusé (non enregistré)");
+    if (!ok) {
+        toast.error("Erreur lors du refus");
+    }
   };
 
-  const handleBlock = async (entry: LikeEntry) => {
-    removeFromLists(entry.id);
-    const ok = await blockUser(entry.swiper_id);
-    if (ok) toast.success(`${entry.profile?.first_name} a été bloqué`);
-    else toast.error("Le blocage n'a pas pu être enregistré");
-  };
-
-  // Le signalement passe désormais par un dialogue : sans motif, la
-  // modération ne savait ni quoi vérifier ni quelle urgence accorder.
-  const handleReport = (entry: LikeEntry) => {
+  const handleReport = (entry: RequestEntry) => {
     setReportTarget({
       id: entry.swiper_id,
       name: entry.profile?.first_name ?? undefined,
     });
   };
 
-  const currentList = active === "like" ? likes : active === "superlike" ? superlikes : [];
-  const showMatches = active === "match";
-  const showVisits = active === "visit";
-
   return (
-    <div className="px-4 pt-4">
-      <h1 className="font-serif text-2xl font-semibold">Demandes</h1>
-      <p className="text-xs text-muted-foreground mb-4">
-        Consultez qui s'intéresse à votre profil.
-      </p>
-
-      {/* Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-4 -mx-4 px-4 scrollbar-none">
-        {tabs.map((t) => {
-          const Icon = t.icon;
-          const on = active === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setActive(t.id)}
-              className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium border transition-all ${
-                on
-                  ? "bg-primary text-primary-foreground border-primary shadow-elegant"
-                  : "bg-background text-foreground border-border hover:border-primary/40"
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {t.label}
-              {/* Le cadenas suit le verrou réel de CHAQUE onglet. Il
-                  s'affichait auparavant sur les trois dès que
-                  `seeAdmirers` était faux — y compris sur « Visiteurs »,
-                  dont l'accès dépend d'un autre droit. */}
-              {tabVerrouille(t.id) && <Lock className="w-3 h-3 opacity-70" />}
-            </button>
-          );
-        })}
+    <div className="min-h-screen bg-background pb-20 pt-6 px-4 max-w-2xl mx-auto flex flex-col">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold font-serif text-foreground">Demandes</h1>
+          <p className="text-muted-foreground mt-1">Personnes qui vous ont aimé</p>
+        </div>
+        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+          <Heart className="w-6 h-6 fill-current" />
+        </div>
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 gap-3">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="aspect-[3/4] rounded-2xl bg-secondary animate-pulse" />
-          ))}
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : isPremiumLocked ? (
-        <PremiumGate
-          tab={active}
-          count={active === "visit" ? visits.length : active === "superlike" ? superlikes.length : likes.length}
-        />
-      ) : showVisits ? (
-        visits.length === 0 ? (
-          <EmptyState message="Personne n'a encore visité votre profil." />
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {visits.map((v, i) => (
-              <motion.div
-                key={v.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-                className="rounded-2xl overflow-hidden bg-card border border-border/50 shadow-soft"
-              >
-                <div className="relative aspect-[3/4]">
-                  <CardPhoto src={v.visitor?.photos?.[0]} name={v.visitor?.first_name || "Membre"} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
-                  <span className="absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/90 text-foreground text-[10px] font-semibold">
-                    <Eye className="w-3 h-3" /> {timeAgo(v.created_at)}
-                  </span>
-                  <div className="absolute inset-x-0 bottom-0 p-2.5 text-white">
-                    {/* `truncate` plutôt qu'un retour à la ligne : ces
-                        vignettes font deux par ligne sur mobile, un nom
-                        composé y tiendrait sur trois lignes. */}
-                    <div className="font-serif text-base font-semibold leading-tight truncate">
-                      {displayName(v.visitor?.first_name, v.visitor?.last_name)}
-                      {getAge(v.visitor?.birth_date || null) > 0 && `, ${getAge(v.visitor?.birth_date || null)}`}
-                    </div>
-                    <div className="text-[10px] opacity-90 mt-0.5">{v.visitor?.city}</div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+      ) : requests.length === 0 ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-card rounded-2xl border border-border shadow-sm">
+          <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-6">
+            <Heart className="w-10 h-10 text-muted-foreground/50" />
           </div>
-        )
-      ) : showMatches ? (
-        matches.length === 0 ? (
-          <EmptyState message="Pas encore de match. Continuez à swiper !" />
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {matches.map((m, i) => (
-              <motion.div
-                key={m.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-                className="rounded-2xl overflow-hidden bg-card border border-border/50 shadow-soft cursor-pointer"
-                onClick={() => navigate({ to: "/messages", search: { conversation: m.id } as any })}
-              >
-                <div className="relative aspect-[3/4]">
-                  <CardPhoto src={m.other?.photos?.[0]} name={m.other?.first_name || "Membre"} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
-                  <span className="absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold">
-                    <Sparkles className="w-3 h-3" /> Match !
-                  </span>
-                  <div className="absolute inset-x-0 bottom-0 p-2.5 text-white">
-                    <div className="font-serif text-base font-semibold leading-tight truncate">
-                      {displayName(m.other?.first_name, m.other?.last_name)}
-                      {getAge(m.other?.birth_date || null) > 0 && `, ${getAge(m.other?.birth_date || null)}`}
-                    </div>
-                    <div className="text-[10px] opacity-90 mt-0.5">{m.other?.city}</div>
-                  </div>
-                </div>
-                <div className="p-2.5 border-t border-border/60">
-                  <button className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl bg-primary/10 text-primary text-xs font-semibold">
-                    <MessageCircle className="w-3.5 h-3.5" /> Envoyer un message
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )
-      ) : currentList.length === 0 ? (
-        <EmptyState message="Rien à afficher ici pour l'instant." />
+          <h2 className="text-xl font-bold text-foreground mb-2">Aucune demande</h2>
+          <p className="text-muted-foreground">
+            Continuez à utiliser l'application pour recevoir de nouvelles demandes de connexion.
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {currentList.map((r, i) => (
-            <LikeCard
-              key={r.id}
-              entry={r}
-              delay={i * 0.03}
-              onAccept={acceptLike}
-              onDismiss={handleDismiss}
-              onBlock={handleBlock}
-              onReport={handleReport}
-            />
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <AnimatePresence>
+            {requests.map((req) => (
+              <motion.div
+                key={req.id}
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm flex flex-col relative"
+              >
+                <div className="relative h-64 w-full bg-muted overflow-hidden">
+                  {req.profile?.photos?.[0] ? (
+                    <img 
+                      src={req.profile.photos[0]} 
+                      alt={req.profile.first_name} 
+                      className={`w-full h-full object-cover transition-all duration-300 ${!isPremium && req.action !== 'superlike' ? 'blur-xl scale-110' : ''}`}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-gold/20">
+                      <User className="w-16 h-16 text-primary/50" />
+                    </div>
+                  )}
+
+                  {!isPremium && req.action !== 'superlike' && (
+                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/20 backdrop-blur-[2px]">
+                        <Heart className="w-12 h-12 text-white mb-2 drop-shadow-md" />
+                        <span className="text-white font-medium drop-shadow-md px-4 text-center">Débloquer avec Premium</span>
+                     </div>
+                  )}
+
+                  {req.action === "superlike" && (
+                    <div className="absolute top-3 left-3 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center shadow-md z-10">
+                      <Star className="w-3 h-3 mr-1 fill-current" />
+                      Super Like
+                    </div>
+                  )}
+                  
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 pt-12 z-10">
+                     <div className="flex justify-between items-end">
+                       <div>
+                          <h3 className="text-white font-bold text-xl drop-shadow-md">
+                            {req.profile?.first_name}, {getAge(req.profile?.birth_date)}
+                          </h3>
+                          <p className="text-white/80 text-sm flex items-center mt-1">
+                            {req.profile?.city || "Ville inconnue"} • {timeAgo(req.created_at)}
+                          </p>
+                       </div>
+                     </div>
+                  </div>
+                </div>
+
+                <div className="p-4 flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="flex-1 h-12 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
+                    onClick={() => declineRequest(req)}
+                  >
+                    <X className="w-6 h-6" />
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    size="icon" 
+                    className="flex-1 h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+                    onClick={() => acceptRequest(req)}
+                  >
+                    <Check className="w-6 h-6" />
+                  </Button>
+                  
+                  <Button 
+                    variant="ghost"
+                    size="icon"
+                    className="h-12 w-12 rounded-xl text-muted-foreground hover:text-foreground"
+                    onClick={() => handleReport(req)}
+                    title="Signaler ou bloquer"
+                  >
+                    <ShieldAlert className="w-5 h-5" />
+                  </Button>
+                </div>
+                
+                <Link
+                  to="/_app/profil/$id"
+                  params={{ id: req.swiper_id }}
+                  className="px-4 pb-4 text-center text-sm font-medium text-primary hover:underline"
+                >
+                  Voir le profil complet
+                </Link>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
 
-      <ReportDialog
-        open={!!reportTarget}
-        onOpenChange={o => !o && setReportTarget(null)}
-        reportedId={reportTarget?.id ?? ""}
-        reportedName={reportTarget?.name}
-        context="profile"
-      />
-    </div>
-  );
-}
-
-function LikeCard({
-  entry,
-  delay,
-  onAccept,
-  onDismiss,
-  onBlock,
-  onReport,
-}: {
-  entry: LikeEntry;
-  delay: number;
-  onAccept: (e: LikeEntry) => void;
-  onDismiss: (e: LikeEntry) => void;
-  onBlock: (e: LikeEntry) => void;
-  onReport: (e: LikeEntry) => void;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-      className="rounded-2xl overflow-hidden bg-card border border-border/50 shadow-soft"
-    >
-      <div className="relative aspect-[3/4]">
-        <CardPhoto src={entry.profile?.photos?.[0]} name={entry.profile?.first_name || "Membre"} />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
-        {entry.action === "superlike" && (
-          <div className="absolute top-2 inset-x-2 flex flex-col gap-1.5 items-start">
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold shadow-soft">
-              <Star className="w-3 h-3" fill="currentColor" /> Super Like
-            </span>
-            <div className="bg-primary/95 text-primary-foreground text-[10px] px-2.5 py-1.5 rounded-xl leading-snug shadow-elegant backdrop-blur-sm border border-primary-foreground/20">
-              Cette personne a eu un énorme coup de cœur pour toi
-            </div>
-          </div>
-        )}
-        <div className="absolute inset-x-0 bottom-0 p-2.5 text-white">
-          <div className="font-serif text-base font-semibold leading-tight truncate">
-            {displayName(entry.profile?.first_name, entry.profile?.last_name)}
-            {getAge(entry.profile?.birth_date || null) > 0 && `, ${getAge(entry.profile?.birth_date || null)}`}
-          </div>
-          <div className="text-[10px] opacity-90 mt-0.5">{entry.profile?.city}</div>
-        </div>
-      </div>
-      <div className="grid grid-cols-4 divide-x divide-border/60 border-t border-border/60">
-        <button aria-label="Accepter" onClick={() => onAccept(entry)} className="py-2.5 flex items-center justify-center hover:bg-secondary/60 transition-colors text-emerald-500">
-          <Check className="w-4 h-4" />
-        </button>
-        <button aria-label="Refuser" onClick={() => onDismiss(entry)} className="py-2.5 flex items-center justify-center hover:bg-secondary/60 transition-colors text-destructive">
-          <X className="w-4 h-4" />
-        </button>
-        <button aria-label="Signaler" onClick={() => onReport(entry)} className="py-2.5 flex items-center justify-center hover:bg-secondary/60 transition-colors text-muted-foreground">
-          <Flag className="w-4 h-4" />
-        </button>
-        <button aria-label="Bloquer" onClick={() => onBlock(entry)} className="py-2.5 flex items-center justify-center hover:bg-secondary/60 transition-colors text-muted-foreground">
-          <Ban className="w-4 h-4" />
-        </button>
-      </div>
-    </motion.div>
-  );
-}
-
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="rounded-2xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
-      {message}
-    </div>
-  );
-}
-
-function PremiumGate({ count = 0, tab }: { count?: number; tab?: TabId }) {
-  const label =
-    tab === "visit"
-      ? "personne n'a encore regardé votre profil"
-      : tab === "superlike"
-        ? "aucun Super Like reçu pour l'instant"
-        : "personne ne vous a encore aimé";
-
-  const teaser =
-    tab === "visit"
-      ? `${count} membre${count > 1 ? "s ont" : " a"} récemment regardé votre profil`
-      : tab === "superlike"
-        ? `${count} Super Like${count > 1 ? "s" : ""} vous attend${count > 1 ? "ent" : ""}`
-        : `${count} membre${count > 1 ? "s vous ont" : " vous a"} aimé`;
-
-  return (
-    <div className="rounded-3xl overflow-hidden relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/85 to-primary/70" />
-      <div className="relative p-8 text-center text-primary-foreground">
-        <div className="w-14 h-14 rounded-full bg-gold text-gold-foreground mx-auto flex items-center justify-center shadow-elegant">
-          <Lock className="w-6 h-6" />
-        </div>
-
-        {/* L'aperçu chiffré : on dit COMBIEN, pas QUI. C'est ce qui donne
-            envie de s'abonner, et ça reste honnête. */}
-        <div className="font-serif text-3xl font-semibold mt-4">
-          {count > 0 ? count : "—"}
-        </div>
-        <p className="text-sm opacity-95 mt-1">{count > 0 ? teaser : label}</p>
-
-        <h3 className="font-serif text-xl mt-4">Découvrez qui c'est</h3>
-        <p className="text-sm opacity-90 mt-1.5 max-w-sm mx-auto">
-          Passez Premium pour voir leurs profils et répondre à leur intérêt.
-        </p>
-        <Link
-          to="/abonnement"
-          className="mt-5 inline-flex px-6 py-2.5 rounded-full bg-gold text-gold-foreground font-semibold shadow-elegant"
-        >
-          Devenir Premium
-        </Link>
-      </div>
+      {reportTarget && (
+        <ReportDialog
+          open={!!reportTarget}
+          onOpenChange={(o) => {
+            if (!o) setReportTarget(null);
+          }}
+          targetId={reportTarget.id}
+          targetName={reportTarget.name}
+        />
+      )}
     </div>
   );
 }
