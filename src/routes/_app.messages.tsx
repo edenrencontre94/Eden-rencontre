@@ -70,7 +70,7 @@ type Msg = {
   created_at: string;
   read_at: string | null;
   media_url?: string | null;
-  media_type?: "image" | "video" | "audio" | "gif" | "sticker" | null;
+  type?: "image" | "video" | "audio" | "gif" | "sticker" | "text" | "call" | null;
 };
 
 function getAge(birthDate: string | null) {
@@ -434,7 +434,7 @@ async function loadConversations(userId: string): Promise<MatchChat[]> {
             visibleMatches.map((m: any) =>
               supabase
                 .from("messages")
-                .select("match_id, content, created_at, sender_id, media_type, read_at")
+                .select("match_id, content, created_at, sender_id, type, read_at")
                 .eq("match_id", m.id)
                 .order("created_at", { ascending: false })
                 .limit(1),
@@ -444,7 +444,17 @@ async function loadConversations(userId: string): Promise<MatchChat[]> {
         }
 
         const dernierParMatch = new Map<string, any>(
-          derniers.map((d: any) => [d.match_id, d]),
+          derniers.map((d: any) => [
+            d.match_id, 
+            {
+              match_id: d.match_id,
+              type: d.last_type ?? d.type,
+              content: d.last_content ?? d.content,
+              created_at: d.last_at ?? d.created_at,
+              sender_id: d.last_sender_id ?? d.sender_id,
+              read_at: d.read_at,
+            }
+          ]),
         );
 
         // Diagnostic : des matches existent mais aucun profil n'est lisible
@@ -475,8 +485,8 @@ async function loadConversations(userId: string): Promise<MatchChat[]> {
 
           let preview = "Nouveau match — dites bonjour 👋";
           if (lastMsg) {
-            preview = lastMsg.media_type
-              ? MEDIA_LABELS[lastMsg.media_type] || "Média"
+            preview = lastMsg.type
+              ? MEDIA_LABELS[lastMsg.type] || "Média"
               : lastMsg.content || "";
             // « Vous : » aussi sur les médias, pour rester cohérent
             if (mine) preview = `Vous : ${preview}`;
@@ -556,7 +566,7 @@ function MessagesPage() {
         if (!knownIds.has(msg.match_id)) return;
 
         const mine = msg.sender_id === userId;
-        const body = msg.media_type ? MEDIA_LABELS[msg.media_type] || "Média" : msg.content || "";
+        const body = msg.type ? MEDIA_LABELS[msg.type] || "Média" : msg.content || "";
 
         setChats(prev =>
           prev
@@ -1039,13 +1049,13 @@ function ChatView({
     return data.publicUrl;
   };
 
-  const sendMessage = async (opts: { content?: string; media_url?: string; media_type?: Msg["media_type"] }) => {
+  const sendMessage = async (opts: { content?: string; media_url?: string; type?: Msg["type"] }) => {
     const { error } = await supabase.from("messages").insert({
       match_id: chat.id,
       sender_id: currentUserId,
       content: opts.content || "",
       media_url: opts.media_url || null,
-      media_type: opts.media_type || null,
+      type: opts.type || null,
     });
 
     if (!error) {
@@ -1089,7 +1099,7 @@ function ChatView({
     }
     setUploading(true);
     const url = await uploadMedia(file, type === "image" ? "images" : "videos");
-    if (url) await sendMessage({ media_url: url, media_type: type });
+    if (url) await sendMessage({ media_url: url, type: type as Msg["type"] });
     setUploading(false);
     setShowMedia(false);
     e.target.value = "";
@@ -1197,7 +1207,7 @@ function ChatView({
       setUploading(true);
       const file = new File([blob], `vocal.${ext}`, { type });
       const url = await uploadMedia(file, "audio");
-      if (url) await sendMessage({ media_url: url, media_type: "audio" });
+      if (url) await sendMessage({ media_url: url, type: "audio" });
       setUploading(false);
     };
 
@@ -1241,7 +1251,7 @@ function ChatView({
   const sendGif = async (url: string, kind: "gif" | "sticker") => {
     setShowGif(false);
     setShowSticker(false);
-    await sendMessage({ media_url: url, media_type: kind });
+    await sendMessage({ media_url: url, type: kind });
   };
 
   // ── Emoji ──
@@ -1262,35 +1272,35 @@ function ChatView({
       </div>
     );
 
-    if (m.media_type === "image") return (
+    if (m.type === "image") return (
       <div className={`${base} overflow-hidden p-0`}>
         <img src={m.media_url!} alt="image" className="max-w-[200px] max-h-[260px] object-cover" onClick={() => window.open(m.media_url!, "_blank")} />
         <div className="px-2 pb-1">{ts}</div>
       </div>
     );
 
-    if (m.media_type === "video") return (
+    if (m.type === "video") return (
       <div className={`${base} overflow-hidden p-0`}>
         <video src={m.media_url!} controls className="max-w-[220px] rounded-2xl" />
         <div className="px-2 pb-1">{ts}</div>
       </div>
     );
 
-    if (m.media_type === "audio") return (
+    if (m.type === "audio") return (
       <div className={`${base} px-3 py-2`}>
         <AudioPlayer src={m.media_url!} isMe={isMe} />
         {ts}
       </div>
     );
 
-    if (m.media_type === "gif" || m.media_type === "sticker") return (
+    if (m.type === "gif" || m.type === "sticker") return (
       // Sans bulle : un sticker se pose sur la conversation, il ne
       // s'encadre pas. `w-[140px]` fixe la taille — un SVG sans
       // dimensions explicites s'étirerait à la largeur disponible.
       <div className={`${base} p-0 bg-transparent shadow-none border-none`}>
         <img
           src={m.media_url!}
-          alt={m.media_type === "sticker" ? "Sticker" : "Sticker animé"}
+          alt={m.type === "sticker" ? "Sticker" : "Sticker animé"}
           loading="lazy"
           className="w-[140px] h-[140px] object-contain rounded-2xl"
         />

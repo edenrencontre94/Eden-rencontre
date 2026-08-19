@@ -68,7 +68,7 @@ function RequestsPage() {
   const [requests, setRequests] = useState<RequestEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [reportTarget, setReportTarget] = useState<{ id: string; name?: string } | null>(null);
-  const { features, isPremium } = useSubscription();
+  const { features } = useSubscription();
 
   useEffect(() => {
     async function loadRequests() {
@@ -249,13 +249,7 @@ function RequestsPage() {
                   </Button>
                 </div>
                 
-                <Link
-                  to="/_app/profil/$id"
-                  params={{ id: req.actor_id }}
-                  className="px-4 pb-4 text-center text-sm font-medium text-primary hover:underline"
-                >
-                  Voir le profil complet
-                </Link>
+
               </motion.div>
             ))}
           </AnimatePresence>
@@ -268,8 +262,8 @@ function RequestsPage() {
           onOpenChange={(o) => {
             if (!o) setReportTarget(null);
           }}
-          targetId={reportTarget.id}
-          targetName={reportTarget.name}
+          reportedId={reportTarget.id}
+          reportedName={reportTarget.name}
         />
       )}
     </div>
