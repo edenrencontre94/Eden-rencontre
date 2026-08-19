@@ -120,8 +120,8 @@ function RequestsPage() {
     if (!user) return;
 
     const { error } = await supabase.from("swipes").upsert(
-      { swiper_id: user.id, target_id: entry.swiper_id, action: "like" },
-      { onConflict: "swiper_id,target_id" },
+      { actor_id: user.id, target_id: entry.actor_id, action: "like" },
+      { onConflict: "actor_id,target_id" },
     );
 
     if (error) {
@@ -136,7 +136,7 @@ function RequestsPage() {
 
   const declineRequest = async (entry: RequestEntry) => {
     removeRequest(entry.id);
-    const ok = await dismissLike(entry.swiper_id);
+    const ok = await dismissLike(entry.actor_id);
     if (!ok) {
         toast.error("Erreur lors du refus");
     }
@@ -144,7 +144,7 @@ function RequestsPage() {
 
   const handleReport = (entry: RequestEntry) => {
     setReportTarget({
-      id: entry.swiper_id,
+      id: entry.actor_id,
       name: entry.profile?.first_name ?? undefined,
     });
   };
@@ -154,7 +154,6 @@ function RequestsPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold font-serif text-foreground">Demandes</h1>
-          <p className="text-muted-foreground mt-1">Personnes qui vous ont aimé</p>
         </div>
         <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
           <Heart className="w-6 h-6 fill-current" />
@@ -192,7 +191,7 @@ function RequestsPage() {
                     <img 
                       src={req.profile.photos[0]} 
                       alt={req.profile.first_name} 
-                      className={`w-full h-full object-cover transition-all duration-300 ${!isPremium && req.action !== 'superlike' ? 'blur-xl scale-110' : ''}`}
+                      className="w-full h-full object-cover"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-gold/20">
@@ -200,14 +199,7 @@ function RequestsPage() {
                     </div>
                   )}
 
-                  {!isPremium && req.action !== 'superlike' && (
-                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/20 backdrop-blur-[2px]">
-                        <Heart className="w-12 h-12 text-white mb-2 drop-shadow-md" />
-                        <span className="text-white font-medium drop-shadow-md px-4 text-center">Débloquer avec Premium</span>
-                     </div>
-                  )}
-
-                  {req.action === "superlike" && (
+                  {req.action === "super_like" && (
                     <div className="absolute top-3 left-3 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center shadow-md z-10">
                       <Star className="w-3 h-3 mr-1 fill-current" />
                       Super Like
@@ -259,7 +251,7 @@ function RequestsPage() {
                 
                 <Link
                   to="/_app/profil/$id"
-                  params={{ id: req.swiper_id }}
+                  params={{ id: req.actor_id }}
                   className="px-4 pb-4 text-center text-sm font-medium text-primary hover:underline"
                 >
                   Voir le profil complet
