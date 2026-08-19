@@ -219,7 +219,7 @@ function DiscoverPage() {
 
     const target = currentFiltered;
     setHistory((h) => [...h, { id: target.id, action }]);
-    if (action === "right") toast.success(`Vous aimez ${target.firstName}`);
+    if (action === "right") toast.success(`Demande envoyée à ${target.firstName} 💌`);
     if (action === "super") toast.success(`Super Like envoyé à ${target.firstName} ⭐`);
     setIndex((i) => i + 1);
 
@@ -326,24 +326,7 @@ function DiscoverPage() {
     }
   };
 
-  // ── Ajouter aux contacts ──
-  const addContact = async () => {
-    if (!currentFiltered) return;
-    try {
-      const user = await getCurrentUser();
-      if (!user) return;
-      await supabase.from('swipes').insert({
-        swiper_id: user.id,
-        target_id: currentFiltered.id,
-        action: 'like'
-      });
-      setHistory(h => [...h, { id: currentFiltered.id, action: 'right' }]);
-      setIndex(i => i + 1);
-      toast.success(`${currentFiltered.firstName} ajouté(e) à vos contacts ! 👤`);
-    } catch (e) {
-      console.error(e);
-    }
-  };
+
 
   return (
     <div className="px-4 pt-4 relative">
@@ -478,12 +461,12 @@ function DiscoverPage() {
 
         <div className="flex flex-col items-center gap-1">
           <button
-            onClick={addContact}
-            className="w-10 h-10 rounded-full border-2 border-primary/80 bg-background flex items-center justify-center text-primary hover:bg-primary/10 transition-transform active:scale-95 shadow-sm"
+            onClick={() => swipe("right")}
+            className="w-12 h-12 rounded-full border-2 border-primary bg-background flex items-center justify-center text-primary hover:bg-primary/10 transition-transform active:scale-95 shadow-sm"
           >
-            <UserPlus className="w-4 h-4" />
+            <UserPlus className="w-5 h-5" />
           </button>
-          <span className="text-[10px] text-muted-foreground font-medium">Ajouter</span>
+          <span className="text-[10px] text-primary font-medium">Demander</span>
         </div>
       </div>
 
