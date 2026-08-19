@@ -226,9 +226,9 @@ function DiscoverPage() {
     try {
       const user = await getCurrentUser();
       if (user) {
-        const dbAction = action === "left" ? "pass" : action === "right" ? "like" : "superlike";
+        const dbAction = action === "left" ? "pass" : action === "right" ? "like" : "super_like";
         const { error: swipeError } = await supabase.from('swipes').insert({
-          swiper_id: user.id,
+          actor_id: user.id,
           target_id: target.id,
           action: dbAction
         });
@@ -249,22 +249,19 @@ function DiscoverPage() {
 
         refreshQuotas();
 
-        if (dbAction === 'like' || dbAction === 'superlike') {
-          // Le like est ECRIT en base a ce stade : l evenement decrit un
-          // fait, pas une intention.
+        if (dbAction === 'like' || dbAction === 'super_like') {
           import("@/lib/meta").then(m => m.suivreMeta("Like"));
 
           const { data: matchCheck } = await supabase
             .from('swipes')
             .select('id')
-            .eq('swiper_id', currentFiltered.id)
+            .eq('actor_id', currentFiltered.id)
             .eq('target_id', user.id)
-            .in('action', ['like', 'superlike'])
+            .in('action', ['like', 'super_like'])
             .maybeSingle();
 
           if (matchCheck) {
             toast.success(`C'est un match avec ${currentFiltered.firstName} ! 🎉`, { duration: 5000 });
-            // Reciprocite confirmee par la base : le match existe.
             import("@/lib/meta").then(m => m.suivreMeta("Match"));
           }
         }
@@ -334,7 +331,7 @@ function DiscoverPage() {
       if (!user) return;
 
       const { error: swipeError } = await supabase.from('swipes').insert({
-        swiper_id: user.id,
+        actor_id: user.id,
         target_id: currentFiltered.id,
         action: 'like'
       });
@@ -353,17 +350,17 @@ function DiscoverPage() {
       const { data: matchCheck } = await supabase
         .from('swipes')
         .select('id')
-        .eq('swiper_id', currentFiltered.id)
+        .eq('actor_id', currentFiltered.id)
         .eq('target_id', user.id)
-        .in('action', ['like', 'superlike'])
+        .in('action', ['like', 'super_like'])
         .maybeSingle();
 
       if (matchCheck) {
         toast.success(`C'est un match avec ${currentFiltered.firstName} ! 🎉`, { duration: 5000 });
       }
-    } catch (e) {
-      console.error(e);
-      toast.error("Erreur lors de l'envoi de la demande");
+    } catch (e: any) {
+      console.error('[sendRequest]', e);
+      toast.error(`Erreur : ${e?.message || 'inconnue'}`);
     }
   };
 
