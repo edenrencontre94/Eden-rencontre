@@ -939,9 +939,9 @@ function ConversationsTab() {
                     : "bg-primary/10 border border-primary/20"
                 }`}>
                   <p className="text-[11px] font-semibold opacity-70 mb-0.5">{m.auteur}</p>
-                  {m.media_type && m.media_type !== "text" ? (
+                  {m.type && m.type !== "text" ? (
                     <p className="text-sm italic text-muted-foreground">
-                      [{m.media_type}] {m.content}
+                      [{m.type}] {m.content}
                     </p>
                   ) : (
                     <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.content}</p>

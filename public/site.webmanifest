@@ -1,7 +1,7 @@
 {
-  "name": "AgapeMeet — Rencontres chrétiennes sérieuses",
-  "short_name": "AgapeMeet",
-  "description": "La plateforme de rencontres chrétiennes dédiée au mariage, en Afrique francophone et dans le monde.",
+  "name": "Eden Rencontre",
+  "short_name": "Eden Rencontre",
+  "description": "Eden Rencontre, la plateforme de rencontres sérieuses.",
   "id": "/",
   "start_url": "/accueil",
   "scope": "/",

@@ -1,15 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Heart, Star, User, Check, X, ShieldAlert } from "lucide-react";
+import { Heart, User, Check, X, ShieldAlert } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getCurrentUser } from "@/lib/auth";
 import { toast } from "sonner";
-import { useSubscription } from "@/lib/subscription";
-import { displayName } from "@/lib/utils";
 import { ReportDialog } from "@/components/app/ReportDialog";
 import {
-  blockUser,
   dismissLike,
   fetchBlockedIds,
   fetchDismissedIds,
@@ -55,7 +52,7 @@ function getAge(birthDate: string | null) {
 
 function timeAgo(iso: string) {
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
-  if (mins < 1) return "à l'instant";
+  if (mins < 1) return "a l'instant";
   if (mins < 60) return `il y a ${mins} min`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `il y a ${hours} h`;
@@ -67,8 +64,8 @@ function timeAgo(iso: string) {
 function RequestsPage() {
   const [requests, setRequests] = useState<RequestEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
   const [reportTarget, setReportTarget] = useState<{ id: string; name?: string } | null>(null);
-  const { features } = useSubscription();
 
   useEffect(() => {
     async function loadRequests() {
@@ -77,7 +74,12 @@ function RequestsPage() {
         const user = await getCurrentUser();
         if (!user) return;
 
-        const [{ data: swipesData }, blockedIds, dismissedIds] = await Promise.all([
+        const [
+          { data: swipesData },
+          blockedIds,
+          dismissedIds,
+          { data: matchesData },
+        ] = await Promise.all([
           supabase
             .from("swipes")
             .select("id, actor_id, action, created_at, profiles!swipes_actor_id_fkey(id, first_name, last_name, birth_date, city, photos)")
@@ -86,17 +88,26 @@ function RequestsPage() {
             .order("created_at", { ascending: false }),
           fetchBlockedIds(),
           fetchDismissedIds(),
+          supabase
+            .from("matches")
+            .select("user1_id, user2_id")
+            .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`),
         ]);
-        
+
         const hidden = new Set([...blockedIds, ...dismissedIds]);
+        const matchedIds = new Set(
+          (matchesData ?? []).map((m: any) =>
+            m.user1_id === user.id ? m.user2_id : m.user1_id,
+          ),
+        );
 
         if (swipesData) {
           const allRequests = swipesData
-            .filter((s: any) => !hidden.has(s.actor_id))
+            .filter((s: any) => !hidden.has(s.actor_id) && !matchedIds.has(s.actor_id))
             .map((s: any) => ({
               id: s.id,
               actor_id: s.actor_id,
-              action: s.action,
+              action: s.action as "like" | "super_like",
               created_at: s.created_at,
               profile: s.profiles,
             }));
@@ -104,6 +115,7 @@ function RequestsPage() {
         }
       } catch (err) {
         console.error("Erreur chargement demandes:", err);
+        toast.error("Impossible de charger les demandes");
       } finally {
         setLoading(false);
       }
@@ -115,9 +127,21 @@ function RequestsPage() {
     setRequests((prev) => prev.filter((r) => r.id !== id));
   };
 
+  const markProcessing = (id: string, val: boolean) => {
+    setProcessingIds((prev) => {
+      const next = new Set(prev);
+      val ? next.add(id) : next.delete(id);
+      return next;
+    });
+  };
+
   const acceptRequest = async (entry: RequestEntry) => {
+    if (processingIds.has(entry.id)) return;
+    markProcessing(entry.id, true);
+    removeRequest(entry.id);
+
     const user = await getCurrentUser();
-    if (!user) return;
+    if (!user) { markProcessing(entry.id, false); return; }
 
     const { error } = await supabase.from("swipes").upsert(
       { actor_id: user.id, target_id: entry.actor_id, action: "like" },
@@ -126,35 +150,35 @@ function RequestsPage() {
 
     if (error) {
       console.error("[demandes] acceptation:", error);
-      toast.error("Erreur lors de l'action");
-      return;
+      toast.error("Erreur lors de l'acceptation, veuillez reessayer");
+      setRequests((prev) => [entry, ...prev]);
+    } else {
+      toast.success(`C'est un match avec ${entry.profile?.first_name} !`);
     }
-
-    toast.success(`C'est un match avec ${entry.profile?.first_name} ! 🎉`);
-    removeRequest(entry.id);
+    markProcessing(entry.id, false);
   };
 
   const declineRequest = async (entry: RequestEntry) => {
+    if (processingIds.has(entry.id)) return;
+    markProcessing(entry.id, true);
     removeRequest(entry.id);
+
     const ok = await dismissLike(entry.actor_id);
     if (!ok) {
-        toast.error("Erreur lors du refus");
+      toast.error("Erreur lors du refus");
+      setRequests((prev) => [entry, ...prev]);
     }
+    markProcessing(entry.id, false);
   };
 
   const handleReport = (entry: RequestEntry) => {
-    setReportTarget({
-      id: entry.actor_id,
-      name: entry.profile?.first_name ?? undefined,
-    });
+    setReportTarget({ id: entry.actor_id, name: entry.profile?.first_name ?? undefined });
   };
 
   return (
     <div className="min-h-screen bg-background pb-20 pt-6 px-4 max-w-2xl mx-auto flex flex-col">
       <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold font-serif text-foreground">Demandes</h1>
-        </div>
+        <h1 className="text-3xl font-bold font-serif text-foreground">Demandes</h1>
         <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
           <Heart className="w-6 h-6 fill-current" />
         </div>
@@ -171,7 +195,7 @@ function RequestsPage() {
           </div>
           <h2 className="text-xl font-bold text-foreground mb-2">Aucune demande</h2>
           <p className="text-muted-foreground">
-            Continuez à utiliser l'application pour recevoir de nouvelles demandes de connexion.
+            Continuez a utiliser l'application pour recevoir de nouvelles demandes de connexion.
           </p>
         </div>
       ) : (
@@ -183,62 +207,52 @@ function RequestsPage() {
                 layout
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.2 } }}
                 className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm flex flex-col relative"
               >
                 <div className="relative h-64 w-full bg-muted overflow-hidden">
                   {req.profile?.photos?.[0] ? (
-                    <img 
-                      src={req.profile.photos[0]} 
-                      alt={req.profile.first_name} 
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={req.profile.photos[0]} alt={req.profile.first_name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-gold/20">
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-purple-500/20">
                       <User className="w-16 h-16 text-primary/50" />
                     </div>
                   )}
 
                   {req.action === "super_like" && (
-                    <div className="absolute top-3 left-3 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center shadow-md z-10">
-                      <Star className="w-3 h-3 mr-1 fill-current" />
+                    <div className="absolute top-3 left-3 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-md z-10">
                       Super Like
                     </div>
                   )}
-                  
+
                   <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 pt-12 z-10">
-                     <div className="flex justify-between items-end">
-                       <div>
-                          <h3 className="text-white font-bold text-xl drop-shadow-md">
-                            {req.profile?.first_name}, {getAge(req.profile?.birth_date)}
-                          </h3>
-                          <p className="text-white/80 text-sm flex items-center mt-1">
-                            {req.profile?.city || "Ville inconnue"} • {timeAgo(req.created_at)}
-                          </p>
-                       </div>
-                     </div>
+                    <h3 className="text-white font-bold text-xl drop-shadow-md">
+                      {req.profile?.first_name}{getAge(req.profile?.birth_date) > 0 ? `, ${getAge(req.profile?.birth_date)}` : ""}
+                    </h3>
+                    <p className="text-white/80 text-sm mt-1">
+                      {req.profile?.city || "Ville inconnue"} {String.fromCharCode(8226)} {timeAgo(req.created_at)}
+                    </p>
                   </div>
                 </div>
 
                 <div className="p-4 flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="icon" 
+                  <Button
+                    variant="outline"
+                    size="icon"
                     className="flex-1 h-12 rounded-xl text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
                     onClick={() => declineRequest(req)}
                   >
                     <X className="w-6 h-6" />
                   </Button>
-                  <Button 
-                    variant="default" 
-                    size="icon" 
+                  <Button
+                    variant="default"
+                    size="icon"
                     className="flex-1 h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
                     onClick={() => acceptRequest(req)}
                   >
                     <Check className="w-6 h-6" />
                   </Button>
-                  
-                  <Button 
+                  <Button
                     variant="ghost"
                     size="icon"
                     className="h-12 w-12 rounded-xl text-muted-foreground hover:text-foreground"
@@ -248,8 +262,6 @@ function RequestsPage() {
                     <ShieldAlert className="w-5 h-5" />
                   </Button>
                 </div>
-                
-
               </motion.div>
             ))}
           </AnimatePresence>
@@ -259,9 +271,7 @@ function RequestsPage() {
       {reportTarget && (
         <ReportDialog
           open={!!reportTarget}
-          onOpenChange={(o) => {
-            if (!o) setReportTarget(null);
-          }}
+          onOpenChange={(o) => { if (!o) setReportTarget(null); }}
           reportedId={reportTarget.id}
           reportedName={reportTarget.name}
         />
