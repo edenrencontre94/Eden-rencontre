@@ -29,8 +29,8 @@ export const Route = createFileRoute("/_app/demandes")({
 
 type RequestEntry = {
   id: string;
-  swiper_id: string;
-  action: "like" | "superlike";
+  actor_id: string;
+  action: "like" | "super_like";
   created_at: string;
   profile: {
     id: string;
@@ -80,9 +80,9 @@ function RequestsPage() {
         const [{ data: swipesData }, blockedIds, dismissedIds] = await Promise.all([
           supabase
             .from("swipes")
-            .select("id, swiper_id, action, created_at, profiles!swipes_swiper_id_fkey(id, first_name, last_name, birth_date, city, photos)")
+            .select("id, actor_id, action, created_at, profiles!swipes_actor_id_fkey(id, first_name, last_name, birth_date, city, photos)")
             .eq("target_id", user.id)
-            .in("action", ["like", "superlike"])
+            .in("action", ["like", "super_like"])
             .order("created_at", { ascending: false }),
           fetchBlockedIds(),
           fetchDismissedIds(),
@@ -92,10 +92,10 @@ function RequestsPage() {
 
         if (swipesData) {
           const allRequests = swipesData
-            .filter((s: any) => !hidden.has(s.swiper_id))
+            .filter((s: any) => !hidden.has(s.actor_id))
             .map((s: any) => ({
               id: s.id,
-              swiper_id: s.swiper_id,
+              actor_id: s.actor_id,
               action: s.action,
               created_at: s.created_at,
               profile: s.profiles,
