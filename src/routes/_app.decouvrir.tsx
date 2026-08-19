@@ -326,7 +326,46 @@ function DiscoverPage() {
     }
   };
 
+  // ── Envoyer une demande (sans consommer le quota de likes) ──
+  const sendRequest = async () => {
+    if (!currentFiltered) return;
+    try {
+      const user = await getCurrentUser();
+      if (!user) return;
 
+      const { error: swipeError } = await supabase.from('swipes').insert({
+        swiper_id: user.id,
+        target_id: currentFiltered.id,
+        action: 'like'
+      });
+
+      if (swipeError) {
+        const message = quotaErrorMessage(swipeError);
+        if (message) { upsell(message); return; }
+        throw swipeError;
+      }
+
+      setHistory(h => [...h, { id: currentFiltered.id, action: 'right' }]);
+      setIndex(i => i + 1);
+      toast.success(`Demande envoyée à ${currentFiltered.firstName} 💌`);
+
+      // Vérifier si c'est un match mutuel
+      const { data: matchCheck } = await supabase
+        .from('swipes')
+        .select('id')
+        .eq('swiper_id', currentFiltered.id)
+        .eq('target_id', user.id)
+        .in('action', ['like', 'superlike'])
+        .maybeSingle();
+
+      if (matchCheck) {
+        toast.success(`C'est un match avec ${currentFiltered.firstName} ! 🎉`, { duration: 5000 });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Erreur lors de l'envoi de la demande");
+    }
+  };
 
   return (
     <div className="px-4 pt-4 relative">
@@ -461,12 +500,12 @@ function DiscoverPage() {
 
         <div className="flex flex-col items-center gap-1">
           <button
-            onClick={() => swipe("right")}
+            onClick={sendRequest}
             className="w-12 h-12 rounded-full border-2 border-primary bg-background flex items-center justify-center text-primary hover:bg-primary/10 transition-transform active:scale-95 shadow-sm"
           >
             <UserPlus className="w-5 h-5" />
           </button>
-          <span className="text-[10px] text-primary font-medium">Demander</span>
+          <span className="text-[10px] text-primary font-medium">Ajouter</span>
         </div>
       </div>
 
