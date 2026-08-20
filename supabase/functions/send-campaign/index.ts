@@ -21,42 +21,91 @@ serve(async (req) => {
     const { data: isStaff } = await supabase.rpc('is_staff')
     if (!isStaff) throw new Error('Forbidden')
 
-    const { title, message, segment, channels } = await req.json()
-    if (!title || !message) throw new Error('Missing title or message')
+    const { campaignId } = await req.json()
+    if (!campaignId) throw new Error('Missing campaignId')
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Enregistrer la campagne dans la table campaigns
-    const { data: campaign, error: insertError } = await supabaseAdmin
+    // Récupérer la campagne
+    const { data: campaign, error: fetchErr } = await supabaseAdmin
       .from('campaigns')
-      .insert({
-        title,
-        message,
-        segment: segment || 'all',
-        channels: channels || ['email'],
-        sent_by: user.id,
-        sent_at: new Date().toISOString()
-      })
-      .select()
+      .select('*')
+      .eq('id', campaignId)
       .single()
 
-    if (insertError) {
-      console.error('Erreur insertion campagne:', insertError)
-      // On continue quand même l'envoi, la table peut manquer dans certains environnements
+    if (fetchErr || !campaign) throw new Error('Campagne introuvable')
+    if (campaign.status === 'sent') throw new Error('Campagne déjà envoyée')
+
+    console.log(`[send-campaign] Lancement de la campagne "${campaign.subject}" pour le segment ${campaign.segment}`)
+    
+    // Déterminer les cibles
+    let query = supabaseAdmin.from('profiles').select('email, first_name, id, last_seen')
+    
+    // Filtres simples selon le segment
+    if (campaign.segment === 'active') {
+      query = query.gte('last_seen', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+    } else if (campaign.segment === 'inactive') {
+      query = query.lt('last_seen', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
+    }
+    // "all" ou par défaut: pas de filtre
+
+    const { data: users, error: usersErr } = await query
+    if (usersErr) throw usersErr
+
+    const validUsers = (users || []).filter(u => u.email && u.email.includes('@'))
+    let delivered = 0
+    let skipped = (users?.length || 0) - validUsers.length
+
+    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+    if (RESEND_API_KEY && validUsers.length > 0) {
+       // Préparation du batch
+       const emails = validUsers.map(u => ({
+         from: 'Eden Rencontre <contact@edenrencontres.com>',
+         to: u.email,
+         subject: campaign.subject,
+         html: `<p>Bonjour ${u.first_name || 'membre'},</p><p>${campaign.body}</p>`
+       }))
+
+       const batchSize = 100
+       for (let i = 0; i < emails.length; i += batchSize) {
+         const batch = emails.slice(i, i + batchSize)
+         const res = await fetch('https://api.resend.com/emails/batch', {
+           method: 'POST',
+           headers: {
+             'Authorization': `Bearer ${RESEND_API_KEY}`,
+             'Content-Type': 'application/json'
+           },
+           body: JSON.stringify(batch)
+         })
+         
+         if (res.ok) {
+            delivered += batch.length
+         } else {
+            console.error('[send-campaign] Erreur batch Resend:', await res.text())
+            skipped += batch.length
+         }
+       }
+    } else if (!RESEND_API_KEY) {
+      console.warn('[send-campaign] RESEND_API_KEY manquante, aucun email envoyé.')
+      skipped += validUsers.length
     }
 
-    console.log(`[send-campaign] Campagne "${title}" préparée pour le segment ${segment}. Canaux: ${channels?.join(',')}`)
-    
-    // TODO: Implémenter la boucle sur les utilisateurs du segment et l'envoi via Resend/OneSignal/VAPID
-    // Pour l'instant, c'est un mock (simule l'envoi)
-    
-    // Simuler le délai d'envoi
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Mise à jour de la campagne
+    await supabaseAdmin
+      .from('campaigns')
+      .update({
+        status: 'sent',
+        recipients: validUsers.length + skipped,
+        delivered,
+        skipped,
+        sent_at: new Date().toISOString()
+      })
+      .eq('id', campaign.id)
 
-    return new Response(JSON.stringify({ success: true, message: 'Campagne envoyée avec succès' }), {
+    return new Response(JSON.stringify({ success: true, delivered, skipped }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })

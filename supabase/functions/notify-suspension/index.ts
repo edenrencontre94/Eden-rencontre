@@ -38,12 +38,9 @@ serve(async (req) => {
     
     console.log(`[notify-suspension] Utilisateur ${userId} (${profile?.email}) suspendu pour la raison: ${reason}. Jusqu'au: ${until || 'Définitif'}`)
     
-    // TODO: Implémenter l'envoi d'email avec un fournisseur externe (Resend, Sendgrid)
-    // Exemple avec Resend:
-    /*
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
     if (RESEND_API_KEY && profile?.email) {
-      await fetch('https://api.resend.com/emails', {
+      const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
@@ -53,11 +50,15 @@ serve(async (req) => {
           from: 'Eden Rencontre <support@edenrencontres.com>',
           to: profile.email,
           subject: 'Votre compte a été suspendu',
-          html: `<p>Bonjour ${profile.first_name},</p><p>Votre compte a été suspendu pour la raison suivante : <b>${reason}</b>.</p>`
+          html: `<p>Bonjour ${profile.first_name},</p><p>Votre compte a été suspendu pour la raison suivante : <b>${reason}</b>.</p><p>La suspension durera jusqu'au : ${until || 'Définitif'}.</p>`
         })
       })
+      if (!res.ok) {
+        console.error('[notify-suspension] Erreur Resend:', await res.text())
+      } else {
+        console.log(`[notify-suspension] Email envoyé avec succès à ${profile.email}`)
+      }
     }
-    */
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
