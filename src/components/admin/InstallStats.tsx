@@ -68,7 +68,7 @@ export function InstallStats({ days }: { days: number }) {
     );
   }
 
-  if (!data) return <div className="h-48 rounded-2xl bg-secondary animate-pulse" />;
+  if (!data || !data.engagement) return <div className="h-48 rounded-2xl bg-secondary animate-pulse" />;
 
   const e = data.engagement;
   // Le rapport plutôt que la différence : « 3× plus actifs » se retient,
@@ -78,8 +78,8 @@ export function InstallStats({ days }: { days: number }) {
       ? Math.round((e.msg_installes / e.msg_non_installes) * 10) / 10
       : null;
 
-  const maxCourbe = Math.max(1, ...data.courbe.map(p => p.n));
-  const dormantes = Math.max(0, data.total - data.vivantes);
+  const maxCourbe = Math.max(1, ...(data.courbe || []).map(p => p.n));
+  const dormantes = Math.max(0, (data.total || 0) - (data.vivantes || 0));
 
   return (
     <section className="space-y-4">
