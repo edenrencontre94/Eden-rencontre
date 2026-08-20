@@ -328,7 +328,7 @@ function AdminAnalytics() {
           </Section>
 
           {/* ══ Rétention par cohorte ══ */}
-          {data.cohortes.length > 0 && (
+          {Array.isArray(data.cohortes) && data.cohortes.length > 0 && (
             <Section
               titre="Rétention par cohorte"
               sousTitre="Une moyenne globale mélange anciens et nouveaux. Par mois d'arrivée, on voit si l'accueil s'améliore."
