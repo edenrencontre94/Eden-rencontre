@@ -87,8 +87,9 @@ function AdminMarketing() {
     ]);
 
     if (mErr || (m as any)?.error) {
-      console.error("[admin/marketing]", mErr ?? m);
-
+      const msg = mErr?.message ?? (m as any)?.error ?? "Erreur inconnue";
+      console.error("[admin/marketing]", msg);
+      setError(msg);
       setLoading(false);
       return;
     }

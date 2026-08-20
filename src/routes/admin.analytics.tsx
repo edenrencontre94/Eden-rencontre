@@ -85,8 +85,9 @@ function AdminAnalytics() {
     const { data: res, error: err } = await supabase.rpc("admin_analytics", { p_days: d });
 
     if (err || (res as any)?.error) {
-      console.error("[admin/analytics]", err ?? res);
-
+      const msg = err?.message ?? (res as any)?.error ?? "Erreur inconnue";
+      console.error("[admin/analytics]", msg);
+      setError(msg);
       setLoading(false);
       return;
     }
