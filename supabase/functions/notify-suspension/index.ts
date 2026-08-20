@@ -39,6 +39,7 @@ serve(async (req) => {
     console.log(`[notify-suspension] Utilisateur ${userId} (${profile?.email}) suspendu pour la raison: ${reason}. Jusqu'au: ${until || 'Définitif'}`)
     
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+    const REPLY_TO = Deno.env.get('REPLY_TO_EMAIL') || 'contact@edenrencontres.com'
     if (RESEND_API_KEY && profile?.email) {
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -47,7 +48,8 @@ serve(async (req) => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: 'Eden Rencontre <support@edenrencontres.com>',
+          from: 'Eden Rencontre <contact@edenrencontres.com>',
+          reply_to: REPLY_TO,
           to: profile.email,
           subject: 'Votre compte a été suspendu',
           html: `<p>Bonjour ${profile.first_name},</p><p>Votre compte a été suspendu pour la raison suivante : <b>${reason}</b>.</p><p>La suspension durera jusqu'au : ${until || 'Définitif'}.</p>`

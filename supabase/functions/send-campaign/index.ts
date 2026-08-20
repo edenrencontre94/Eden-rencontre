@@ -60,10 +60,12 @@ serve(async (req) => {
     let skipped = (users?.length || 0) - validUsers.length
 
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+    const REPLY_TO = Deno.env.get('REPLY_TO_EMAIL') || 'contact@edenrencontres.com'
     if (RESEND_API_KEY && validUsers.length > 0) {
        // Préparation du batch
        const emails = validUsers.map(u => ({
          from: 'Eden Rencontre <contact@edenrencontres.com>',
+         reply_to: REPLY_TO,
          to: u.email,
          subject: campaign.subject,
          html: `<p>Bonjour ${u.first_name || 'membre'},</p><p>${campaign.body}</p>`
