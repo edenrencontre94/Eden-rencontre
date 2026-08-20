@@ -516,14 +516,15 @@ const GENDER_LABELS: Record<string, string> = {
 function Chart({ title, points, color, icon: Icon, money }: {
   title: string; points: Point[]; color: string; icon: any; money?: boolean;
 }) {
-  const values = points.map(p => Number(p.n) || 0);
+  const safePoints = Array.isArray(points) ? points : [];
+  const values = safePoints.map(p => Number(p.n) || 0);
   const max = Math.max(...values, 1);
   const total = values.reduce((a, b) => a + b, 0);
   const W = 100;
   const H = 32;
 
   const coords = values.map((v, i) => {
-    const x = points.length > 1 ? (i / (points.length - 1)) * W : W / 2;
+    const x = safePoints.length > 1 ? (i / (safePoints.length - 1)) * W : W / 2;
     const y = H - (v / max) * H;
     return `${x.toFixed(2)},${y.toFixed(2)}`;
   });
@@ -567,8 +568,8 @@ function Chart({ title, points, color, icon: Icon, money }: {
       </svg>
 
       <div className="flex justify-between text-[11px] text-muted-foreground mt-1">
-        <span>{fmtDay(points[0]?.d)}</span>
-        <span>{fmtDay(points[points.length - 1]?.d)}</span>
+        <span>{fmtDay(safePoints[0]?.d)}</span>
+        <span>{fmtDay(safePoints[safePoints.length - 1]?.d)}</span>
       </div>
     </section>
   );
@@ -577,15 +578,16 @@ function Chart({ title, points, color, icon: Icon, money }: {
 function Breakdown({ title, icon: Icon, rows, labels }: {
   title: string; icon: any; rows: { k: string; n: number }[]; labels?: Record<string, string>;
 }) {
-  const max = Math.max(...rows.map(r => Number(r.n)), 1);
+  const safeRows = Array.isArray(rows) ? rows : [];
+  const max = Math.max(...safeRows.map(r => Number(r.n)), 1);
   return (
     <section className="rounded-2xl border border-border bg-card p-5">
       <h3 className="font-serif font-semibold flex items-center gap-2">
         <Icon className="w-4 h-4 text-primary" /> {title}
       </h3>
       <div className="mt-4 space-y-2.5">
-        {rows.length === 0 && <p className="text-sm text-muted-foreground">Aucune donnée.</p>}
-        {rows.map(r => (
+        {safeRows.length === 0 && <p className="text-sm text-muted-foreground">Aucune donnée.</p>}
+        {safeRows.map(r => (
           <div key={r.k} className="flex items-center gap-3">
             <span className="text-sm w-28 shrink-0 truncate">{labels?.[r.k] ?? r.k}</span>
             <div className="flex-1 h-2 rounded-full bg-secondary overflow-hidden">
