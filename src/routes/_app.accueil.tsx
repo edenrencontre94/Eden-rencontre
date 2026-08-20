@@ -436,29 +436,6 @@ function HomePage() {
               </div>
             </motion.div>
 
-            {/* Guide
-                La carte portait `cursor-pointer` sans lien : elle prenait
-                l'apparence d'un bouton et ne faisait rien au clic. */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
-            >
-              <Link
-                to="/guide"
-                className="rounded-3xl bg-card border border-border/50 p-5 shadow-soft flex items-center gap-4 hover:bg-card/80 transition-colors"
-              >
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <Compass className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-sm font-bold">Guide</h3>
-                  <p className="text-xs text-muted-foreground">Conseils pour réussir ta recherche</p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
-              </Link>
-            </motion.div>
-
             {/* Visibilité du profil */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
