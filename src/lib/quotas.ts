@@ -31,7 +31,7 @@ export async function fetchQuotas(): Promise<Quotas> {
 
   if (error || !data) {
     console.error("[quotas]", error);
-    return { plan: "gratuit", messagesLeft: 0, messagesQuota: 5, level: 0, likesLeft: 0, superLikeAvailableAt: null };
+    return { plan: "gratuit", messagesLeft: 5, messagesQuota: 5, level: 0, likesLeft: 25, superLikeAvailableAt: null };
   }
 
   return {
