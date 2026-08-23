@@ -29,21 +29,21 @@ export const SITE_URL = "https://edenrencontre.com";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Eden Rencontre — La rencontre chrétienne sérieuse №1 en Afrique francophone" },
+      { title: "Eden Rencontre — Trouvez l'amour selon votre foi chrétienne" },
       {
         name: "description",
         content:
           "Eden Rencontre est la plateforme de rencontres chrétiennes sérieuses dédiée au mariage. Profils vérifiés, appels audio & vidéo, Stories, messagerie riche. Rejoignez 1 200 chrétiens en Afrique et dans le monde.",
       },
       { name: "keywords", content: "rencontre chrétienne, mariage chrétien, rencontres sérieuses chrétiens, application rencontre chrétienne Afrique, site de rencontre chrétien, rencontre foi, Eden Rencontre" },
-      { property: "og:title", content: "Eden Rencontre — La rencontre chrétienne sérieuse №1 en Afrique francophone" },
+      { property: "og:title", content: "Eden Rencontre — Trouvez l'amour selon votre foi chrétienne" },
       {
         property: "og:description",
         content: "Profils vérifiés, appels audio & vidéo avec votre match, Stories, GIFs, emojis, messagerie riche. Trouvez votre futur conjoint chrétien sur Eden Rencontre.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Eden Rencontre — La rencontre chrétienne sérieuse №1 en Afrique francophone" },
+      { name: "twitter:title", content: "Eden Rencontre — Trouvez l'amour selon votre foi chrétienne" },
       { name: "twitter:description", content: "Rencontres chrétiennes sérieuses. Profils vérifiés, appels vidéo, communauté chrétienne active. Rejoignez Eden Rencontre gratuitement." },
       // og:url absolue, sinon les partages sociaux pointent dans le vide
       { property: "og:url", content: `${SITE_URL}/` },
