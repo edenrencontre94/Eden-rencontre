@@ -113,8 +113,12 @@ function AdminParametres() {
     for (const key of changedKeys) {
       const { error: err } = await supabase
         .from("app_settings")
-        .update({ value: settings[key], updated_at: new Date().toISOString(), updated_by: userId })
-        .eq("key", key);
+        .upsert({ 
+          key, 
+          value: settings[key], 
+          updated_at: new Date().toISOString(), 
+          updated_by: userId 
+        });
 
       if (err) {
         console.error("[admin/paramètres] écriture:", err);
