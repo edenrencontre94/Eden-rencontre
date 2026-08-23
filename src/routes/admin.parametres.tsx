@@ -116,8 +116,7 @@ function AdminParametres() {
         .upsert({ 
           key, 
           value: settings[key], 
-          updated_at: new Date().toISOString(), 
-          updated_by: userId 
+          updated_at: new Date().toISOString()
         });
 
       if (err) {
