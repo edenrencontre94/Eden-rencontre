@@ -65,7 +65,7 @@ function LanguagePage() {
 
       <p className="text-xs text-center text-muted-foreground mt-6 px-4">
         Vous souhaitez aider à traduire Eden Rencontre ? <br />
-        Contactez-nous à <a href="mailto:contact@edenrencontre.com" className="text-primary hover:underline">contact@edenrencontre.com</a>
+        Contactez-nous à <a href="mailto:contact@edenrencontres.com" className="text-primary hover:underline">contact@edenrencontres.com</a>
       </p>
     </div>
   );
