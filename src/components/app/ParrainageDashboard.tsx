@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import {
   Users, Copy, Check, TrendingUp, Wallet, Clock,
-  AlertTriangle, Gift, ChevronRight, Phone,
+  AlertTriangle, Gift, ChevronRight, Phone, BadgePercent,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { formatPrice } from "@/lib/plans";
+import { formatPrice, OFFERS } from "@/lib/plans";
 
 type Filleul = {
   prenom: string;
@@ -162,9 +162,12 @@ export function ParrainageDashboard() {
           <Gift className="w-6 h-6 text-primary" /> Parrainage
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Gagnez {data.taux ?? 20} % de commission sur chaque abonnement de vos filleuls, à vie.
+          Gagnez {data.taux ?? 20} % de commission sur chaque abonnement de vos filleuls, à vie.
         </p>
       </div>
+
+      {/* Table des gains */}
+      <CommissionTable taux={data.taux ?? 20} />
 
       {/* Lien parrainage */}
       <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
@@ -400,3 +403,55 @@ function SoldeCard({
     </div>
   );
 }
+
+/** Tableau "Ce que vous gagnez" — offres Premium uniquement, sans VIP. */
+function CommissionTable({ taux }: { taux: number }) {
+  // Seules les offres premium (pas vip)
+  const premiumOffers = OFFERS.filter(o => o.planId === "premium");
+
+  const LABELS: Record<string, string> = {
+    premium_15j: "Premium 15 jours",
+    premium_1m: "Premium 1 mois",
+    premium_3m: "Premium 3 mois",
+  };
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <h3 className="font-semibold flex items-center gap-2 mb-4">
+        <BadgePercent className="w-4 h-4 text-primary" /> Ce que vous gagnez
+      </h3>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left border-b border-border">
+              <th className="pb-2 text-muted-foreground font-medium text-xs uppercase tracking-wide">Offre</th>
+              <th className="pb-2 text-muted-foreground font-medium text-xs uppercase tracking-wide text-right">Prix</th>
+              <th className="pb-2 text-muted-foreground font-medium text-xs uppercase tracking-wide text-right">Votre commission</th>
+            </tr>
+          </thead>
+          <tbody>
+            {premiumOffers.map(offer => {
+              const commission = Math.round(offer.priceXOF * taux / 100);
+              return (
+                <tr key={offer.id} className="border-b border-border/40 last:border-0">
+                  <td className="py-3 font-medium">{LABELS[offer.id] ?? offer.label}</td>
+                  <td className="py-3 text-right tabular-nums text-muted-foreground">{formatPrice(offer.priceXOF)}</td>
+                  <td className="py-3 text-right tabular-nums font-bold text-primary">{formatPrice(commission)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-muted-foreground mt-4 leading-relaxed">
+        Ces montants vous sont versés <strong className="text-foreground">à chaque renouvellement</strong>, pas une seule fois.
+        Un filleul en Premium mensuel vous rapporte{" "}
+        <strong className="text-foreground">
+          {formatPrice(Math.round(4000 * taux / 100))}
+        </strong>{" "}
+        tous les mois tant qu'il reste abonné.
+      </p>
+    </div>
+  );
+}
+
