@@ -1371,23 +1371,7 @@ function ChatView({
             )}
           </div>
         </div>
-        {/* Call buttons */}
-        <button
-          onClick={() => startCall("audio")}
-          disabled={startingCall}
-          className="w-9 h-9 rounded-full hover:bg-secondary flex items-center justify-center disabled:opacity-50"
-          aria-label="Appel audio"
-        >
-          <Phone className="w-4 h-4 text-primary" />
-        </button>
-        <button
-          onClick={() => startCall("video")}
-          disabled={startingCall}
-          className="w-9 h-9 rounded-full hover:bg-secondary flex items-center justify-center disabled:opacity-50"
-          aria-label="Appel vidéo"
-        >
-          <VideoIcon className="w-4 h-4 text-primary" />
-        </button>
+        {/* Call buttons (temporarily disabled per admin request) */}
         {/* Menu */}
         <div className="relative">
           <button onClick={() => setMenu(!menu)} className="w-9 h-9 rounded-full hover:bg-secondary flex items-center justify-center" aria-label="Options">
