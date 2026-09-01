@@ -14,9 +14,8 @@ import logoAsset from "@/assets/logo.png";
  *
  * TROIS RÊGLES :
  *
- *  1. Rien pendant la première minute. Proposer d'installer à quelqu'un
- *     qui vient d'arriver, avant qu'il ait rien vu, fait refuser – et un
- *     refus est presque définitif.
+ *  1. On attend 5 secondes. Proposer d'installer l'application très vite après
+ *     l'inscription permet de capter l'utilisateur quand il est engagé.
  *  2. Un refus vaut trente jours de silence, et vaut pour LES DEUX
  *     emplacements : les fermer un par un serait une corvée.
  *  3. Rien du tout si l'application est déjà installée.
@@ -24,8 +23,8 @@ import logoAsset from "@/assets/logo.png";
 
 const CLE_REFUS = "eden_install_refuse";
 
-/** Délai avant la proposition, en millisecondes. */
-const DELAI_MS = 60_000;
+/** Délai avant la proposition, en millisecondes. 5 secondes après inscription. */
+const DELAI_MS = 5_000;
 const JOURS_APRES_REFUS = 30;
 
 function refusRecent(): boolean {
@@ -65,8 +64,7 @@ function useInvitation() {
 
   useEffect(() => {
     if (refusRecent()) { ecarteGlobal = true; return; }
-    // Une minute de navigation : assez pour avoir vu de quoi il s'agit,
-    // assez tôt pour attraper celui qui ne reviendra pas.
+    // 5 secondes après inscription/arrivée
     const t = setTimeout(() => setEcoule(true), DELAI_MS);
     return () => clearTimeout(t);
   }, []);
