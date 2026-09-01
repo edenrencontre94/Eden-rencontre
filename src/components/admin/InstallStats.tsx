@@ -178,10 +178,10 @@ export function InstallStats({ days }: { days: number }) {
         <div className="rounded-2xl border border-border bg-card p-5">
           <h3 className="text-sm font-semibold">Par plateforme</h3>
           <div className="mt-4 space-y-3">
-            {data.par_plateforme.length === 0 && (
+            {(data.par_plateforme || []).length === 0 && (
               <p className="text-sm text-muted-foreground">Aucune installation.</p>
             )}
-            {data.par_plateforme.map(p => {
+            {(data.par_plateforme || []).map(p => {
               const meta = PLATEFORMES[p.plateforme] ?? PLATEFORMES.autre;
               const pct = data.total > 0 ? Math.round((p.n / data.total) * 100) : 0;
               return (
@@ -220,12 +220,12 @@ export function InstallStats({ days }: { days: number }) {
           <div className="mt-4 space-y-3">
             <Ligne
               label="Installés et abonnés au push"
-              valeur={`${data.push.installes}`}
-              detail={`${data.push.part_installes} % des installés`}
+              valeur={`${data.push?.installes ?? 0}`}
+              detail={`${data.push?.part_installes ?? 0} % des installés`}
             />
             <Ligne
               label="Abonnés sans installation"
-              valeur={`${data.push.non_installes}`}
+              valeur={`${data.push?.non_installes ?? 0}`}
               detail="Android uniquement — impossible sur iPhone"
             />
           </div>
@@ -239,11 +239,11 @@ export function InstallStats({ days }: { days: number }) {
       </div>
 
       {/* ── Courbe ───────────────────────────────────────────── */}
-      {data.courbe.length > 1 && (
+      {(data.courbe || []).length > 1 && (
         <div className="rounded-2xl border border-border bg-card p-5">
           <h3 className="text-sm font-semibold">Installations par jour</h3>
           <div className="flex items-end gap-[3px] h-24 mt-4">
-            {data.courbe.map(p => (
+            {(data.courbe || []).map(p => (
               <div
                 key={p.jour}
                 title={`${new Date(p.jour).toLocaleDateString("fr-FR")} — ${p.n}`}
@@ -253,7 +253,7 @@ export function InstallStats({ days }: { days: number }) {
             ))}
           </div>
           <div className="flex justify-between text-[11px] text-muted-foreground mt-2">
-            <span>{new Date(data.courbe[0].jour).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</span>
+            <span>{new Date((data.courbe || [])[0]?.jour || Date.now()).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</span>
             <span>Aujourd'hui</span>
           </div>
         </div>

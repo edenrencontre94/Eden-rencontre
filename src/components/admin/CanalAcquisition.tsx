@@ -103,17 +103,17 @@ export function CanalAcquisition({ days }: { days: number }) {
   // Les canaux renvoyés par la base, complétés par ceux restés à zéro,
   // puis triés par volume — les canaux vides fermant la marche dans
   // l'ordre où ils sont proposés à l'inscription.
-  const parCanal = new Map(d.declare.map(x => [x.canal, x]));
+  const parCanal = new Map((d.declare || []).map(x => [x.canal, x]));
   const lignes = [
     ...ORDRE.map(c => parCanal.get(c) ?? { canal: c, inscrits: 0, ...VIDE }),
-    ...d.declare.filter(x => !ORDRE.includes(x.canal as any)),
+    ...(d.declare || []).filter(x => !ORDRE.includes(x.canal as any)),
   ].sort((a, b) => b.inscrits - a.inscrits);
 
   const max = Math.max(1, ...lignes.map(x => x.inscrits));
 
   // Le bouche-à-oreille amplifié : arrivés par une publicité, mais qui
   // attribuent leur venue à autre chose.
-  const boucheAOreille = d.ecart.filter(
+  const boucheAOreille = (d.ecart || []).filter(
     e => e.declare === "recommandation" && e.mesure !== "recommandation",
   ).reduce((n, e) => n + e.n, 0);
 
@@ -221,7 +221,7 @@ export function CanalAcquisition({ days }: { days: number }) {
       )}
 
       {/* Mesuré, quand il y en a */}
-      {d.mesure.some(m => m.source !== "direct") && (
+      {(d.mesure || []).some(m => m.source !== "direct") && (
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-border bg-card p-5">
             <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -232,7 +232,7 @@ export function CanalAcquisition({ days }: { days: number }) {
               pas une déclaration.
             </p>
             <div className="mt-3 space-y-2">
-              {d.mesure.map(m => (
+              {(d.mesure || []).map(m => (
                 <div key={m.source} className="flex items-center justify-between text-sm">
                   <span>{m.source}</span>
                   <span className="tabular-nums">
@@ -244,7 +244,7 @@ export function CanalAcquisition({ days }: { days: number }) {
             </div>
           </div>
 
-          {d.ecart.length > 0 && (
+          {(d.ecart || []).length > 0 && (
             <div className="rounded-2xl border border-border bg-card p-5">
               <h3 className="text-sm font-semibold">Mesuré contre déclaré</h3>
               <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
@@ -252,7 +252,7 @@ export function CanalAcquisition({ days }: { days: number }) {
                 d'une personne qu'un ami avait déjà convaincue.
               </p>
               <div className="mt-3 space-y-2">
-                {d.ecart.slice(0, 8).map((e, i) => (
+                {(d.ecart || []).slice(0, 8).map((e, i) => (
                   <div key={i} className="flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">
                       {e.mesure} → <strong className="text-foreground">

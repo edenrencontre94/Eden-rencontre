@@ -152,36 +152,36 @@ function AdminAnalytics() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Stat
               icon={Users} label={`Nouveaux membres (${days} j)`}
-              value={String(data.totals.new_members)}
-              hint={`${data.totals.members} au total`}
+              value={String(data.totals?.new_members ?? 0)}
+              hint={`${data.totals?.members ?? 0} au total`}
             />
             <Stat
               icon={TrendingUp} label="Actifs sur 7 jours"
-              value={String(data.totals.active_7d)}
-              hint={data.totals.members > 0
-                ? `${Math.round((data.totals.active_7d / data.totals.members) * 100)} % des membres`
+              value={String(data.totals?.active_7d ?? 0)}
+              hint={(data.totals?.members ?? 0) > 0
+                ? `${Math.round(((data.totals?.active_7d ?? 0) / data.totals!.members) * 100)} % des membres`
                 : undefined}
             />
             <Stat
               icon={Wallet} label={`Revenus (${days} j)`}
-              value={formatPrice(data.totals.revenue_period)}
-              hint={`${data.totals.orders_period} commande(s) · ${formatPrice(data.totals.revenue_total)} au total`}
+              value={formatPrice(data.totals?.revenue_period ?? 0)}
+              hint={`${data.totals?.orders_period ?? 0} commande(s) · ${formatPrice(data.totals?.revenue_total ?? 0)} au total`}
             />
             <Stat
               icon={Heart} label="Abonnés actifs"
-              value={String(data.totals.paying)}
-              hint={data.totals.members > 0
-                ? `${((data.totals.paying / data.totals.members) * 100).toFixed(1)} % de conversion`
+              value={String(data.totals?.paying ?? 0)}
+              hint={(data.totals?.members ?? 0) > 0
+                ? `${(((data.totals?.paying ?? 0) / data.totals!.members) * 100).toFixed(1)} % de conversion`
                 : undefined}
             />
           </div>
 
-          {(data.totals.pending > 0 || data.totals.failed_period > 0) && (
+          {((data.totals?.pending ?? 0) > 0 || (data.totals?.failed_period ?? 0) > 0) && (
             <div className="rounded-2xl border border-gold/50 bg-gold/5 p-4 flex gap-3">
               <AlertTriangle className="w-5 h-5 text-gold shrink-0 mt-0.5" />
               <p className="text-sm leading-relaxed">
-                <strong>{data.totals.pending}</strong> paiement(s) encore en attente
-                {data.totals.failed_period > 0 && <> et <strong>{data.totals.failed_period}</strong> échec(s) sur la période</>}.
+                <strong>{data.totals?.pending ?? 0}</strong> paiement(s) encore en attente
+                {(data.totals?.failed_period ?? 0) > 0 && <> et <strong>{data.totals?.failed_period}</strong> échec(s) sur la période</>}.
                 Un paiement bloqué en « pending » signifie souvent qu'un webhook n'est
                 pas arrivé — la fonction <code className="px-1 rounded bg-secondary text-xs">chariow-reconcile</code> existe
                 pour ces cas.
@@ -194,19 +194,19 @@ function AdminAnalytics() {
               90 suppressions ressemble à une croissance de 100. */}
           <Section titre="Croissance" sousTitre={`Sur ${days} jours`}>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Metrique label="Inscriptions" valeur={data.croissance.inscriptions} />
-              <Metrique label="Départs" valeur={data.croissance.departs}
-                        detail={data.croissance.departs_succes > 0
-                          ? `dont ${data.croissance.departs_succes} ont rencontré quelqu'un`
+              <Metrique label="Inscriptions" valeur={data.croissance?.inscriptions} />
+              <Metrique label="Départs" valeur={data.croissance?.departs}
+                        detail={(data.croissance?.departs_succes ?? 0) > 0
+                          ? `dont ${data.croissance?.departs_succes} ont rencontré quelqu'un`
                           : undefined} />
               <Metrique
                 label="Croissance nette"
-                valeur={data.croissance.nette}
-                ton={data.croissance.nette > 0 ? "bon" : data.croissance.nette < 0 ? "mauvais" : undefined}
-                prefixe={data.croissance.nette > 0 ? "+" : ""}
+                valeur={data.croissance?.nette}
+                ton={(data.croissance?.nette ?? 0) > 0 ? "bon" : (data.croissance?.nette ?? 0) < 0 ? "mauvais" : undefined}
+                prefixe={(data.croissance?.nette ?? 0) > 0 ? "+" : ""}
               />
-              <Metrique label="Comptes suspendus" valeur={data.croissance.suspendus}
-                        ton={data.croissance.suspendus > 0 ? "alerte" : undefined} />
+              <Metrique label="Comptes suspendus" valeur={data.croissance?.suspendus}
+                        ton={(data.croissance?.suspendus ?? 0) > 0 ? "alerte" : undefined} />
             </div>
           </Section>
 
@@ -218,41 +218,41 @@ function AdminAnalytics() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Metrique
                 label="Réciprocité"
-                valeur={data.engagement.taux_reciprocite}
+                valeur={data.engagement?.taux_reciprocite}
                 suffixe=" %"
                 detail="Part des likes devenus matchs"
-                ton={seuil(data.engagement.taux_reciprocite, 10, 4)}
+                ton={seuil(data.engagement?.taux_reciprocite, 10, 4)}
               />
               <Metrique
                 label="Matchs engagés"
-                valeur={data.engagement.taux_engagement_match}
+                valeur={data.engagement?.taux_engagement_match}
                 suffixe=" %"
                 detail="Au moins un message envoyé"
-                ton={seuil(data.engagement.taux_engagement_match, 50, 25)}
+                ton={seuil(data.engagement?.taux_engagement_match, 50, 25)}
               />
               <Metrique
                 label="Conversations réciproques"
-                valeur={data.engagement.taux_reponse}
+                valeur={data.engagement?.taux_reponse}
                 suffixe=" %"
                 detail="Les deux ont écrit"
-                ton={seuil(data.engagement.taux_reponse, 60, 30)}
+                ton={seuil(data.engagement?.taux_reponse, 60, 30)}
               />
               <Metrique
                 label="Adhésion quotidienne"
-                valeur={data.engagement.adhesion}
+                valeur={data.engagement?.adhesion}
                 suffixe=" %"
                 detail="Actifs du jour / du mois"
-                ton={seuil(data.engagement.adhesion, 20, 8)}
+                ton={seuil(data.engagement?.adhesion, 20, 8)}
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6 mt-4">
-              <Petit label="Likes" valeur={data.engagement.likes} />
-              <Petit label="Passes" valeur={data.engagement.passes} />
-              <Petit label="Super Likes" valeur={data.engagement.superlikes} />
+              <Petit label="Likes" valeur={data.engagement?.likes} />
+              <Petit label="Passes" valeur={data.engagement?.passes} />
+              <Petit label="Super Likes" valeur={data.engagement?.superlikes} />
 
-              <Petit label="Publications" valeur={data.engagement.publications} />
-              <Petit label="Msgs / match" valeur={data.engagement.messages_par_match} />
+              <Petit label="Publications" valeur={data.engagement?.publications} />
+              <Petit label="Msgs / match" valeur={data.engagement?.messages_par_match} />
             </div>
           </Section>
 
@@ -265,26 +265,26 @@ function AdminAnalytics() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Metrique
                 label="Sans photo"
-                valeur={data.experience.sans_photo}
-                detail={part(data.experience.sans_photo, data.totals.members)}
-                ton={data.experience.sans_photo > 0 ? "alerte" : undefined}
+                valeur={data.experience?.sans_photo}
+                detail={part(data.experience?.sans_photo ?? 0, data.totals?.members ?? 0)}
+                ton={(data.experience?.sans_photo ?? 0) > 0 ? "alerte" : undefined}
               />
               <Metrique
                 label="Aucun like reçu"
-                valeur={data.experience.sans_like_recu}
-                detail={part(data.experience.sans_like_recu, data.totals.members)}
+                valeur={data.experience?.sans_like_recu}
+                detail={part(data.experience?.sans_like_recu ?? 0, data.totals?.members ?? 0)}
               />
               <Metrique
                 label="Aucun match"
-                valeur={data.experience.sans_match}
-                detail={part(data.experience.sans_match, data.totals.members)}
+                valeur={data.experience?.sans_match}
+                detail={part(data.experience?.sans_match ?? 0, data.totals?.members ?? 0)}
               />
               <Metrique
                 label="Profil complété"
-                valeur={data.experience.completion_moyenne}
+                valeur={data.experience?.completion_moyenne}
                 suffixe=" %"
                 detail="Moyenne des 500 derniers inscrits"
-                ton={seuil(data.experience.completion_moyenne, 70, 40)}
+                ton={seuil(data.experience?.completion_moyenne, 70, 40)}
               />
             </div>
           </Section>
@@ -294,25 +294,25 @@ function AdminAnalytics() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Metrique
                 label="Taux de conversion"
-                valeur={data.monetisation.taux_conversion}
+                valeur={data.monetisation?.taux_conversion}
                 suffixe=" %"
-                detail={`${data.monetisation.payants_uniques} membre(s) ont payé`}
+                detail={`${data.monetisation?.payants_uniques ?? 0} membre(s) ont payé`}
               />
               <Metrique
                 label="Panier moyen"
-                texte={formatPrice(data.monetisation.panier_moyen)}
+                texte={formatPrice(data.monetisation?.panier_moyen ?? 0)}
               />
               {/* On ne renouvelle que si le service a tenu sa promesse. */}
               <Metrique
                 label="Taux de réachat"
-                valeur={data.monetisation.taux_reachat}
+                valeur={data.monetisation?.taux_reachat}
                 suffixe=" %"
                 detail="Ont payé au moins deux fois"
-                ton={seuil(data.monetisation.taux_reachat, 25, 10)}
+                ton={seuil(data.monetisation?.taux_reachat, 25, 10)}
               />
               <Metrique
                 label="Délai avant achat"
-                valeur={data.monetisation.jours_avant_achat}
+                valeur={data.monetisation?.jours_avant_achat}
                 suffixe=" j"
                 detail="Médiane depuis l'inscription"
               />
@@ -320,10 +320,10 @@ function AdminAnalytics() {
 
             <div className="grid gap-4 sm:grid-cols-3 mt-4">
               <Petit label="Revenus abonnements"
-                     texte={formatPrice(data.monetisation.revenu_abonnements)} />
+                     texte={formatPrice(data.monetisation?.revenu_abonnements ?? 0)} />
 
               <Petit label="Taux d'échec de paiement"
-                     valeur={data.monetisation.taux_echec} suffixe=" %" />
+                     valeur={data.monetisation?.taux_echec} suffixe=" %" />
             </div>
           </Section>
 
@@ -373,16 +373,16 @@ function AdminAnalytics() {
           {/* ══ Santé ══ */}
           <Section titre="Sécurité et modération">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Metrique label="Signalements" valeur={data.sante.signalements}
-                        detail={`${data.sante.signalements_ouverts} en attente`}
-                        ton={data.sante.signalements_ouverts > 0 ? "alerte" : undefined} />
-              <Metrique label="Blocages" valeur={data.sante.blocages} />
+              <Metrique label="Signalements" valeur={data.sante?.signalements}
+                        detail={`${data.sante?.signalements_ouverts ?? 0} en attente`}
+                        ton={(data.sante?.signalements_ouverts ?? 0) > 0 ? "alerte" : undefined} />
+              <Metrique label="Blocages" valeur={data.sante?.blocages} />
               {/* Le chiffre brut monte avec la croissance ; ce ratio non. */}
               <Metrique label="Taux de signalement"
-                        valeur={data.sante.taux_signalement} suffixe=" %"
+                        valeur={data.sante?.taux_signalement} suffixe=" %"
                         detail="Rapporté aux membres actifs" />
-              <Metrique label="Tickets ouverts" valeur={data.sante.tickets_ouverts}
-                        ton={data.sante.tickets_ouverts > 0 ? "alerte" : undefined} />
+              <Metrique label="Tickets ouverts" valeur={data.sante?.tickets_ouverts}
+                        ton={(data.sante?.tickets_ouverts ?? 0) > 0 ? "alerte" : undefined} />
             </div>
           </Section>
 
@@ -407,14 +407,14 @@ function AdminAnalytics() {
 
             <div className="mt-5 space-y-2.5">
               {[
-                { label: "Ont créé un compte", n: data.funnel.inscrits },
+                { label: "Ont créé un compte", n: data.funnel?.inscrits ?? 0 },
                 // Ajouté : c'est souvent LE décrochage majeur, et il est
                 // réparable — un profil sans photo ne reçoit rien.
-                { label: "Ont ajouté une photo", n: data.funnel.ont_photo },
-                { label: "Ont commencé à découvrir", n: data.funnel.ont_swipe },
-                { label: "Ont obtenu un match", n: data.funnel.ont_match },
-                { label: "Ont écrit un message", n: data.funnel.ont_ecrit },
-                { label: "Ont payé", n: data.funnel.ont_paye },
+                { label: "Ont ajouté une photo", n: data.funnel?.ont_photo ?? 0 },
+                { label: "Ont commencé à découvrir", n: data.funnel?.ont_swipe ?? 0 },
+                { label: "Ont obtenu un match", n: data.funnel?.ont_match ?? 0 },
+                { label: "Ont écrit un message", n: data.funnel?.ont_ecrit ?? 0 },
+                { label: "Ont payé", n: data.funnel?.ont_paye ?? 0 },
               ].map((step, i, arr) => {
                 const base = arr[0].n || 1;
                 const pct = (step.n / base) * 100;
@@ -444,7 +444,7 @@ function AdminAnalytics() {
           </section>
 
           {/* Ventes par offre */}
-          {data.by_offer.length > 0 && (
+          {(data.by_offer || []).length > 0 && (
             <section className="rounded-2xl border border-border bg-card p-5">
               <h2 className="font-serif text-lg font-semibold">Ventes par offre</h2>
               <div className="mt-4 overflow-x-auto">
