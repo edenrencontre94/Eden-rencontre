@@ -167,7 +167,7 @@ export function ParrainageDashboard() {
       </div>
 
       {/* Table des gains */}
-      <CommissionTable taux={data.taux ?? 20} />
+      <CommissionTable taux={data.taux ?? 20} seuil={data.seuil ?? 3000} maturation={data.maturation_jours ?? 7} />
 
       {/* Lien parrainage */}
       <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5">
@@ -405,7 +405,7 @@ function SoldeCard({
 }
 
 /** Tableau "Ce que vous gagnez" — offres Premium uniquement, sans VIP. */
-function CommissionTable({ taux }: { taux: number }) {
+function CommissionTable({ taux, seuil, maturation }: { taux: number; seuil: number; maturation: number }) {
   // Seules les offres premium (pas vip)
   const premiumOffers = OFFERS.filter(o => o.planId === "premium");
 
@@ -451,6 +451,24 @@ function CommissionTable({ taux }: { taux: number }) {
         </strong>{" "}
         tous les mois tant qu'il reste abonné.
       </p>
+
+      {/* Conditions de retrait */}
+      <div className="mt-4 pt-4 border-t border-border/60 flex flex-col sm:flex-row gap-3">
+        <div className="flex items-start gap-2 flex-1">
+          <Wallet className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-semibold text-foreground">Retrait minimum</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Le retrait devient possible à partir de <strong className="text-foreground">{formatPrice(seuil)}</strong>.</p>
+          </div>
+        </div>
+        <div className="flex items-start gap-2 flex-1">
+          <Clock className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-semibold text-foreground">Délai de disponibilité</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Chaque commission est disponible <strong className="text-foreground">{maturation} jours</strong> après le paiement.</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
