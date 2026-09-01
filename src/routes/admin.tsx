@@ -35,6 +35,7 @@ const adminMenus: {
   // module autonome, avec sa propre navigation interne.
   { to: "/admin/meta-ads", label: "Meta Ads", icon: Radio, perm: "reglages" },
   { to: "/admin/marketing", label: "Marketing", icon: Megaphone, perm: "reglages" },
+  { to: "/admin/parrainage", label: "Parrainage", icon: Users, perm: "finances" },
   { to: "/admin/equipe", label: "Équipe", icon: UsersRound, perm: "equipe" },
   { to: "/admin/parametres", label: "Paramètres", icon: Settings, perm: "reglages" },
 ];

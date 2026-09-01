@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Settings, Languages, Package, CreditCard, Ban, Trash2, LogOut, MessageSquare, Heart, LifeBuoy } from "lucide-react";
+import { Camera, Settings, Languages, Package, CreditCard, Ban, Trash2, LogOut, MessageSquare, Heart, LifeBuoy, Gift } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import {
@@ -352,6 +352,13 @@ function AppLayout() {
                     <Link to="/abonnement" className="flex items-center gap-3 py-2.5 px-2">
                       <Crown className="w-4 h-4 text-gold" />
                       <span className="font-medium">Abonnement & Facturation</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
+                    <Link to="/parrainage" className="flex items-center gap-3 py-2.5 px-2">
+                      <Gift className="w-4 h-4 text-primary" />
+                      <span className="font-medium">Parrainage</span>
                     </Link>
                   </DropdownMenuItem>
                   

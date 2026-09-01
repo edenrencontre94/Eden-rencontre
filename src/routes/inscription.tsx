@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useState } from "react";
-import { Eye, EyeOff, User, Mail, Lock, CalendarDays, Check } from "lucide-react";
+import { Eye, EyeOff, User, Mail, Lock, CalendarDays, Check, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +37,11 @@ function InscriptionPage() {
   const [acceptedCGU, setAcceptedCGU] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Chercher un code de parrainage dans l'URL (ex: ?ref=CODE)
+  const searchParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const [referralCode, setReferralCode] = useState(searchParams.get("ref") || "");
+
   const registrationOpen = useSetting<boolean>("registration_open", true);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -114,6 +119,15 @@ function InscriptionPage() {
         sessionStorage.setItem("eden_pending_user_id", userId);
         sessionStorage.setItem("eden_pending_first_name", prenom);
         sessionStorage.setItem("eden_pending_last_name", nom);
+        
+        // 2. Rattacher le parrainage si un code est fourni
+        if (referralCode.trim()) {
+          const { data: refRes, error: refErr } = await supabase.rpc("rattacher_parrain", { p_code: referralCode.trim() });
+          if (refErr) {
+            console.error("Erreur rattachement parrain: ", refErr);
+            // On ne bloque pas l'inscription pour ça, on log juste
+          }
+        }
       }
 
       toast.success("Compte créé avec succès !");
@@ -248,6 +262,20 @@ function InscriptionPage() {
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="referral" className="text-sm font-semibold text-muted-foreground flex items-center gap-1.5">
+                  <Gift className="w-4 h-4" /> Code de parrainage <span className="font-normal opacity-70">(Optionnel)</span>
+                </Label>
+                <Input
+                  id="referral"
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  placeholder="Ex: A1B2C"
+                  className="h-12 bg-background/50 focus:bg-background transition-colors text-base rounded-xl font-mono uppercase tracking-widest placeholder:normal-case placeholder:tracking-normal placeholder:font-sans"
+                />
               </div>
 
               <label className="flex items-start gap-3 cursor-pointer group mt-2">
