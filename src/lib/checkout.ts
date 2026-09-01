@@ -32,11 +32,13 @@ export async function startCheckout(
     if (!res.ok) return { ok: false, error: json?.error ?? "Le paiement n'a pas pu être lancé" };
 
     // Chariow affiche ses propres moyens de paiement selon l'indicatif
-    if (json.checkoutUrl) {
-      window.location.href = json.checkoutUrl;
+    const redirectUrl = json.checkoutUrl ?? json.url;
+    if (redirectUrl) {
+      window.location.href = redirectUrl;
       return { ok: true };
     }
     if (json.step === "completed") return { ok: true };
+
 
     return { ok: false, error: "Réponse inattendue du serveur de paiement" };
   } catch (e) {
