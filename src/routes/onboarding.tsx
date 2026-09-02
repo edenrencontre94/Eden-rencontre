@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect, useRef, useMemo, type ReactElement } from "react";
 import { Heart, Search, Camera, Church, ArrowRight, ArrowLeft, Upload, X, Sparkles, Check } from "lucide-react";
@@ -239,7 +239,7 @@ function OnboardingPage() {
         data.hasChildren !== "" &&
         data.wantsChildren !== ""
       );
-    if (step === 4) return data.photos.length >= 1;
+    if (step === 4) return true; // Photos désormais optionnelles
     return false;
   }, [step, data]);
 
@@ -329,11 +329,9 @@ function OnboardingPage() {
           }
         }
 
-        // AUCUNE photo n'est passée : on interrompt au lieu de créer un
-        // profil vide. Sans cela, le membre termine son inscription
-        // convaincu d'avoir mis sa photo, ne comprend pas pourquoi
-        // personne ne le like, et repart au bout de quelques jours.
-        if (uploadedPhotos.length === 0) {
+        // AUCUNE photo n'est passée alors que l'utilisateur en a sélectionné :
+        // on interrompt au lieu de créer un profil vide en croyant que ça a marché.
+        if (data.photos.length > 0 && uploadedPhotos.length === 0) {
           toast.dismiss("saving");
           toast.error("Votre photo n'a pas pu être envoyée", {
             description: dernierEchec
@@ -341,8 +339,7 @@ function OnboardingPage() {
               : "Vérifiez votre connexion et réessayez.",
             duration: 8000,
           });
-          // On reste à l'étape 4 : les fichiers sélectionnés sont toujours
-          // en mémoire, un second clic suffit à réessayer.
+          // On reste à l'étape 4
           return;
         }
 
@@ -538,8 +535,8 @@ function OnboardingPage() {
                 size="lg"
                 className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 shadow-elegant"
               >
-                {step === 4 ? "Terminer" : "Continuer"}
-                <ArrowRight className="w-4 h-4" />
+                {step === 4 ? (data.photos.length > 0 ? "Terminer" : "Ignorer pour l'instant") : "Continuer"}
+                {step < 4 && <ArrowRight className="w-4 h-4" />}
               </Button>
             </motion.div>
           </div>
