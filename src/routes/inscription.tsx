@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { useState } from "react";
-import { Eye, EyeOff, User, Mail, Lock, CalendarDays, Check, Gift } from "lucide-react";
+import { Eye, EyeOff, User, Mail, Lock, Check, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,8 +32,10 @@ function InscriptionPage() {
   const navigate = useNavigate();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [acceptedCGU, setAcceptedCGU] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Chercher un code de parrainage dans l'URL (ex: ?ref=CODE)
@@ -63,6 +65,16 @@ function InscriptionPage() {
       toast.error("Votre nom est requis");
       return;
     }
+    // Email : optionnel, mais si fourni doit être valide
+    if (email.trim() && !email.trim().includes("@")) {
+      toast.error("L'adresse e-mail semble incomplète");
+      return;
+    }
+    // Mot de passe : requis seulement si un email est fourni
+    if (email.trim() && password.length < 6) {
+      toast.error("Le mot de passe doit contenir au moins 6 caractères");
+      return;
+    }
     if (!acceptedCGU) {
       toast.error("Veuillez accepter les conditions d'utilisation");
       return;
@@ -75,22 +87,23 @@ function InscriptionPage() {
       const prenom = firstName.trim();
       const nom = lastName.trim();
       
+      // Si l'utilisateur a fourni un email, on l'utilise ; sinon on en génère un fantôme invisible.
       const randomStr = Math.random().toString(36).substring(2, 10);
-      const generatedEmail = `${prenom.toLowerCase().replace(/[^a-z0-9]/g, '')}.${nom.toLowerCase().replace(/[^a-z0-9]/g, '')}.${randomStr}@eden.local`;
-      const generatedPassword = `Eden@${randomStr}A${Date.now()}`;
+      const finalEmail = email.trim() || `${prenom.toLowerCase().replace(/[^a-z0-9]/g, '')}.${nom.toLowerCase().replace(/[^a-z0-9]/g, '')}.${randomStr}@eden.local`;
+      const finalPassword = email.trim() ? password : `Eden@${randomStr}A${Date.now()}`;
 
-      // Sauvegarde de secours en cas de perte de session
+      // Sauvegarde de secours en cas de perte de session (utile surtout pour les comptes sans email)
       if (typeof window !== "undefined") {
         try {
-          localStorage.setItem("eden_recovery_email", generatedEmail);
-          localStorage.setItem("eden_recovery_password", generatedPassword);
+          localStorage.setItem("eden_recovery_email", finalEmail);
+          localStorage.setItem("eden_recovery_password", finalPassword);
         } catch {}
       }
 
       // 1. Inscription Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: generatedEmail,
-        password: generatedPassword,
+        email: finalEmail,
+        password: finalPassword,
         options: {
           data: {
             first_name: prenom,
@@ -114,8 +127,8 @@ function InscriptionPage() {
       // Connexion explicite pour créer une session JWT valide immédiatement,
       // indépendamment de la configuration de confirmation d'email.
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ 
-        email: generatedEmail, 
-        password: generatedPassword 
+        email: finalEmail, 
+        password: finalPassword 
       });
       if (signInError) throw signInError;
 
@@ -229,7 +242,50 @@ function InscriptionPage() {
                 </div>
               </div>
               
-              {/* Pas d'email ni de mot de passe, c'est généré en arrière-plan */}
+              {/* Champs email (optionnel) et mot de passe */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-1.5">
+                  <Mail className="w-4 h-4 text-muted-foreground" />
+                  Email <span className="font-normal text-muted-foreground opacity-70">(Optionnel — pour récupérer votre compte)</span>
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="votre@email.com"
+                  className="h-12 bg-background/50 focus:bg-background transition-colors text-base rounded-xl"
+                />
+              </div>
+
+              {email.trim() && (
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-semibold flex items-center gap-1.5">
+                    <Lock className="w-4 h-4 text-muted-foreground" />
+                    Mot de passe
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Au moins 6 caractères"
+                      minLength={6}
+                      className="h-12 pr-11 bg-background/50 focus:bg-background transition-colors text-base rounded-xl"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="referral" className="text-sm font-semibold text-muted-foreground flex items-center gap-1.5">
