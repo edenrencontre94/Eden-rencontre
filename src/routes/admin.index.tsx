@@ -208,76 +208,48 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function load() {
       try {
-        const now = new Date();
-        const todayStart = new Date(now.setHours(0, 0, 0, 0)).toISOString();
-        const weekStart = new Date(Date.now() - 7 * 86400000).toISOString();
-        const monthStart = new Date(Date.now() - 30 * 86400000).toISOString();
-
-        // Chaque requête est isolée : si une table n'existe pas encore (ex:
-        // payments, matches) la promesse renvoie un fallback au lieu de
-        // faire planter tout le tableau de bord.
-        const safe = <T,>(p: Promise<T>, fallback: T): Promise<T> =>
-          p.catch(() => fallback);
-
+        // Un seul appel RPC avec SECURITY DEFINER : bypass complet du RLS,
+        // retourne les vrais compteurs même si les politiques bloquent les
+        // requêtes directes depuis le client.
         const [
-          { count: total },
-          { count: today },
-          { count: week },
-          { count: month },
-          { count: verified },
-          { count: male },
-          { count: female },
-          { count: matches },
-          { count: messages },
-          { data: recent },
-          { data: paid },
-          { data: subs },
-          { count: openReports },
-        ] = await Promise.all([
-          safe(supabase.from("profiles").select("*", { count: "exact", head: true }), { count: 0, data: null, error: null }),
-          safe(supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", todayStart), { count: 0, data: null, error: null }),
-          safe(supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", weekStart), { count: 0, data: null, error: null }),
-          safe(supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", monthStart), { count: 0, data: null, error: null }),
-          safe(supabase.from("profiles").select("*", { count: "exact", head: true }).eq("is_verified", true), { count: 0, data: null, error: null }),
-          safe(supabase.from("profiles").select("*", { count: "exact", head: true }).eq("gender", "male"), { count: 0, data: null, error: null }),
-          safe(supabase.from("profiles").select("*", { count: "exact", head: true }).eq("gender", "female"), { count: 0, data: null, error: null }),
-          safe(supabase.from("matches").select("*", { count: "exact", head: true }), { count: 0, data: null, error: null }),
-          safe(supabase.from("messages").select("*", { count: "exact", head: true }), { count: 0, data: null, error: null }),
-          safe(supabase.from("profiles").select("id, first_name, city, gender, photos, created_at, is_verified").order("created_at", { ascending: false }).limit(8), { count: null, data: [], error: null }),
-          safe(supabase.from("payments").select("amount_xof, completed_at").eq("status", "completed"), { count: null, data: [], error: null }),
-          safe(supabase.from("profiles").select("public_plan").gt("premium_until", new Date().toISOString()), { count: null, data: [], error: null }),
-          safe(supabase.from("reports").select("id", { count: "exact", head: true }).eq("status", "pending"), { count: 0, data: null, error: null }),
-        ]);
-
-        const revenueTotal = (paid ?? []).reduce((sum: number, p: any) => sum + (p.amount_xof || 0), 0);
-        const revenueMonth = (paid ?? [])
-          .filter((p: any) => (p.completed_at ?? "") >= monthStart)
-          .reduce((sum: number, p: any) => sum + (p.amount_xof || 0), 0);
-
-        setStats({
-          totalUsers: total || 0,
-          newUsersToday: today || 0,
-          newUsersThisWeek: week || 0,
-          newUsersThisMonth: month || 0,
-          verifiedUsers: verified || 0,
-          maleUsers: male || 0,
-          femaleUsers: female || 0,
-          totalMatches: matches || 0,
-          totalMessages: messages || 0,
-          openReports: openReports || 0,
-          revenueTotal,
-          revenueMonth,
-          activeSubs: (subs ?? []).length,
-        });
-        setRecentUsers(recent || []);
-
-        const [
+          { data: dashStats, error: dashErr },
+          { data: recent, error: recentErr },
           { data: a, error: aErr },
           { data: o, error: oErr },
         ] = await Promise.all([
-          safe(supabase.rpc("admin_analytics", { p_days: 30 }), { data: null, error: new Error("rpc missing") }),
-          safe(supabase.rpc("admin_overview"), { data: null, error: new Error("rpc missing") }),
+          supabase.rpc("admin_dashboard_stats"),
+          supabase
+            .from("profiles")
+            .select("id, first_name, city, gender, photos, created_at, is_verified")
+            .order("created_at", { ascending: false })
+            .limit(8),
+          supabase.rpc("admin_analytics", { p_days: 30 }).catch(() => ({ data: null, error: null })),
+          supabase.rpc("admin_overview").catch(() => ({ data: null, error: null })),
         ]);
+
+        if (dashErr) {
+          console.error("[admin/dashboard] admin_dashboard_stats error:", dashErr);
+        } else if (dashStats && !(dashStats as any).error) {
+          const s = dashStats as any;
+          setStats({
+            totalUsers:        Number(s.totalUsers        ?? 0),
+            newUsersToday:     Number(s.newUsersToday     ?? 0),
+            newUsersThisWeek:  Number(s.newUsersThisWeek  ?? 0),
+            newUsersThisMonth: Number(s.newUsersThisMonth ?? 0),
+            verifiedUsers:     Number(s.verifiedUsers     ?? 0),
+            maleUsers:         Number(s.maleUsers         ?? 0),
+            femaleUsers:       Number(s.femaleUsers       ?? 0),
+            totalMatches:      Number(s.totalMatches      ?? 0),
+            totalMessages:     Number(s.totalMessages     ?? 0),
+            openReports:       Number(s.openReports       ?? 0),
+            revenueTotal:      Number(s.revenueTotal      ?? 0),
+            revenueMonth:      Number(s.revenueMonth      ?? 0),
+            activeSubs:        Number(s.activeSubs        ?? 0),
+          });
+        }
+
+        if (!recentErr && recent) setRecentUsers(recent);
+
         if (!aErr && a && !(a as any).error) setAnalytics(a);
         if (!oErr && o && !(o as any).error) setOv(o);
       } catch (e) {
@@ -288,6 +260,8 @@ export default function AdminDashboard() {
     }
     load();
   }, []);
+
+
 
 
   // Séries RÉELLES, calculées en base sur 30 jours.
