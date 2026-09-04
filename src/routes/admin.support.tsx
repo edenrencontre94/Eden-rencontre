@@ -26,9 +26,9 @@ type Ticket = {
 
 type Msg = {
   id: string;
-  author_id: string | null;
+  sender_id: string | null;
   is_staff: boolean;
-  body: string;
+  content: string;
   created_at: string;
 };
 
@@ -131,10 +131,9 @@ function AdminSupport() {
       const userId = await getCurrentUserId();
       const { error: err } = await supabase.from("support_messages").insert({
         ticket_id: selected.id,
-        author_id: userId,
-        body: reply.trim(),
-        // `is_staff` est écrasé par un trigger : la valeur envoyée ici
-        // n'a aucune autorité, et c'est voulu.
+        sender_id: userId,
+        content: reply.trim(),
+        is_staff: true,
       });
       if (err) throw err;
 
@@ -250,7 +249,7 @@ function AdminSupport() {
                 <p className="text-[11px] font-semibold opacity-70 mb-1">
                   {m.is_staff ? "Eden Rencontre" : names[selected.user_id] ?? "Membre"}
                 </p>
-                <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.body}</p>
+                <p className="text-sm whitespace-pre-wrap leading-relaxed">{m.content}</p>
                 <p className="text-[10px] opacity-60 mt-1.5">
                   {new Date(m.created_at).toLocaleString("fr-FR", {
                     day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",

@@ -111,6 +111,14 @@ CREATE POLICY "admin_app_settings_all"
   USING (public.is_staff())
   WITH CHECK (public.is_staff());
 
+-- ─── support_tickets ─────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "admin_support_tickets_all" ON public.support_tickets;
+
+CREATE POLICY "admin_support_tickets_all"
+  ON public.support_tickets FOR ALL
+  USING (public.is_staff() OR user_id = auth.uid())
+  WITH CHECK (public.is_staff() OR user_id = auth.uid());
+
 -- ─── support_messages ─────────────────────────────────────────────────────────
 ALTER TABLE IF EXISTS public.support_messages ENABLE ROW LEVEL SECURITY;
 
