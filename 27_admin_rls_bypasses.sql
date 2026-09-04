@@ -119,8 +119,18 @@ DROP POLICY IF EXISTS "users_support_messages_own"  ON public.support_messages;
 
 CREATE POLICY "users_support_messages_own"
   ON public.support_messages FOR ALL
-  USING (user_id = auth.uid() OR public.is_staff())
-  WITH CHECK (user_id = auth.uid() OR public.is_staff());
+  USING (
+    public.is_staff()
+    OR sender_id = auth.uid()
+    OR EXISTS (
+      SELECT 1 FROM public.support_tickets t
+      WHERE t.id = ticket_id AND t.user_id = auth.uid()
+    )
+  )
+  WITH CHECK (
+    public.is_staff()
+    OR sender_id = auth.uid()
+  );
 
 -- ─── staff_roles ──────────────────────────────────────────────────────────────
 DROP POLICY IF EXISTS "admin_staff_roles_all" ON public.staff_roles;
