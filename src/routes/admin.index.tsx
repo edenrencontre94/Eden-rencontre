@@ -223,13 +223,16 @@ export default function AdminDashboard() {
             .select("id, first_name, city, gender, photos, created_at, is_verified")
             .order("created_at", { ascending: false })
             .limit(8),
-          supabase.rpc("admin_analytics", { p_days: 30 }).catch(() => ({ data: null, error: null })),
-          supabase.rpc("admin_overview").catch(() => ({ data: null, error: null })),
+          Promise.resolve(supabase.rpc("admin_analytics", { p_days: 30 })).catch(() => ({ data: null, error: null })),
+          Promise.resolve(supabase.rpc("admin_overview")).catch(() => ({ data: null, error: null })),
         ]);
 
+        const session = await supabase.auth.getSession();
+        const currentUid = session.data.session?.user?.id;
         if (dashErr) {
           console.error("[admin/dashboard] admin_dashboard_stats error:", dashErr);
-        } else if (dashStats && !(dashStats as any).error) {
+        } else if (dashStats) {
+          if (!(dashStats as any).error) {
           const s = dashStats as any;
           setStats({
             totalUsers:        Number(s.totalUsers        ?? 0),
@@ -246,6 +249,7 @@ export default function AdminDashboard() {
             revenueMonth:      Number(s.revenueMonth      ?? 0),
             activeSubs:        Number(s.activeSubs        ?? 0),
           });
+          }
         }
 
         if (!recentErr && recent) setRecentUsers(recent);
@@ -333,6 +337,7 @@ export default function AdminDashboard() {
           Données en direct depuis Supabase
         </div>
       </div>
+
 
       {/* ── Revenus ──────────────────────────────────────────────── */}
       {/* Chiffres réels issus de `payments` et `subscriptions`. Ils
