@@ -62,13 +62,13 @@ function InscriptionPage() {
       toast.error("Votre nom est requis");
       return;
     }
-    // Email : optionnel, mais si fourni doit être valide
-    if (email.trim() && !email.trim().includes("@")) {
-      toast.error("L'adresse e-mail semble incomplète");
+    // Email : obligatoire
+    if (!email.trim() || !email.trim().includes("@")) {
+      toast.error("Une adresse e-mail valide est requise");
       return;
     }
-    // Mot de passe : requis seulement si un email est fourni
-    if (email.trim() && password.length < 6) {
+    // Mot de passe : obligatoire
+    if (password.length < 6) {
       toast.error("Le mot de passe doit contenir au moins 6 caractères");
       return;
     }
@@ -84,18 +84,8 @@ function InscriptionPage() {
       const prenom = firstName.trim();
       const nom = lastName.trim();
       
-      // Si l'utilisateur a fourni un email, on l'utilise ; sinon on en génère un fantôme invisible.
-      const randomStr = Math.random().toString(36).substring(2, 10);
-      const finalEmail = email.trim() || `${prenom.toLowerCase().replace(/[^a-z0-9]/g, '')}.${nom.toLowerCase().replace(/[^a-z0-9]/g, '')}.${randomStr}@eden.local`;
-      const finalPassword = email.trim() ? password : `Eden@${randomStr}A${Date.now()}`;
-
-      // Sauvegarde de secours en cas de perte de session (utile surtout pour les comptes sans email)
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem("eden_recovery_email", finalEmail);
-          localStorage.setItem("eden_recovery_password", finalPassword);
-        } catch {}
-      }
+      const finalEmail = email.trim();
+      const finalPassword = password;
 
       // 1. Inscription Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -235,7 +225,7 @@ function InscriptionPage() {
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-1.5">
                   <Mail className="w-4 h-4 text-muted-foreground" />
-                  Email <span className="font-normal text-muted-foreground opacity-70">(Optionnel — pour récupérer votre compte)</span>
+                  Email
                 </Label>
                 <Input
                   id="email"
@@ -248,33 +238,31 @@ function InscriptionPage() {
                 />
               </div>
 
-              {email.trim() && (
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-semibold flex items-center gap-1.5">
-                    <Lock className="w-4 h-4 text-muted-foreground" />
-                    Mot de passe
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Au moins 6 caractères"
-                      minLength={6}
-                      className="h-12 pr-11 bg-background/50 focus:bg-background transition-colors text-base rounded-xl"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-semibold flex items-center gap-1.5">
+                  <Lock className="w-4 h-4 text-muted-foreground" />
+                  Mot de passe
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Au moins 6 caractères"
+                    minLength={6}
+                    className="h-12 pr-11 bg-background/50 focus:bg-background transition-colors text-base rounded-xl"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
                 </div>
-              )}
+              </div>
 
 
               <label className="flex items-start gap-3 cursor-pointer group mt-2">

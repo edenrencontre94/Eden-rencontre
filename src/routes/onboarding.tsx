@@ -239,7 +239,7 @@ function OnboardingPage() {
         data.hasChildren !== "" &&
         data.wantsChildren !== ""
       );
-    if (step === 4) return true; // Photos désormais optionnelles
+    if (step === 4) return data.photos.length > 0; // Au moins une photo obligatoire
     return false;
   }, [step, data]);
 
@@ -949,7 +949,7 @@ function StepPhotos({
       <StepHeader
         eyebrow="Étape 4"
         title="Votre photo de profil"
-        description="Une seule photo suffit pour commencer. Vous en ajouterez d'autres depuis votre profil."
+        description="Une photo est requise pour créer votre profil. Vous pourrez en ajouter d'autres depuis votre profil."
       />
 
       {/* Un seul emplacement, centré et large : c'est LA photo que les
