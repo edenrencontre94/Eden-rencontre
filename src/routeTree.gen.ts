@@ -17,8 +17,6 @@ import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as InscriptionRouteImport } from './routes/inscription'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as MotDePasseOublieRouteImport } from './routes/mot-de-passe-oublie'
-import { Route as NouveauMotDePasseRouteImport } from './routes/nouveau-mot-de-passe'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as TarifsRouteImport } from './routes/tarifs'
 import { Route as AppAbonnementRouteImport } from './routes/_app.abonnement'
@@ -29,6 +27,7 @@ import { Route as AppDecouvrirRouteImport } from './routes/_app.decouvrir'
 import { Route as AppDemandesRouteImport } from './routes/_app.demandes'
 import { Route as AppGuideRouteImport } from './routes/_app.guide'
 import { Route as AppMessagesRouteImport } from './routes/_app.messages'
+import { Route as AppParrainageRouteImport } from './routes/_app.parrainage'
 import { Route as AppProfilRouteImport } from './routes/_app.profil'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAbonnementsRouteImport } from './routes/admin.abonnements'
@@ -39,6 +38,7 @@ import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
 import { Route as AdminMetaAdsRouteImport } from './routes/admin.meta-ads'
 import { Route as AdminModerationRouteImport } from './routes/admin.moderation'
 import { Route as AdminParametresRouteImport } from './routes/admin.parametres'
+import { Route as AdminParrainageRouteImport } from './routes/admin.parrainage'
 import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminUtilisateursRouteImport } from './routes/admin.utilisateurs'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
@@ -86,16 +86,6 @@ const InscriptionRoute = InscriptionRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MotDePasseOublieRoute = MotDePasseOublieRouteImport.update({
-  id: '/mot-de-passe-oublie',
-  path: '/mot-de-passe-oublie',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NouveauMotDePasseRoute = NouveauMotDePasseRouteImport.update({
-  id: '/nouveau-mot-de-passe',
-  path: '/nouveau-mot-de-passe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -148,6 +138,11 @@ const AppMessagesRoute = AppMessagesRouteImport.update({
   path: '/messages',
   getParentRoute: () => AppRoute,
 } as any)
+const AppParrainageRoute = AppParrainageRouteImport.update({
+  id: '/parrainage',
+  path: '/parrainage',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProfilRoute = AppProfilRouteImport.update({
   id: '/profil',
   path: '/profil',
@@ -196,6 +191,11 @@ const AdminModerationRoute = AdminModerationRouteImport.update({
 const AdminParametresRoute = AdminParametresRouteImport.update({
   id: '/parametres',
   path: '/parametres',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminParrainageRoute = AdminParrainageRouteImport.update({
+  id: '/parrainage',
+  path: '/parrainage',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminSupportRoute = AdminSupportRouteImport.update({
@@ -253,8 +253,6 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
-  '/mot-de-passe-oublie': typeof MotDePasseOublieRoute
-  '/nouveau-mot-de-passe': typeof NouveauMotDePasseRoute
   '/onboarding': typeof OnboardingRoute
   '/tarifs': typeof TarifsRoute
   '/abonnement': typeof AppAbonnementRoute
@@ -265,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/demandes': typeof AppDemandesRoute
   '/guide': typeof AppGuideRoute
   '/messages': typeof AppMessagesRoute
+  '/parrainage': typeof AppParrainageRoute
   '/profil': typeof AppProfilRoute
   '/admin/abonnements': typeof AdminAbonnementsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
@@ -274,6 +273,7 @@ export interface FileRoutesByFullPath {
   '/admin/meta-ads': typeof AdminMetaAdsRoute
   '/admin/moderation': typeof AdminModerationRoute
   '/admin/parametres': typeof AdminParametresRoute
+  '/admin/parrainage': typeof AdminParrainageRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -292,8 +292,6 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
-  '/mot-de-passe-oublie': typeof MotDePasseOublieRoute
-  '/nouveau-mot-de-passe': typeof NouveauMotDePasseRoute
   '/onboarding': typeof OnboardingRoute
   '/tarifs': typeof TarifsRoute
   '/abonnement': typeof AppAbonnementRoute
@@ -304,6 +302,7 @@ export interface FileRoutesByTo {
   '/demandes': typeof AppDemandesRoute
   '/guide': typeof AppGuideRoute
   '/messages': typeof AppMessagesRoute
+  '/parrainage': typeof AppParrainageRoute
   '/profil': typeof AppProfilRoute
   '/admin/abonnements': typeof AdminAbonnementsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
@@ -313,6 +312,7 @@ export interface FileRoutesByTo {
   '/admin/meta-ads': typeof AdminMetaAdsRoute
   '/admin/moderation': typeof AdminModerationRoute
   '/admin/parametres': typeof AdminParametresRoute
+  '/admin/parrainage': typeof AdminParrainageRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -334,8 +334,6 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/inscription': typeof InscriptionRoute
   '/login': typeof LoginRoute
-  '/mot-de-passe-oublie': typeof MotDePasseOublieRoute
-  '/nouveau-mot-de-passe': typeof NouveauMotDePasseRoute
   '/onboarding': typeof OnboardingRoute
   '/tarifs': typeof TarifsRoute
   '/_app/abonnement': typeof AppAbonnementRoute
@@ -346,6 +344,7 @@ export interface FileRoutesById {
   '/_app/demandes': typeof AppDemandesRoute
   '/_app/guide': typeof AppGuideRoute
   '/_app/messages': typeof AppMessagesRoute
+  '/_app/parrainage': typeof AppParrainageRoute
   '/_app/profil': typeof AppProfilRoute
   '/admin/abonnements': typeof AdminAbonnementsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
@@ -355,6 +354,7 @@ export interface FileRoutesById {
   '/admin/meta-ads': typeof AdminMetaAdsRoute
   '/admin/moderation': typeof AdminModerationRoute
   '/admin/parametres': typeof AdminParametresRoute
+  '/admin/parrainage': typeof AdminParrainageRoute
   '/admin/support': typeof AdminSupportRoute
   '/admin/utilisateurs': typeof AdminUtilisateursRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -376,8 +376,6 @@ export interface FileRouteTypes {
     | '/faq'
     | '/inscription'
     | '/login'
-    | '/mot-de-passe-oublie'
-    | '/nouveau-mot-de-passe'
     | '/onboarding'
     | '/tarifs'
     | '/abonnement'
@@ -388,6 +386,7 @@ export interface FileRouteTypes {
     | '/demandes'
     | '/guide'
     | '/messages'
+    | '/parrainage'
     | '/profil'
     | '/admin/abonnements'
     | '/admin/analytics'
@@ -397,6 +396,7 @@ export interface FileRouteTypes {
     | '/admin/meta-ads'
     | '/admin/moderation'
     | '/admin/parametres'
+    | '/admin/parrainage'
     | '/admin/support'
     | '/admin/utilisateurs'
     | '/blog/$slug'
@@ -415,8 +415,6 @@ export interface FileRouteTypes {
     | '/faq'
     | '/inscription'
     | '/login'
-    | '/mot-de-passe-oublie'
-    | '/nouveau-mot-de-passe'
     | '/onboarding'
     | '/tarifs'
     | '/abonnement'
@@ -427,6 +425,7 @@ export interface FileRouteTypes {
     | '/demandes'
     | '/guide'
     | '/messages'
+    | '/parrainage'
     | '/profil'
     | '/admin/abonnements'
     | '/admin/analytics'
@@ -436,6 +435,7 @@ export interface FileRouteTypes {
     | '/admin/meta-ads'
     | '/admin/moderation'
     | '/admin/parametres'
+    | '/admin/parrainage'
     | '/admin/support'
     | '/admin/utilisateurs'
     | '/blog/$slug'
@@ -456,8 +456,6 @@ export interface FileRouteTypes {
     | '/faq'
     | '/inscription'
     | '/login'
-    | '/mot-de-passe-oublie'
-    | '/nouveau-mot-de-passe'
     | '/onboarding'
     | '/tarifs'
     | '/_app/abonnement'
@@ -468,6 +466,7 @@ export interface FileRouteTypes {
     | '/_app/demandes'
     | '/_app/guide'
     | '/_app/messages'
+    | '/_app/parrainage'
     | '/_app/profil'
     | '/admin/abonnements'
     | '/admin/analytics'
@@ -477,6 +476,7 @@ export interface FileRouteTypes {
     | '/admin/meta-ads'
     | '/admin/moderation'
     | '/admin/parametres'
+    | '/admin/parrainage'
     | '/admin/support'
     | '/admin/utilisateurs'
     | '/blog/$slug'
@@ -498,8 +498,6 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   InscriptionRoute: typeof InscriptionRoute
   LoginRoute: typeof LoginRoute
-  MotDePasseOublieRoute: typeof MotDePasseOublieRoute
-  NouveauMotDePasseRoute: typeof NouveauMotDePasseRoute
   OnboardingRoute: typeof OnboardingRoute
   TarifsRoute: typeof TarifsRoute
   BlogSlugRoute: typeof BlogSlugRoute
@@ -563,20 +561,6 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mot-de-passe-oublie': {
-      id: '/mot-de-passe-oublie'
-      path: '/mot-de-passe-oublie'
-      fullPath: '/mot-de-passe-oublie'
-      preLoaderRoute: typeof MotDePasseOublieRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/nouveau-mot-de-passe': {
-      id: '/nouveau-mot-de-passe'
-      path: '/nouveau-mot-de-passe'
-      fullPath: '/nouveau-mot-de-passe'
-      preLoaderRoute: typeof NouveauMotDePasseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -649,6 +633,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMessagesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/parrainage': {
+      id: '/_app/parrainage'
+      path: '/parrainage'
+      fullPath: '/parrainage'
+      preLoaderRoute: typeof AppParrainageRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/profil': {
       id: '/_app/profil'
       path: '/profil'
@@ -717,6 +708,13 @@ declare module '@tanstack/react-router' {
       path: '/parametres'
       fullPath: '/admin/parametres'
       preLoaderRoute: typeof AdminParametresRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/parrainage': {
+      id: '/admin/parrainage'
+      path: '/parrainage'
+      fullPath: '/admin/parrainage'
+      preLoaderRoute: typeof AdminParrainageRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/support': {
@@ -794,6 +792,7 @@ interface AppRouteChildren {
   AppDemandesRoute: typeof AppDemandesRoute
   AppGuideRoute: typeof AppGuideRoute
   AppMessagesRoute: typeof AppMessagesRoute
+  AppParrainageRoute: typeof AppParrainageRoute
   AppProfilRoute: typeof AppProfilRoute
   AppParametresBloquesRoute: typeof AppParametresBloquesRoute
   AppParametresLangueRoute: typeof AppParametresLangueRoute
@@ -810,6 +809,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDemandesRoute: AppDemandesRoute,
   AppGuideRoute: AppGuideRoute,
   AppMessagesRoute: AppMessagesRoute,
+  AppParrainageRoute: AppParrainageRoute,
   AppProfilRoute: AppProfilRoute,
   AppParametresBloquesRoute: AppParametresBloquesRoute,
   AppParametresLangueRoute: AppParametresLangueRoute,
@@ -828,6 +828,7 @@ interface AdminRouteChildren {
   AdminMetaAdsRoute: typeof AdminMetaAdsRoute
   AdminModerationRoute: typeof AdminModerationRoute
   AdminParametresRoute: typeof AdminParametresRoute
+  AdminParrainageRoute: typeof AdminParrainageRoute
   AdminSupportRoute: typeof AdminSupportRoute
   AdminUtilisateursRoute: typeof AdminUtilisateursRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -842,6 +843,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminMetaAdsRoute: AdminMetaAdsRoute,
   AdminModerationRoute: AdminModerationRoute,
   AdminParametresRoute: AdminParametresRoute,
+  AdminParrainageRoute: AdminParrainageRoute,
   AdminSupportRoute: AdminSupportRoute,
   AdminUtilisateursRoute: AdminUtilisateursRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -858,8 +860,6 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   InscriptionRoute: InscriptionRoute,
   LoginRoute: LoginRoute,
-  MotDePasseOublieRoute: MotDePasseOublieRoute,
-  NouveauMotDePasseRoute: NouveauMotDePasseRoute,
   OnboardingRoute: OnboardingRoute,
   TarifsRoute: TarifsRoute,
   BlogSlugRoute: BlogSlugRoute,
