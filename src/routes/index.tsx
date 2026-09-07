@@ -1207,8 +1207,13 @@ function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-border">
         <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <p>© {new Date().getFullYear()} Eden Rencontre. Tous droits réservés. — Rencontres chrétiennes sérieuses en Afrique francophone et dans le monde.</p>
-          <p className="italic font-serif text-sm">« Là où la foi unit les cœurs. »</p>
+          <div className="flex flex-col gap-1 text-center md:text-left">
+            <p>© {new Date().getFullYear()} Eden Rencontre. Tous droits réservés. — Rencontres chrétiennes sérieuses en Afrique francophone et dans le monde.</p>
+            <p className="text-[11px] opacity-80 mt-1 md:mt-0">
+              Créé par <a href="https://wa.me/22890624554" target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-primary transition-colors hover:underline">Africa Digi Tech</a>
+            </p>
+          </div>
+          <p className="italic font-serif text-sm mt-2 md:mt-0">« Là où la foi unit les cœurs. »</p>
         </div>
       </div>
     </footer>
