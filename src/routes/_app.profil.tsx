@@ -458,8 +458,8 @@ function ProfilePage() {
               className="w-full h-10 px-3 py-2 rounded-xl border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="">Non précisé</option>
-              <option value="male">Homme</option>
-              <option value="female">Femme</option>
+              <option value="homme">Homme</option>
+              <option value="femme">Femme</option>
             </select>
           </div>
         </div>
@@ -578,8 +578,8 @@ function ProfilePage() {
               className="w-full h-10 px-3 py-2 rounded-xl border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="all">Peu importe</option>
-              <option value="female">Des femmes</option>
-              <option value="male">Des hommes</option>
+              <option value="femme">Des femmes</option>
+              <option value="homme">Des hommes</option>
             </select>
           </div>
 
