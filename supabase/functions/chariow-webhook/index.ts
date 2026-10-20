@@ -83,16 +83,41 @@ serve(async (req) => {
     }
 
     // Enregistrer le paiement dans la table payments (optionnel, pour l'historique admin)
+    const paymentAmount = order.payment?.amount?.value || order.order?.payment?.amount?.value || 0
+    const chariowOrderId = order.id || order.order?.id || 'unknown'
+
     await supabaseAdmin.from('payments').insert({
       user_id: userId,
-      amount: order.payment?.amount?.value || order.order?.payment?.amount?.value || 0,
+      amount: paymentAmount,
       currency: 'XOF',
       plan_id: offerInfo.planId,
       status: 'completed',
-      chariow_order_id: order.id || order.order?.id || 'unknown'
+      chariow_order_id: chariowOrderId
     }).catch((e: any) => {
       console.warn('Could not insert payment log:', e.message)
     })
+
+    // Déclencher l'événement d'achat Purchase vers Meta Conversions API (CAPI)
+    try {
+      const { data: userProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('phone, fbclid')
+        .eq('id', userId)
+        .maybeSingle()
+
+      await supabaseAdmin.functions.invoke('meta-capi', {
+        body: {
+          event_name: 'Purchase',
+          event_id: `purchase_${chariowOrderId}`,
+          value_xof: paymentAmount,
+          fbclid: userProfile?.fbclid || null,
+          phone: userProfile?.phone || null,
+          email: email || null,
+        }
+      })
+    } catch (e: any) {
+      console.warn('[chariow-webhook] Envoi CAPI Purchase ignoré:', e.message)
+    }
 
     console.log(`[chariow-webhook] Activated premium for user ${userId} until ${newPremiumUntil}`)
 
