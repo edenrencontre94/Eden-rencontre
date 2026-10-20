@@ -102,7 +102,7 @@ function AdminMetaAds() {
   useEffect(() => { charger(jours); }, [jours]);
 
   const pixelOk = Boolean(String(reglages.meta_pixel_id ?? "").trim());
-  const capiOk = reglages.meta_capi_active === true;
+  const capiOk = reglages.meta_capi_active === true || reglages.meta_capi_active === "true";
   const enProd = reglages.meta_mode === "production";
 
   return (
@@ -363,7 +363,7 @@ function Pixel({ reglages, onSave }: { reglages: Record<string, any>; onSave: ()
     meta_domain: String(reglages.meta_domain ?? "edenrencontre.com"),
     meta_test_code: String(reglages.meta_test_code ?? ""),
     meta_mode: String(reglages.meta_mode ?? "test"),
-    meta_capi_active: reglages.meta_capi_active === true,
+    meta_capi_active: reglages.meta_capi_active === true || reglages.meta_capi_active === "true",
   });
   const [busy, setBusy] = useState(false);
 
@@ -372,16 +372,18 @@ function Pixel({ reglages, onSave }: { reglages: Record<string, any>; onSave: ()
     for (const [k, val] of Object.entries(v)) {
       const { error } = await supabase
         .from("app_settings")
-        .update({ value: val, updated_at: new Date().toISOString() })
-        .eq("key", k);
+        .upsert(
+          { key: k, value: val, updated_at: new Date().toISOString() },
+          { onConflict: "key" }
+        );
       if (error) {
         setBusy(false);
-        toast.error(`Impossible d'enregistrer « ${k} »`);
+        toast.error(`Impossible d'enregistrer « ${k} »: ${error.message}`);
         return;
       }
     }
     setBusy(false);
-    toast.success("Configuration enregistrée");
+    toast.success("Configuration enregistrée avec succès");
     onSave();
   };
 

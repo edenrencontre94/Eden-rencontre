@@ -48,7 +48,7 @@ serve(async (req) => {
     })
 
     const pixelId = String(reglages.meta_pixel_id ?? "").trim()
-    const capiActive = reglages.meta_capi_active === true
+    const capiActive = reglages.meta_capi_active === true || String(reglages.meta_capi_active) === "true"
     const mode = String(reglages.meta_mode ?? "test")
     const testEventCode = String(reglages.meta_test_code ?? "").trim()
 
@@ -146,11 +146,14 @@ serve(async (req) => {
       payload.test_event_code = activeTestCode
     }
 
-    const metaGraphUrl = `https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${accessToken}`
+    const metaGraphUrl = `https://graph.facebook.com/v19.0/${pixelId}/events`
 
     const response = await fetch(metaGraphUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`,
+      },
       body: JSON.stringify(payload),
     })
 
