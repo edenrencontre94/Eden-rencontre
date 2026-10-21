@@ -96,6 +96,22 @@ export const OFFER_LABELS: Record<string, string> = {
   boost_7j: "Boost 7 jours",
 };
 
+export function formatGender(gender?: string | null): string {
+  if (!gender) return "—";
+  const g = gender.toLowerCase().trim();
+  if (g === "female" || g === "femme" || g === "f") return "Femme";
+  if (g === "male" || g === "homme" || g === "h") return "Homme";
+  return gender;
+}
+
+export function formatGenderShort(gender?: string | null): string {
+  if (!gender) return "";
+  const g = gender.toLowerCase().trim();
+  if (g === "female" || g === "femme" || g === "f") return "F";
+  if (g === "male" || g === "homme" || g === "h") return "H";
+  return "";
+}
+
 function emptyCounts(): Counts {
   return {
     total: 0, gratuit: 0, premium: 0, fondateurs: 0, expires: 0,
@@ -112,16 +128,25 @@ export async function fetchCounts(): Promise<Counts> {
     const { data, error } = await supabase.rpc("admin_plan_counts");
     if (!error && data && !(data as any)?.error) {
       const d = data as any;
-      if (typeof d.total === "number" || typeof d.gratuit === "number") {
+      const femmesCount = Number(d.femmes ?? 0);
+      const hommesCount = Number(d.hommes ?? 0);
+      const totalCount = Number(d.total ?? 0);
+
+      // Si la RPC a retourné 0 femmes et 0 hommes alors qu'il y a des membres inscrits (total > 0),
+      // c'est que la RPC en base filtre sur 'female'/'male' alors que les membres sont enregistrés
+      // avec 'femme'/'homme'. On bascule alors sur le fallback direct pour lire les vrais genres.
+      const hasValidGenderCounts = femmesCount > 0 || hommesCount > 0 || totalCount === 0;
+
+      if ((typeof d.total === "number" || typeof d.gratuit === "number") && hasValidGenderCounts) {
         return {
-          total: Number(d.total ?? 0),
+          total: totalCount,
           gratuit: Number(d.gratuit ?? 0),
           premium: Number(d.premium ?? 0),
           fondateurs: Number(d.fondateurs ?? 0),
           expires: Number(d.expires ?? 0),
           nouveaux_7j: Number(d.nouveaux_7j ?? 0),
-          femmes: Number(d.femmes ?? 0),
-          hommes: Number(d.hommes ?? 0),
+          femmes: femmesCount,
+          hommes: hommesCount,
           genre_absent: Number(d.genre_absent ?? 0),
           actifs_7j: Number(d.actifs_7j ?? 0),
           actifs_30j: Number(d.actifs_30j ?? 0),
@@ -506,7 +531,7 @@ export function toCsv(rows: UserRow[]): string {
     ["Nom", (r: UserRow) => r.last_name ?? ""],
     ["Ville", (r: UserRow) => r.city ?? ""],
     ["Pays", (r: UserRow) => r.country ?? ""],
-    ["Genre", (r: UserRow) => (r.gender === "female" ? "Femme" : r.gender === "male" ? "Homme" : "")],
+    ["Genre", (r: UserRow) => formatGender(r.gender)],
     ["Offre", (r: UserRow) => (r.is_founder ? "Premium (fondateur)" : r.public_plan)],
     ["Expire le", (r: UserRow) => (r.premium_until ? new Date(r.premium_until).toLocaleDateString("fr-FR") : "")],
     ["Vérifié", (r: UserRow) => (r.is_verified ? "oui" : "non")],

@@ -18,6 +18,7 @@ import { displayName } from "@/lib/utils";
 import {
   DEFAULT_FILTERS, PAGE_SIZE, SEGMENTS, OFFER_LABELS,
   fetchCounts, fetchUsers, downloadCsv, isSuspended, unsuspendUser,
+  formatGenderShort,
   type Counts, type Filters, type UserRow,
 } from "@/lib/adminUsers";
 import { UserDetailSheet } from "@/components/admin/UserDetailSheet";
@@ -344,7 +345,7 @@ function AdminUtilisateurs() {
                           </div>
                           <div className="text-[11px] text-muted-foreground truncate">
                             {[u.city, u.country].filter(Boolean).join(", ") || "–"}
-                            {u.gender && ` · ${u.gender === "female" ? "F" : "H"}`}
+                            {u.gender && formatGenderShort(u.gender) && ` · ${formatGenderShort(u.gender)}`}
                           </div>
                         </div>
                       </div>

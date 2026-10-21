@@ -34,9 +34,9 @@ BEGIN
     'fondateurs', COUNT(*) FILTER (WHERE is_founder),
     'expires', COUNT(*) FILTER (WHERE public_plan = 'premium' AND premium_until IS NOT NULL AND premium_until <= now()),
     'nouveaux_7j', COUNT(*) FILTER (WHERE created_at >= now() - interval '7 days'),
-    'femmes', COUNT(*) FILTER (WHERE gender = 'female' OR gender = 'Femme'),
-    'hommes', COUNT(*) FILTER (WHERE gender = 'male' OR gender = 'Homme'),
-    'genre_absent', COUNT(*) FILTER (WHERE gender IS NULL OR (gender NOT IN ('female', 'Femme', 'male', 'Homme'))),
+    'femmes', COUNT(*) FILTER (WHERE LOWER(gender) IN ('female', 'femme', 'f')),
+    'hommes', COUNT(*) FILTER (WHERE LOWER(gender) IN ('male', 'homme', 'h')),
+    'genre_absent', COUNT(*) FILTER (WHERE gender IS NULL OR LOWER(gender) NOT IN ('female', 'femme', 'f', 'male', 'homme', 'h')),
     'actifs_7j', COUNT(*) FILTER (WHERE last_seen >= now() - interval '7 days'),
     'actifs_30j', COUNT(*) FILTER (WHERE last_seen >= now() - interval '30 days'),
     'verifies', COUNT(*) FILTER (WHERE is_verified),
@@ -142,9 +142,12 @@ BEGIN
            (p_segment = 'suspendus' AND p.suspended_until > now())
           )
       -- Filtres supplémentaires
-      AND (p_gender IS NULL OR p_gender = '' OR p.gender = p_gender OR 
-           (p_gender = 'female' AND p.gender = 'Femme') OR 
-           (p_gender = 'male' AND p.gender = 'Homme'))
+      AND (
+        p_gender IS NULL OR p_gender = '' OR
+        (LOWER(p_gender) IN ('female', 'femme', 'f') AND LOWER(p.gender) IN ('female', 'femme', 'f')) OR
+        (LOWER(p_gender) IN ('male', 'homme', 'h') AND LOWER(p.gender) IN ('male', 'homme', 'h')) OR
+        LOWER(p.gender) = LOWER(p_gender)
+      )
       AND (p_country IS NULL OR p_country = '' OR p.country ILIKE '%' || p_country || '%')
       AND (p_verified IS NULL OR p.is_verified = p_verified)
     ORDER BY p.created_at DESC
