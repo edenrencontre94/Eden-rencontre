@@ -56,17 +56,30 @@ function AdminUtilisateurs() {
     setLoading(true);
     setError(null);
 
-    const [c, { rows, error: err }] = await Promise.all([fetchCounts(), fetchUsers(f)]);
+    try {
+      const [c, { rows, error: err }] = await Promise.all([
+        fetchCounts(),
+        fetchUsers(f),
+      ]);
 
-    if (err || !c) {
+      if (c) {
+        setCounts(c);
+      }
 
+      setUsers(rows ?? []);
+
+      if (err) {
+        console.warn("[admin/utilisateurs] Problème lors du chargement:", err);
+        if (!rows || rows.length === 0) {
+          setError(typeof err === "string" ? err : err.message || "Erreur de chargement des utilisateurs.");
+        }
+      }
+    } catch (e: any) {
+      console.error("[admin/utilisateurs] Exception load():", e);
+      setError(e?.message || "Impossible de charger les utilisateurs.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setCounts(c);
-    setUsers(rows);
-    setLoading(false);
   };
 
   // La recherche est temporisée : sans cela, chaque frappe déclencherait
