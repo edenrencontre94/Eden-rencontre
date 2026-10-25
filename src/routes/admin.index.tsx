@@ -255,7 +255,23 @@ export default function AdminDashboard() {
         if (!recentErr && recent) setRecentUsers(recent);
 
         if (!aErr && a && !(a as any).error) setAnalytics(a);
-        if (!oErr && o && !(o as any).error) setOv(o);
+
+        let overviewData = o && !(o as any).error ? o : null;
+        // Si activite est vide dans le RPC ou que le RPC n'est pas encore déployé,
+        // générer une activité de secours depuis les récents profils
+        if (!overviewData || !overviewData.activite || overviewData.activite.length === 0) {
+          const fallbackActivite = (recent || []).map((u: any) => ({
+            type: "inscription",
+            texte: `Nouvel inscrit : ${u.first_name || "Un membre"}`,
+            detail: u.city ? `${u.city}` : "Nouveau profil",
+            at: u.created_at,
+          }));
+          overviewData = {
+            ...(overviewData || {}),
+            activite: fallbackActivite,
+          };
+        }
+        setOv(overviewData);
       } catch (e) {
         console.error(e);
       } finally {
