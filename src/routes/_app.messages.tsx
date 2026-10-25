@@ -8,7 +8,7 @@ import {
   Search, ArrowLeft, Send, Smile, Mic,
   Image as ImageIcon, Video as VideoIcon, Phone, Sticker,
   Check, CheckCheck, MoreVertical, Archive, Flag, Ban,
-  X, GalleryHorizontal, Loader2, Play, Pause, BadgeCheck, Lock, Trash2,
+  X, GalleryHorizontal, Loader2, Play, Pause, BadgeCheck, Lock, Trash2, Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { normaliser } from "@/content/pays";
@@ -873,6 +873,11 @@ function ChatView({
   const [callState, setCallState] = useState<{ type: "audio" | "video"; callId: string } | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [startingCall, setStartingCall] = useState(false);
+  // ── Message context menu (long press) ──
+  const [msgAction, setMsgAction] = useState<Msg | null>(null);
+  const [editingMsg, setEditingMsg] = useState<Msg | null>(null);
+  const [editText, setEditText] = useState("");
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { features } = useSubscription();
   const navigate = useNavigate();
 
@@ -1009,6 +1014,12 @@ function ChatView({
         const msg = payload.new as Msg;
         setMessages(prev => prev.map(m => (m.id === msg.id ? { ...m, ...msg } : m)));
       })
+      .on("postgres_changes", {
+        event: "DELETE", schema: "public", table: "messages",
+        filter: `match_id=eq.${chat.id}`,
+      }, (payload: any) => {
+        setMessages(prev => prev.filter(m => m.id !== payload.old?.id));
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -1055,7 +1066,7 @@ function ChatView({
       sender_id: currentUserId,
       content: opts.content || "",
       media_url: opts.media_url || null,
-      type: opts.type || null,
+      type: opts.type || "text",
     });
 
     if (!error) {
@@ -1063,6 +1074,8 @@ function ChatView({
       loadQuotas();
       return false;
     }
+
+    console.error("[sendMessage] Erreur d'envoi du message:", error);
 
     // La base applique les limites de la formule Gratuit : on traduit son
     // refus plutôt que d'afficher « Erreur d'envoi », qui n'apprend rien.
@@ -1072,7 +1085,7 @@ function ChatView({
         action: { label: "Voir les formules", onClick: () => navigate({ to: "/abonnement" }) },
       });
     } else {
-      toast.error("Erreur d'envoi");
+      toast.error(error.message || "Erreur d'envoi");
     }
     return true;
   };
@@ -1244,10 +1257,6 @@ function ChatView({
   };
 
   // ── GIF & Sticker send ──
-  // Le type vient du sélecteur, pas de `showSticker` : celui-ci est remis
-  // à `false` deux lignes plus haut, et ne devait sa justesse qu'au fait
-  // que React ne met pas l'état à jour de façon synchrone. Un
-  // rafraîchissement au mauvais moment aurait enregistré un sticker en GIF.
   const sendGif = async (url: string, kind: "gif" | "sticker") => {
     setShowGif(false);
     setShowSticker(false);
@@ -1257,10 +1266,53 @@ function ChatView({
   // ── Emoji ──
   const COMMON_EMOJIS = ["😀", "😂", "🥰", "😍", "🙏", "😭", "🥺", "😊", "🔥", "✨", "❤️", "💯", "👍", "🙌", "👀", "😘", "😎", "💪", "😉", "🎉", "💖", "🥲"];
 
+  // ── Delete message (for everyone) ──
+  const deleteMessage = async (msgId: string) => {
+    const { error } = await supabase.from("messages").delete().eq("id", msgId);
+    if (error) {
+      console.error("[deleteMessage]", error);
+      toast.error("Impossible de supprimer ce message");
+    } else {
+      setMessages(prev => prev.filter(m => m.id !== msgId));
+    }
+    setMsgAction(null);
+  };
+
+  // ── Edit message (own messages only) ──
+  const startEdit = (msg: Msg) => {
+    setEditingMsg(msg);
+    setEditText(msg.content ?? "");
+    setMsgAction(null);
+  };
+
+  const confirmEdit = async () => {
+    if (!editingMsg || !editText.trim()) return;
+    const { error } = await supabase
+      .from("messages")
+      .update({ content: editText.trim() })
+      .eq("id", editingMsg.id);
+    if (error) {
+      console.error("[editMessage]", error);
+      toast.error("Impossible de modifier ce message");
+    } else {
+      setMessages(prev => prev.map(m => m.id === editingMsg.id ? { ...m, content: editText.trim() } : m));
+    }
+    setEditingMsg(null);
+    setEditText("");
+  };
+
+  // ── Long press handlers ──
+  const handleLongPressStart = (msg: Msg) => {
+    longPressTimer.current = setTimeout(() => setMsgAction(msg), 450);
+  };
+  const handleLongPressEnd = () => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+  };
+
   // ── Message bubble renderer ──
   const renderBubble = (m: Msg) => {
     const isMe = m.sender_id === currentUserId;
-    const base = `max-w-[80%] rounded-2xl text-sm shadow-soft ${isMe
+    const base = `max-w-[80%] rounded-2xl text-sm shadow-soft select-none ${isMe
       ? "bg-gradient-to-br from-primary to-primary/85 text-primary-foreground rounded-br-md"
       : "bg-card border border-border/60 rounded-bl-md"
     }`;
@@ -1272,32 +1324,36 @@ function ChatView({
       </div>
     );
 
+    const longPressProps = {
+      onTouchStart: () => handleLongPressStart(m),
+      onTouchEnd: handleLongPressEnd,
+      onTouchMove: handleLongPressEnd,
+      onContextMenu: (e: React.MouseEvent) => { e.preventDefault(); setMsgAction(m); },
+    };
+
     if (m.type === "image") return (
-      <div className={`${base} overflow-hidden p-0`}>
+      <div {...longPressProps} className={`${base} overflow-hidden p-0 cursor-pointer`}>
         <img src={m.media_url!} alt="image" className="max-w-[200px] max-h-[260px] object-cover" onClick={() => window.open(m.media_url!, "_blank")} />
         <div className="px-2 pb-1">{ts}</div>
       </div>
     );
 
     if (m.type === "video") return (
-      <div className={`${base} overflow-hidden p-0`}>
+      <div {...longPressProps} className={`${base} overflow-hidden p-0 cursor-pointer`}>
         <video src={m.media_url!} controls className="max-w-[220px] rounded-2xl" />
         <div className="px-2 pb-1">{ts}</div>
       </div>
     );
 
     if (m.type === "audio") return (
-      <div className={`${base} px-3 py-2`}>
+      <div {...longPressProps} className={`${base} px-3 py-2 cursor-pointer`}>
         <AudioPlayer src={m.media_url!} isMe={isMe} />
         {ts}
       </div>
     );
 
     if (m.type === "gif" || m.type === "sticker") return (
-      // Sans bulle : un sticker se pose sur la conversation, il ne
-      // s'encadre pas. `w-[140px]` fixe la taille — un SVG sans
-      // dimensions explicites s'étirerait à la largeur disponible.
-      <div className={`${base} p-0 bg-transparent shadow-none border-none`}>
+      <div {...longPressProps} className={`${base} p-0 bg-transparent shadow-none border-none cursor-pointer`}>
         <img
           src={m.media_url!}
           alt={m.type === "sticker" ? "Sticker" : "Sticker animé"}
@@ -1309,7 +1365,7 @@ function ChatView({
     );
 
     return (
-      <div className={`${base} px-3.5 py-2`}>
+      <div {...longPressProps} className={`${base} px-3.5 py-2 cursor-pointer active:scale-[0.97] transition-transform`}>
         <div>{m.content}</div>
         {ts}
       </div>
@@ -1450,6 +1506,70 @@ function ChatView({
             {renderBubble(m)}
           </div>
         ))}
+
+        {/* ── Context menu (long press) overlay ── */}
+        <AnimatePresence>
+          {msgAction && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
+                onClick={() => setMsgAction(null)}
+              />
+              {/* Menu card */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.85, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: 10 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-64 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
+              >
+                {/* Preview bubble */}
+                <div className="px-4 py-3 bg-secondary/40 border-b border-border">
+                  <p className="text-xs text-muted-foreground mb-1">
+                    {msgAction.sender_id === currentUserId ? "Votre message" : `Message de ${chat.profile.firstName}`}
+                  </p>
+                  <p className="text-sm truncate">
+                    {msgAction.type && msgAction.type !== "text" ? `[${msgAction.type}]` : msgAction.content}
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="py-1">
+                  {/* Edit : only for own text messages */}
+                  {msgAction.sender_id === currentUserId && (!msgAction.type || msgAction.type === "text") && (
+                    <button
+                      onClick={() => startEdit(msgAction)}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-secondary transition-colors text-left"
+                    >
+                      <Pencil className="w-4 h-4 text-primary shrink-0" />
+                      <span>Modifier</span>
+                    </button>
+                  )}
+
+                  {/* Delete : available for both sender and receiver */}
+                  <button
+                    onClick={() => deleteMessage(msgAction.id)}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-destructive/10 transition-colors text-destructive text-left"
+                  >
+                    <Trash2 className="w-4 h-4 shrink-0" />
+                    <span>Supprimer pour tout le monde</span>
+                  </button>
+
+                  <button
+                    onClick={() => setMsgAction(null)}
+                    className="w-full flex items-center justify-center px-4 py-3 text-sm text-muted-foreground hover:bg-secondary transition-colors border-t border-border"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
         {chat.typing && (
           <div className="flex justify-start">
             <div className="bg-card border border-border/60 rounded-2xl rounded-bl-md px-4 py-2.5 flex gap-1">
@@ -1612,6 +1732,35 @@ function ChatView({
           >
             <Send className="w-4 h-4" />
           </button>
+        </div>
+      ) : editingMsg ? (
+        /* ── Edit bar ── */
+        <div className="border-t-2 border-primary bg-background p-2 flex flex-col gap-2">
+          <div className="flex items-center gap-2 px-2 py-1 rounded-xl bg-primary/10">
+            <Pencil className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span className="text-xs text-primary font-medium flex-1 truncate">Modification du message</span>
+            <button onClick={() => { setEditingMsg(null); setEditText(""); }} className="text-muted-foreground hover:text-foreground">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              autoFocus
+              value={editText}
+              onChange={e => setEditText(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && confirmEdit()}
+              className="flex-1 pl-4 pr-3 py-2.5 rounded-full bg-secondary border border-border focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm"
+              placeholder="Modifier votre message…"
+            />
+            <button
+              onClick={confirmEdit}
+              disabled={!editText.trim()}
+              aria-label="Confirmer la modification"
+              className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground flex items-center justify-center shadow-elegant disabled:opacity-50"
+            >
+              <Check className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       ) : (
       <div className="border-t border-border/50 bg-background p-2 flex items-center gap-1.5">
