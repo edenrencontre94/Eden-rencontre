@@ -82,17 +82,19 @@ serve(async (req) => {
       throw new Error(`Erreur lors de la mise à jour du profil: ${updateError.message}`)
     }
 
-    // Enregistrer le paiement dans la table payments (optionnel, pour l'historique admin)
-    const paymentAmount = order.payment?.amount?.value || order.order?.payment?.amount?.value || 0
+    // Enregistrer le paiement dans la table payments (pour l'historique et dashboard admin)
+    const paymentAmount = order.payment?.amount?.value || order.order?.payment?.amount?.value || order.amount || 0
     const chariowOrderId = order.id || order.order?.id || 'unknown'
 
     await supabaseAdmin.from('payments').insert({
       user_id: userId,
-      amount: paymentAmount,
+      amount_xof: paymentAmount,
       currency: 'XOF',
-      plan_id: offerInfo.planId,
+      offer_id: metadata?.offer_id || (offerInfo.duration ? `premium_${offerInfo.duration}` : 'premium_1m'),
+      plan_id: offerInfo.planId || 'premium',
       status: 'completed',
-      chariow_order_id: chariowOrderId
+      chariow_order_id: chariowOrderId,
+      completed_at: new Date().toISOString()
     }).catch((e: any) => {
       console.warn('Could not insert payment log:', e.message)
     })
