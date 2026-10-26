@@ -407,7 +407,32 @@ export async function fetchUserDetail(id: string): Promise<UserDetail | null> {
   try {
     const { data, error } = await supabase.rpc("admin_user_detail", { p_user_id: id });
     if (!error && data && !(data as any)?.error) {
-      return data as UserDetail;
+      const d = data as any;
+      // Si la RPC retourne directement { profil, paiements, ... }
+      if (d.profil) {
+        return d as UserDetail;
+      }
+      // Si l'ancienne RPC retourne directement la ligne du profil
+      if (d.id) {
+        return {
+          profil: d,
+          paiements: [],
+          activite: {
+            matchs: 0,
+            messages_envoyes: 0,
+            likes_donnes: 0,
+            likes_recus: 0,
+            passes: 0,
+            swipes_total: 0,
+            publications: 0,
+            visites_recues: 0,
+            boosts: 0,
+          },
+          moderation: { recus: [], emis_n: 0, bloque_par_n: 0, a_bloque_n: 0 },
+          support: [],
+          gestes: [],
+        };
+      }
     }
   } catch (e) {
     console.warn("[admin/utilisateurs] RPC admin_user_detail indisponible:", e);
@@ -418,9 +443,10 @@ export async function fetchUserDetail(id: string): Promise<UserDetail | null> {
     const { data: profile } = await supabase.from("profiles").select("*").eq("id", id).maybeSingle();
     if (!profile) return null;
 
-    const [paiementsRes, supportRes] = await Promise.all([
+    const [paiementsRes, supportRes, reportsRecusRes] = await Promise.all([
       supabase.from("payments").select("*").eq("user_id", id).order("created_at", { ascending: false }).limit(20).catch(() => ({ data: [] })),
       supabase.from("support_tickets").select("*").eq("user_id", id).order("created_at", { ascending: false }).limit(20).catch(() => ({ data: [] })),
+      supabase.from("reports").select("*").eq("reported_id", id).order("created_at", { ascending: false }).limit(20).catch(() => ({ data: [] })),
     ]);
 
     return {
@@ -431,10 +457,18 @@ export async function fetchUserDetail(id: string): Promise<UserDetail | null> {
         messages_envoyes: 0,
         likes_donnes: 0,
         likes_recus: 0,
+        passes: 0,
         swipes_total: 0,
         publications: 0,
+        visites_recues: 0,
+        boosts: 0,
       },
-      moderation: { recus: [], emis_n: 0, bloque_par_n: 0, a_bloque_n: 0 },
+      moderation: {
+        recus: (reportsRecusRes as any)?.data ?? [],
+        emis_n: 0,
+        bloque_par_n: 0,
+        a_bloque_n: 0,
+      },
       support: (supportRes as any)?.data ?? [],
       gestes: [],
     };
