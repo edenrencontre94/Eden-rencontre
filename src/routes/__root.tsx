@@ -164,6 +164,8 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+import { LanguageProvider } from "@/lib/i18n";
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
@@ -184,9 +186,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
-      <Toaster position="top-center" richColors />
+      <LanguageProvider>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <Toaster position="top-center" richColors />
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }

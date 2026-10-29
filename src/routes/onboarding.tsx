@@ -239,7 +239,7 @@ function OnboardingPage() {
         data.hasChildren !== "" &&
         data.wantsChildren !== ""
       );
-    if (step === 4) return data.photos.length > 0; // Au moins une photo obligatoire
+    if (step === 4) return true; // La photo est facultative
     return false;
   }, [step, data]);
 
@@ -535,7 +535,7 @@ function OnboardingPage() {
                 size="lg"
                 className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 shadow-elegant"
               >
-                {step === 4 ? (data.photos.length > 0 ? "Terminer" : "Ignorer pour l'instant") : "Continuer"}
+                {step === 4 ? (data.photos.length > 0 ? "Terminer" : "Ajouter la photo plus tard") : "Continuer"}
                 {step < 4 && <ArrowRight className="w-4 h-4" />}
               </Button>
             </motion.div>
@@ -949,7 +949,7 @@ function StepPhotos({
       <StepHeader
         eyebrow="Étape 4"
         title="Votre photo de profil"
-        description="Une photo est requise pour créer votre profil. Vous pourrez en ajouter d'autres depuis votre profil."
+        description="Ajoutez une photo de profil pour augmenter vos chances. Vous pourrez en ajouter une plus tard depuis votre profil."
       />
 
       {/* Un seul emplacement, centré et large : c'est LA photo que les
@@ -1006,14 +1006,7 @@ function StepPhotos({
         }}
       />
 
-      <div className="mt-6 rounded-xl bg-secondary/50 border border-border/50 p-4 text-sm text-muted-foreground">
-        <p className="font-medium text-foreground mb-1">Une bonne photo principale</p>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Un portrait clair et souriant, votre visage bien visible.</li>
-          <li>Une photo récente, qui vous ressemble aujourd'hui.</li>
-          <li>Ni lunettes de soleil, ni photo de groupe.</li>
-        </ul>
-      </div>
+
 
       <p className="mt-4 text-center text-xs text-muted-foreground">
         Vos autres photos et votre vidéo de présentation s'ajoutent depuis

@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-router";
 import { BottomNav } from "@/components/app/BottomNav";
 import { Bell, Crown, Rocket, Shield, User } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 import { SubscriptionProvider } from "@/lib/subscription";
 import logo from "@/assets/logo.png";
@@ -61,6 +62,7 @@ export const Route = createFileRoute("/_app")({
 
 function AppLayout() {
   usePresence();
+  const { t } = useTranslation();
   
   const isAdmin = useIsAdmin();
   const maintenance = useSetting<boolean>("maintenance_mode", false);
@@ -337,47 +339,47 @@ function AppLayout() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-64 rounded-2xl shadow-elegant border-border/50 bg-background/95 backdrop-blur-xl p-2 mt-2">
                   <DropdownMenuLabel className="px-2 py-1.5 text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                    Mon Compte
+                    {t("menu.account_section")}
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-border/50" />
                   
                   <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-primary/10">
                     <Link to="/profil" className="flex items-center gap-3 py-2.5 px-2">
                       <User className="w-4 h-4" />
-                      <span className="font-medium">Mon profil</span>
+                      <span className="font-medium">{t("menu.my_profile")}</span>
                     </Link>
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
                     <Link to="/abonnement" className="flex items-center gap-3 py-2.5 px-2">
                       <Crown className="w-4 h-4 text-gold" />
-                      <span className="font-medium">Abonnement & Facturation</span>
+                      <span className="font-medium">{t("menu.my_subscription")}</span>
                     </Link>
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
                     <Link to="/parrainage" className="flex items-center gap-3 py-2.5 px-2">
                       <Gift className="w-4 h-4 text-primary" />
-                      <span className="font-medium">Parrainage</span>
+                      <span className="font-medium">{t("menu.referral")}</span>
                     </Link>
                   </DropdownMenuItem>
                   
                   <DropdownMenuSeparator className="bg-border/50 mt-2 mb-2" />
                   <DropdownMenuLabel className="px-2 py-1.5 text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                    Paramètres
+                    {t("menu.settings_section")}
                   </DropdownMenuLabel>
                   
                   <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
                     <Link to="/parametres/securite" className="flex items-center gap-3 py-2.5 px-2">
                       <Settings className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium">Sécurité</span>
+                      <span className="font-medium">{t("menu.security")}</span>
                     </Link>
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
                     <Link to="/parametres/notifications" className="flex items-center gap-3 py-2.5 px-2">
                       <Bell className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium">Notifications</span>
+                      <span className="font-medium">{t("menu.notifications")}</span>
                     </Link>
                   </DropdownMenuItem>
                   
@@ -390,21 +392,21 @@ function AppLayout() {
                   <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
                     <Link to="/parametres/langue" className="flex items-center gap-3 py-2.5 px-2">
                       <Languages className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium">Langue</span>
+                      <span className="font-medium">{t("menu.language")}</span>
                     </Link>
                   </DropdownMenuItem>
                   
                   <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
                     <Link to="/parametres/bloques" className="flex items-center gap-3 py-2.5 px-2">
                       <Ban className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium">Profils bloqués</span>
+                      <span className="font-medium">{t("menu.blocked_profiles")}</span>
                     </Link>
                   </DropdownMenuItem>
 
                   <DropdownMenuItem asChild className="rounded-xl cursor-pointer hover:bg-secondary">
                     <Link to="/aide" className="flex items-center gap-3 py-2.5 px-2">
                       <LifeBuoy className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium">Aide et support</span>
+                      <span className="font-medium">{t("menu.help_support")}</span>
                     </Link>
                   </DropdownMenuItem>
 
@@ -419,7 +421,7 @@ function AppLayout() {
                   >
                     <div className="flex items-center gap-3 py-2.5 px-2 w-full">
                       <Trash2 className="w-4 h-4" />
-                      <span className="font-medium">Supprimer le compte</span>
+                      <span className="font-medium">{t("menu.delete_account")}</span>
                     </div>
                   </DropdownMenuItem>
                   
@@ -432,7 +434,7 @@ function AppLayout() {
                   >
                     <div className="flex items-center gap-3 py-2.5 px-2 w-full">
                       <LogOut className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium">Déconnexion</span>
+                      <span className="font-medium">{t("menu.logout")}</span>
                     </div>
                   </DropdownMenuItem>
                 </DropdownMenuContent>

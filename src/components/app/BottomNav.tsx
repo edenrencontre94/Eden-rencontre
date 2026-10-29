@@ -2,10 +2,12 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Sparkles, MessageSquare, HeartHandshake, Church } from "lucide-react";
 import { motion } from "motion/react";
 import { useNavBadges, type NavBadges } from "@/lib/badgesNav";
+import { useTranslation } from "@/lib/i18n";
+import type { TranslationKey } from "@/locales/translations";
 
 type NavItem = {
   to: "/accueil" | "/decouvrir" | "/messages" | "/demandes" | "/communaute";
-  label: string;
+  labelKey: TranslationKey;
   icon: typeof Home;
   exact?: boolean;
   /** Compteur à afficher sur l'icône, s'il y en a un. */
@@ -13,11 +15,11 @@ type NavItem = {
 };
 
 const items: NavItem[] = [
-  { to: "/accueil", label: "Accueil", icon: Home, exact: true },
-  { to: "/decouvrir", label: "Découvrir", icon: Sparkles },
-  { to: "/messages", label: "Messages", icon: MessageSquare, badge: "messages" },
-  { to: "/demandes", label: "Demandes", icon: HeartHandshake, badge: "demandes" },
-  { to: "/communaute", label: "Communauté", icon: Church, badge: "communaute" },
+  { to: "/accueil", labelKey: "nav.home", icon: Home, exact: true },
+  { to: "/decouvrir", labelKey: "nav.discover", icon: Sparkles },
+  { to: "/messages", labelKey: "nav.messages", icon: MessageSquare, badge: "messages" },
+  { to: "/demandes", labelKey: "nav.requests", icon: HeartHandshake, badge: "demandes" },
+  { to: "/communaute", labelKey: "nav.community", icon: Church, badge: "communaute" },
 ];
 
 /**
@@ -51,6 +53,7 @@ function Pastille({ n }: { n: number }) {
 export function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const badges = useNavBadges();
+  const { t } = useTranslation();
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-background/90 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
@@ -90,14 +93,14 @@ export function BottomNav() {
                   active ? "text-primary" : "text-muted-foreground"
                 }`}
               >
-                {item.label}
+                {t(item.labelKey)}
               </span>
               {/* Le compte lu par les lecteurs d'écran : la pastille est
                   `aria-hidden`, sans quoi « 3 » serait annoncé comme un
                   texte isolé, sans rapport avec le lien. */}
               {item.badge && badges[item.badge] > 0 && (
                 <span className="sr-only">
-                  {badges[item.badge]} non lu{badges[item.badge] > 1 ? "s" : ""}
+                  {badges[item.badge]} {t("common.unread")}
                 </span>
               )}
             </Link>
