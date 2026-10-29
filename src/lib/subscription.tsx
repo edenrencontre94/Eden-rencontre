@@ -280,8 +280,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           );
 
           // Chariow affiche ses propres moyens de paiement selon l'indicatif
-          if (json.checkoutUrl) {
-            window.location.href = json.checkoutUrl;
+          const redirectUrl = json.checkoutUrl ?? json.url;
+          if (redirectUrl) {
+            window.location.href = redirectUrl;
             return { ok: true };
           }
           if (json.step === "completed") {

@@ -50,6 +50,26 @@ function AdminAbonnements() {
     setLoading(true);
     setError(null);
 
+    // Essayer d'abord la RPC admin_get_payments (SECURITY DEFINER)
+    const { data: rpcData, error: rpcErr } = await supabase.rpc("admin_get_payments", { p_limit: 200 });
+
+    if (!rpcErr && rpcData && typeof rpcData === "object" && Array.isArray((rpcData as any).payments)) {
+      const payList = (rpcData as any).payments as any[];
+      const subsList = (rpcData as any).active_subs as any[];
+
+      setPayments(payList as Payment[]);
+      setActiveSubs(subsList.map((s: any) => ({ plan_id: s.public_plan })) as any[]);
+
+      const nMap = new Map<string, string>();
+      payList.forEach((p: any) => {
+        if (p.user_id && p.user_name) nMap.set(p.user_id, p.user_name);
+      });
+      setNames(nMap);
+      setLoading(false);
+      return;
+    }
+
+    // Fallback : requêtes directes
     const [{ data: pay, error: payErr }, { data: subs, error: subErr }] = await Promise.all([
       supabase
         .from("payments")
@@ -63,10 +83,8 @@ function AdminAbonnements() {
     ]);
 
     if (payErr || subErr) {
-      // Sans la policy admin, la RLS ne renvoie que ses propres lignes.
-      // Mieux vaut le dire que d'afficher un tableau de bord à zéro.
       console.error("[admin/abonnements]", payErr ?? subErr);
-
+      setError("Impossible de charger les paiements (vérifiez vos permissions admin).");
       setLoading(false);
       return;
     }
