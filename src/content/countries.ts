@@ -33,6 +33,12 @@ export type Country = {
   conseil: string;
   /** Questions locales fréquentes */
   faq: { q: string; a: string }[];
+  /**
+   * Développements propres au pays, affichés après le conseil. Facultatif :
+   * une page pays courte et presque identique aux autres est traitée par
+   * Google comme une page satellite. Ces sections lui donnent un vrai fond.
+   */
+  sections?: { heading: string; body: string[] }[];
 };
 
 export const COUNTRIES: Country[] = [
@@ -43,7 +49,7 @@ export const COUNTRIES: Country[] = [
     flag: "🇹🇬",
     title: "Rencontre chrétienne au Togo — trouvez votre conjoint en Christ",
     metaDescription:
-      "Rencontres chrétiennes sérieuses au Togo. Rejoignez des célibataires chrétiens de Lomé, Kara et Sokodé qui cherchent un mariage fondé sur la foi.",
+      "Rencontres chrétiennes sérieuses au Togo et dans la diaspora : des célibataires de Lomé, Kara, Sokodé et d'ailleurs qui cherchent un mariage fondé sur la foi.",
     intro:
       "Au Togo, la foi se vit au quotidien — dans les assemblées du dimanche comme dans les cellules de prière en semaine. Eden Rencontre réunit des célibataires togolais qui ne cherchent pas une aventure, mais une alliance.",
     cities: ["Lomé", "Sokodé", "Kara", "Kpalimé", "Atakpamé", "Dapaong", "Tsévié", "Aného"],
@@ -54,11 +60,35 @@ export const COUNTRIES: Country[] = [
     faq: [
       {
         q: "Puis-je préciser ma confession dans mes critères de recherche ?",
-        a: "Oui. Vous pouvez filtrer sur la confession et sur le niveau de pratique, afin de rencontrer des personnes dont la foi s'exprime comme la vôtre. Cette recherche affinée fait partie des formules Premium et VIP.",
+        a: "Oui. Vous pouvez filtrer sur la confession et sur le niveau de pratique, afin de rencontrer des personnes dont la foi s'exprime comme la vôtre. Cette recherche affinée fait partie de la formule Premium.",
       },
       {
         q: "Puis-je rencontrer des Togolais vivant à l'étranger ?",
         a: "Oui. De nombreux membres de la diaspora togolaise en France, au Canada ou en Allemagne recherchent un conjoint partageant leur culture et leur foi. Aucun filtre ne vous enferme dans un seul pays.",
+      },
+    ],
+    sections: [
+      {
+        heading: "Pourquoi tant de Togolais cherchent en ligne",
+        body: [
+          "À Lomé, entre les embouteillages et les journées qui finissent tard, il reste peu de temps pour rencontrer du monde en dehors du travail et de l'église. À Kara, Sokodé, Atakpamé ou Kpalimé, c'est souvent l'inverse : on a le temps, mais le choix est réduit et tout le monde se connaît.",
+          "Il y a aussi tous ceux qui sont partis : étudiants en France ou en Belgique, travailleurs en Allemagne, au Ghana, en Côte d'Ivoire. Beaucoup veulent épouser quelqu'un qui connaît le pays et ses usages, sans savoir par où commencer. Eden Rencontre réunit des chrétiens de nombreux pays : un Togolais de Lomé peut y croiser une Togolaise de Montréal comme une Béninoise de Cotonou.",
+        ],
+      },
+      {
+        heading: "Les sujets à aborder tôt",
+        body: [
+          "La foi commune ne fait pas un couple à elle seule. Elle donne une base. L'Église, d'abord : catholique, Assemblées de Dieu, méthodiste, évangélique, pentecôtiste… Ce n'est pas un mur, mais ça pèse sur la cérémonie, sur l'éducation des enfants et sur le dimanche matin pendant quarante ans.",
+          "La famille, ensuite. Au Togo, on n'épouse pas seulement une personne. Parler tôt de la présentation aux parents évite bien des surprises. La dot, aussi : chez les Éwé, les Kabyè, les Mina, les Tem ou les Moba, les usages ne se ressemblent pas, et mieux vaut savoir ce qu'attend chaque famille avant les fiançailles.",
+          "Et la question du lieu de vie : Lomé, l'intérieur du pays, l'étranger ? Elle mérite d'être posée avant de s'attacher.",
+        ],
+      },
+      {
+        heading: "Se rencontrer en confiance",
+        body: [
+          "La grande majorité des membres sont sincères. Quelques règles protègent des autres. Le premier rendez-vous se fait dans un lieu public et fréquenté, de préférence en journée, et un proche sait où vous êtes.",
+          "On n'envoie jamais d'argent à quelqu'un qu'on n'a pas rencontré, quelle que soit l'histoire : un accident, des frais de douane, un billet d'avion bloqué. Et une personne qui refuse tout appel vidéo, ou qui veut quitter la plateforme dès le deuxième message, mérite de la méfiance.",
+        ],
       },
     ],
   },
@@ -69,7 +99,7 @@ export const COUNTRIES: Country[] = [
     flag: "🇧🇯",
     title: "Rencontre chrétienne au Bénin — célibataires en quête de mariage",
     metaDescription:
-      "Site de rencontre chrétien au Bénin. Rencontrez des célibataires de Cotonou, Porto-Novo et Parakou décidés à bâtir un foyer chrétien.",
+      "Site de rencontre chrétien au Bénin et dans la diaspora : des célibataires de Cotonou, Porto-Novo, Parakou et d'ailleurs, décidés à bâtir un foyer chrétien.",
     intro:
       "Au Bénin, se dire chrétien engage souvent face à toute une famille. Eden Rencontre s'adresse à celles et ceux qui veulent que ce choix soit aussi celui de leur couple.",
     cities: ["Cotonou", "Porto-Novo", "Parakou", "Abomey", "Bohicon", "Natitingou", "Djougou", "Ouidah"],
@@ -85,6 +115,36 @@ export const COUNTRIES: Country[] = [
       {
         q: "L'application fonctionne-t-elle avec une connexion limitée ?",
         a: "Oui. Les pages sont allégées et les images chargées à la demande, pour rester utilisable sur une connexion mobile modeste.",
+      },
+    ],
+    sections: [
+      {
+        heading: "Cotonou, Porto-Novo, Parakou… et bien au-delà",
+        body: [
+          "Cotonou concentre une bonne part des jeunes actifs du pays, mais une vie professionnelle chargée laisse peu de place aux rencontres. À Porto-Novo, Abomey-Calavi, Parakou ou Bohicon, beaucoup de célibataires chrétiens connaissent la même difficulté : un cercle d'église où l'on se connaît depuis l'enfance, et peu d'occasions d'en sortir.",
+          "Eden Rencontre élargit ce cercle sans changer de valeurs. Un célibataire de Cotonou peut y échanger avec quelqu'un de Parakou, mais aussi avec des Béninois de la diaspora, à Paris, à Bruxelles ou à Montréal, et avec des chrétiens d'autres pays francophones.",
+        ],
+      },
+      {
+        heading: "Une même foi, des Églises très différentes",
+        body: [
+          "Le christianisme béninois est d'une grande diversité. L'Église catholique est solidement implantée, aux côtés de l'Église protestante méthodiste, des Assemblées de Dieu, des nombreuses Églises évangéliques et pentecôtistes, et du Christianisme céleste, né à Porto-Novo et très présent dans le sud du pays.",
+          "Ces Églises n'ont ni la même liturgie, ni les mêmes interdits, ni la même façon de célébrer un mariage. Deux personnes qui se disent chrétiennes peuvent donc avoir des attentes très éloignées. Mieux vaut en parler dès les premiers échanges, avec simplicité, plutôt que de le découvrir au moment de la bénédiction nuptiale.",
+        ],
+      },
+      {
+        heading: "La famille, la dot et la tradition",
+        body: [
+          "Au Bénin, le mariage engage deux familles, souvent bien avant l'église ou la mairie. Les usages de la dot diffèrent d'une région à l'autre, chez les Fon, les Goun, les Yoruba, les Bariba ou les Adja, et ce qu'une famille juge normal peut surprendre l'autre.",
+          "Il arrive aussi que la foi d'une famille soit plus mélangée qu'on ne le pense, entre christianisme et religions traditionnelles. Pour un couple chrétien, ce n'est pas une raison de rompre, mais c'est un sujet à aborder avec respect et clarté avant les fiançailles : où se fera la cérémonie, quelles pratiques le couple accepte ou non.",
+        ],
+      },
+      {
+        heading: "Se rencontrer en confiance",
+        body: [
+          "Prenez le temps d'échanger par messages, puis par appel, avant toute rencontre. Le premier rendez-vous se fait dans un lieu public, et un proche sait où vous êtes.",
+          "N'envoyez jamais d'argent à quelqu'un que vous n'avez pas rencontré, quelle que soit la raison invoquée. Et signalez à notre équipe tout profil qui vous paraît suspect : c'est ce qui permet de garder la communauté sûre pour tous.",
+        ],
       },
     ],
   },
@@ -158,11 +218,11 @@ export const COUNTRIES: Country[] = [
     faq: [
       {
         q: "Puis-je chercher dans une ville précise ?",
-        a: "Oui. Le filtre par ville et par distance fait partie des formules Premium et VIP, et vous laisse choisir entre une recherche locale ou nationale.",
+        a: "Oui. Vous pouvez rencontrer des membres de votre ville comme du reste du pays et de la diaspora : la ville de chacun est indiquée sur son profil.",
       },
       {
         q: "Les appels vidéo sont-ils disponibles ?",
-        a: "Les appels audio sont accessibles dès la formule Premium, et les appels vidéo font partie de la formule VIP. C'est souvent l'étape qui rassure avant une première rencontre.",
+        a: "Les appels audio et vidéo sont accessibles avec la formule Premium. C'est souvent l'étape qui rassure avant une première rencontre.",
       },
     ],
   },
@@ -188,7 +248,7 @@ export const COUNTRIES: Country[] = [
       },
       {
         q: "L'inscription est-elle gratuite ?",
-        a: "Oui. Vous pouvez créer votre profil, découvrir des membres et échanger sans payer. Les formules Premium et VIP lèvent les limites quotidiennes et ouvrent les fonctions avancées.",
+        a: "Oui. Vous pouvez créer votre profil, découvrir des membres et échanger sans payer. La formule Premium lève les limites quotidiennes et ouvre les fonctions avancées.",
       },
     ],
   },
