@@ -14,6 +14,7 @@ import {
   FLAW_SUGGESTIONS, DEALBREAKER_SUGGESTIONS, LIST_LIMITS, formatHeight,
   MARITAL_STATUSES, DENOMINATIONS_CONNUES, estDenominationLibre,
 } from "@/lib/profilChamps";
+import { useTranslation } from "@/lib/i18n";
 
 /**
  * Combien de photos par formule.
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/_app/profil")({
 });
 
 function ProfilePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -267,7 +269,7 @@ function ProfilePage() {
         <button onClick={() => navigate({ to: "/accueil" })} className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="font-serif text-2xl font-semibold">Mon Profil</h1>
+        <h1 className="font-serif text-2xl font-semibold">{t("profile.title")}</h1>
       </div>
 
       {/* Le pourcentage est affiché ICI, là où l'on peut agir dessus. Sur

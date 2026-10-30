@@ -36,6 +36,7 @@ import { daysUntilSuperLike, fetchQuotas, quotaErrorMessage, type Quotas } from 
 
 import { displayName } from "@/lib/utils";
 import { ProfileExtrasBlocks } from "@/components/app/ProfileExtras";
+import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_app/decouvrir")({
   head: () => ({
@@ -49,6 +50,7 @@ export const Route = createFileRoute("/_app/decouvrir")({
 });
 
 function DiscoverPage() {
+  const { t } = useTranslation();
   const [deck, setDeck] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
@@ -72,7 +74,7 @@ function DiscoverPage() {
 
   const upsell = (message: string) => {
     toast.error(message, {
-      action: { label: "Voir les formules", onClick: () => navigate({ to: "/abonnement" }) },
+      action: { label: t("landing.nav.pricing"), onClick: () => navigate({ to: "/abonnement" }) },
     });
   };
 
@@ -175,8 +177,11 @@ function DiscoverPage() {
     [deck],
   );
 
-  const currentFiltered = filteredDeck[index];
-  const nextFiltered = filteredDeck[index + 1];
+  // Le défilement boucle indéfiniment : dès qu'on arrive à la fin du paquet,
+  // la boucle repart au début de façon fluide sans interrompre le swipe
+  const deckLength = filteredDeck.length;
+  const currentFiltered = deckLength > 0 ? filteredDeck[index % deckLength] : null;
+  const nextFiltered = deckLength > 1 ? filteredDeck[(index + 1) % deckLength] : null;
   const activeFilters = countActiveFilters(filters);
 
   useEffect(() => {
@@ -377,7 +382,7 @@ function DiscoverPage() {
         <button
           onClick={() => setShowFilters(true)}
           className="relative w-10 h-10 rounded-full bg-secondary text-foreground flex items-center justify-center hover:bg-secondary/80 transition-colors shadow-sm"
-          aria-label="Filtres"
+          aria-label={t("discover.filters")}
         >
           <SlidersHorizontal className="w-5 h-5" />
           {activeFilters > 0 && (
@@ -392,7 +397,7 @@ function DiscoverPage() {
         <div className="inline-flex items-center gap-3 px-3 py-1 rounded-full bg-secondary/60 border border-border/60 text-[11px] font-medium">
           <span className="inline-flex items-center gap-1">
             <Star className="w-3 h-3 text-primary" fill="currentColor" />
-            {superLikesLeft === -1 ? "∞" : superLikesLeft} Super Likes
+            {superLikesLeft === -1 ? "∞" : superLikesLeft} {t("discover.super_likes")}
           </span>
         </div>
       </div>
@@ -400,29 +405,29 @@ function DiscoverPage() {
       <div className="relative h-[560px] max-h-[70vh] w-full mx-auto max-w-md">
         {loading ? (
           <div className="absolute inset-0 rounded-3xl bg-secondary animate-pulse flex items-center justify-center border border-border">
-            <span className="text-muted-foreground font-medium">Recherche de profils...</span>
+            <span className="text-muted-foreground font-medium">{t("discover.searching")}</span>
           </div>
         ) : filteredDeck.length === 0 || !currentFiltered ? (
           <div className="absolute inset-0 rounded-3xl bg-card border-2 border-dashed border-border flex flex-col items-center justify-center p-8 text-center shadow-soft">
             <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mb-4">
               <Sparkles className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="font-serif text-xl font-semibold mb-2">Plus aucun profil</h3>
+            <h3 className="font-serif text-xl font-semibold mb-2">{t("discover.empty_title")}</h3>
             <p className="text-sm text-muted-foreground mb-6">
-              Vous avez vu tous les profils correspondant à vos critères pour le moment.
+              {t("discover.empty_desc")}
             </p>
             <button
               onClick={() => setIndex(0)}
               className="px-6 py-2 rounded-full bg-primary text-primary-foreground font-semibold text-sm shadow-elegant"
             >
-              Revoir depuis le début
+              {t("discover.restart")}
             </button>
           </div>
         ) : (
           <AnimatePresence>
             {nextFiltered && (
               <SwipeCard
-                key={nextFiltered.id}
+                key={`card-next-${nextFiltered.id}-${index + 1}`}
                 profile={nextFiltered}
                 active={false}
                 onSwipe={() => {}}
@@ -431,7 +436,7 @@ function DiscoverPage() {
             )}
             {currentFiltered && (
               <SwipeCard
-                key={currentFiltered.id}
+                key={`card-current-${currentFiltered.id}-${index}`}
                 profile={currentFiltered}
                 active={true}
                 onSwipe={swipe}
@@ -457,7 +462,7 @@ function DiscoverPage() {
               <Lock className="absolute -top-1 -right-1 w-3 h-3 text-gold bg-background rounded-full p-[1px]" />
             )}
           </button>
-          <span className="text-[10px] text-muted-foreground font-medium">Retour</span>
+          <span className="text-[10px] text-muted-foreground font-medium">{t("discover.btn_rewind")}</span>
         </div>
 
         <div className="flex flex-col items-center gap-1">
@@ -467,7 +472,7 @@ function DiscoverPage() {
           >
             <X className="w-5 h-5" />
           </button>
-          <span className="text-[10px] text-muted-foreground font-medium">Passer</span>
+          <span className="text-[10px] text-muted-foreground font-medium">{t("discover.btn_pass")}</span>
         </div>
 
 
@@ -475,11 +480,11 @@ function DiscoverPage() {
           <button
             onClick={() => {
               if (!features.preMatchMessage) {
-                requirePlan("Écrire avant le match est réservé aux membres Premium");
+                requirePlan(t("discover.prematch_premium_required"));
                 return;
               }
               if (currentFiltered) setShowMessageModal(currentFiltered);
-              else toast.info("Chargement…");
+              else toast.info(t("common.loading"));
             }}
             className={`relative w-12 h-12 rounded-full border-2 flex items-center justify-center transition-transform active:scale-95 shadow-sm ${
               features.preMatchMessage
@@ -492,7 +497,7 @@ function DiscoverPage() {
               <Lock className="absolute -top-1 -right-1 w-3 h-3 text-gold bg-background rounded-full p-[1px]" />
             )}
           </button>
-          <span className="text-[10px] text-muted-foreground font-medium">Message</span>
+          <span className="text-[10px] text-muted-foreground font-medium">{t("discover.btn_message")}</span>
         </div>
 
         <div className="flex flex-col items-center gap-1">
@@ -502,7 +507,7 @@ function DiscoverPage() {
           >
             <UserPlus className="w-5 h-5" />
           </button>
-          <span className="text-[10px] text-primary font-medium">Ajouter</span>
+          <span className="text-[10px] text-primary font-medium">{t("discover.btn_add")}</span>
         </div>
       </div>
 
@@ -633,13 +638,13 @@ function DiscoverPage() {
                 <img src={showMessageModal.photo} className="w-12 h-12 rounded-full object-cover" alt="" />
                 <div>
                   <div className="font-semibold">{showMessageModal.firstName}, {showMessageModal.age}</div>
-                  <div className="text-xs text-muted-foreground">Envoyer un message pour briser la glace ✨</div>
+                  <div className="text-xs text-muted-foreground">{t("discover.prematch_sub")}</div>
                 </div>
               </div>
               <textarea
                 value={messageText}
                 onChange={e => setMessageText(e.target.value)}
-                placeholder={`Dites bonjour à ${showMessageModal.firstName}…`}
+                placeholder={t("discover.prematch_placeholder")}
                 rows={3}
                 className="w-full px-4 py-3 rounded-2xl bg-secondary border border-border resize-none text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
               />
@@ -648,14 +653,14 @@ function DiscoverPage() {
                   onClick={() => { setShowMessageModal(null); setMessageText(""); }}
                   className="flex-1 py-2.5 rounded-full border border-border text-sm font-medium hover:bg-secondary"
                 >
-                  Annuler
+                  {t("common.cancel")}
                 </button>
                 <button
                   onClick={sendPreMatchMessage}
                   disabled={!messageText.trim()}
                   className="flex-1 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold shadow-elegant disabled:opacity-40"
                 >
-                  Envoyer 💌
+                  {t("discover.prematch_send")}
                 </button>
               </div>
             </motion.div>

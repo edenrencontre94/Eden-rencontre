@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import logoAsset from "@/assets/logo.png";
+import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -26,11 +28,11 @@ function LoginPage() {
     e.preventDefault();
 
     if (!email.trim() || !email.trim().includes("@")) {
-      toast.error("Veuillez entrer une adresse e-mail valide");
+      toast.error(t("login.err_email"));
       return;
     }
     if (!password) {
-      toast.error("Veuillez entrer votre mot de passe");
+      toast.error(t("login.err_password"));
       return;
     }
 
@@ -43,7 +45,7 @@ function LoginPage() {
 
       if (error) throw error;
       if (data.session) {
-        toast.success("Bon retour sur Eden Rencontre !");
+        toast.success(t("login.welcome_back"));
         
         // Petite pause pour s'assurer que la session locale est bien enregistrée
         setTimeout(() => {
@@ -52,9 +54,9 @@ function LoginPage() {
       }
     } catch (err: any) {
       if (err.message.includes("Invalid login credentials")) {
-        toast.error("E-mail ou mot de passe incorrect");
+        toast.error(t("login.err_credentials"));
       } else {
-        toast.error("Erreur de connexion : " + err.message);
+        toast.error(t("login.err_prefix") + err.message);
       }
       setLoading(false);
     }
@@ -71,16 +73,16 @@ function LoginPage() {
           <Link to="/" className="inline-block hover:scale-105 transition-transform">
             <img src={logoAsset} alt="Eden Rencontre" className="w-16 h-16 object-contain" />
           </Link>
-          <h1 className="font-serif text-3xl font-bold mt-6 mb-2">Bon retour</h1>
+          <h1 className="font-serif text-3xl font-bold mt-6 mb-2">{t("login.title")}</h1>
           <p className="text-muted-foreground text-center mb-8">
-            Connectez-vous pour accéder à votre compte.
+            {t("login.subtitle")}
           </p>
 
           <form onSubmit={handleSubmit} className="w-full space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-1.5">
                 <Mail className="w-4 h-4 text-muted-foreground" />
-                Email
+                {t("login.email")}
               </Label>
               <Input
                 id="email"
@@ -96,7 +98,7 @@ function LoginPage() {
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-semibold flex items-center gap-1.5">
                 <Lock className="w-4 h-4 text-muted-foreground" />
-                Mot de passe
+                {t("login.password")}
               </Label>
               <div className="relative">
                 <Input
@@ -105,7 +107,7 @@ function LoginPage() {
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Votre mot de passe"
+                  placeholder={t("login.password_placeholder")}
                   className="h-12 pr-11 bg-background/50 focus:bg-background transition-colors text-base rounded-xl"
                 />
                 <button
@@ -123,14 +125,14 @@ function LoginPage() {
               disabled={loading}
               className="w-full h-12 text-base font-semibold bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-elegant rounded-xl mt-4"
             >
-              {loading ? "Connexion en cours..." : "Se connecter"}
+              {loading ? t("login.submitting") : t("login.submit")}
             </Button>
           </form>
 
           <p className="mt-8 text-sm text-muted-foreground">
-            Vous n'avez pas de compte ?{" "}
+            {t("login.no_account")}{" "}
             <Link to="/inscription" className="text-primary hover:underline font-medium">
-              S'inscrire
+              {t("login.sign_up")}
             </Link>
           </p>
         </div>

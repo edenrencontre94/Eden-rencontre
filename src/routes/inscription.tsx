@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import logoAsset from "@/assets/logo.png";
 import { toast } from "sonner";
 import { useSetting } from "@/lib/appSettings";
+import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/inscription")({
   head: () => ({
@@ -40,6 +41,7 @@ function InscriptionPage() {
 
 
   const registrationOpen = useSetting<boolean>("registration_open", true);
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,32 +50,32 @@ function InscriptionPage() {
     // le formulaire peut être soumis à la touche Entrée, et l'état a pu
     // changer entre l'ouverture de la page et l'envoi.
     if (registrationOpen === false) {
-      toast.error("Les inscriptions sont momentanément fermées.");
+      toast.error(t("inscription.err_closed"));
       return;
     }
 
     // Messages distincts : « remplissez tous les champs » oblige à
     // chercher lequel manque.
     if (firstName.trim().length < 2) {
-      toast.error("Votre prénom est requis");
+      toast.error(t("inscription.err_firstname"));
       return;
     }
     if (lastName.trim().length < 2) {
-      toast.error("Votre nom est requis");
+      toast.error(t("inscription.err_lastname"));
       return;
     }
-    // Email : obligatoire
+    // Email
     if (!email.trim() || !email.trim().includes("@")) {
-      toast.error("Une adresse e-mail valide est requise");
+      toast.error(t("inscription.err_email"));
       return;
     }
-    // Mot de passe : obligatoire
+    // Mot de passe
     if (password.length < 6) {
-      toast.error("Le mot de passe doit contenir au moins 6 caractères");
+      toast.error(t("inscription.err_password"));
       return;
     }
     if (!acceptedCGU) {
-      toast.error("Veuillez accepter les conditions d'utilisation");
+      toast.error(t("inscription.err_cgu"));
       return;
     }
 
@@ -127,10 +129,10 @@ function InscriptionPage() {
         
       }
 
-      toast.success("Compte créé avec succès !");
+      toast.success(t("inscription.success"));
       navigate({ to: "/onboarding" });
     } catch (err: any) {
-      toast.error("Erreur lors de l'inscription : " + err.message);
+      toast.error(t("inscription.error_prefix") + err.message);
     } finally {
       setLoading(false);
     }
@@ -156,22 +158,20 @@ function InscriptionPage() {
         >
           <div className="text-center mb-10">
             <h1 className="font-serif text-3xl sm:text-4xl font-semibold text-foreground tracking-tight">
-              Créez votre compte.
+              {t("inscription.title")}
             </h1>
             <p className="text-muted-foreground mt-3 text-sm sm:text-base">
-              En moins d'une minute. Sécurisé et sans engagement.
+              {t("inscription.subtitle")}
             </p>
           </div>
 
           {registrationOpen === false && (
             <div className="mb-6 rounded-2xl border border-gold/50 bg-gold/10 p-4 text-sm leading-relaxed">
-              <p className="font-semibold">Les inscriptions sont momentanément fermées.</p>
+              <p className="font-semibold">{t("inscription.closed_title")}</p>
               <p className="text-muted-foreground mt-1">
-                Nous accueillons de nouveaux membres par vagues, afin que chacun
-                trouve une communauté vivante. Revenez d'ici quelques jours — et
-                si vous avez déjà un compte, vous pouvez{" "}
+                {t("inscription.closed_body")}{" "}
                 <Link to="/login" className="text-primary underline underline-offset-2">
-                  vous connecter
+                  {t("inscription.login_link")}
                 </Link>
                 .
               </p>
@@ -190,7 +190,7 @@ function InscriptionPage() {
                   concernée le sait. */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstname" className="text-sm font-semibold">Prénom</Label>
+                  <Label htmlFor="firstname" className="text-sm font-semibold">{t("inscription.firstname")}</Label>
                   <div className="relative">
                     <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                     <Input
@@ -207,7 +207,7 @@ function InscriptionPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="lastname" className="text-sm font-semibold">Nom</Label>
+                  <Label htmlFor="lastname" className="text-sm font-semibold">{t("inscription.lastname")}</Label>
                   <Input
                     id="lastname"
                     type="text"
@@ -225,7 +225,7 @@ function InscriptionPage() {
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-1.5">
                   <Mail className="w-4 h-4 text-muted-foreground" />
-                  Email
+                  {t("inscription.email")}
                 </Label>
                 <Input
                   id="email"
@@ -241,7 +241,7 @@ function InscriptionPage() {
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-semibold flex items-center gap-1.5">
                   <Lock className="w-4 h-4 text-muted-foreground" />
-                  Mot de passe
+                  {t("inscription.password")}
                 </Label>
                 <div className="relative">
                   <Input
@@ -250,7 +250,7 @@ function InscriptionPage() {
                     autoComplete="new-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Au moins 6 caractères"
+                    placeholder={t("inscription.password_placeholder")}
                     minLength={6}
                     className="h-12 pr-11 bg-background/50 focus:bg-background transition-colors text-base rounded-xl"
                   />
@@ -283,7 +283,11 @@ function InscriptionPage() {
                   </div>
                 </div>
                 <span className="text-sm text-muted-foreground leading-relaxed select-none">
-                  J'accepte les <a href="#" onClick={(e) => e.preventDefault()} className="text-primary hover:underline font-medium">termes et conditions</a> d'utilisation de Eden Rencontre
+                  {t("inscription.accept_terms")}{" "}
+                  <a href="#" onClick={(e) => e.preventDefault()} className="text-primary hover:underline font-medium">
+                    {t("inscription.terms_link")}
+                  </a>{" "}
+                  {t("inscription.terms_suffix")}
                 </span>
               </label>
 
@@ -295,17 +299,17 @@ function InscriptionPage() {
                   className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base shadow-soft"
                 >
                   {registrationOpen === false
-                    ? "Inscriptions fermées"
-                    : loading ? "Création en cours..." : "Créer mon compte"}
+                    ? t("inscription.closed_btn")
+                    : loading ? t("inscription.loading") : t("inscription.submit")}
                 </Button>
               </motion.div>
             </form>
 
             <div className="mt-8 text-center">
               <p className="text-sm text-muted-foreground">
-                Déjà un compte ?{" "}
+                {t("inscription.already_account")}{" "}
                 <Link to="/login" className="text-primary font-semibold hover:underline">
-                  Se connecter
+                  {t("inscription.sign_in")}
                 </Link>
               </p>
             </div>

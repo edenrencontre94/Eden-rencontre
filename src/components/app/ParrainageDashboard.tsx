@@ -63,7 +63,8 @@ export function ParrainageDashboard() {
   const [envoi, setEnvoi] = useState(false);
 
   useEffect(() => {
-    supabase.rpc("mon_parrainage").then(({ data: d, error }) => {
+    supabase.rpc("mon_parrainage").then((res: any) => {
+      const { data: d, error } = res;
       if (error) {
         console.error("[parrainage]", error);
         setData({ programme_actif: false });

@@ -26,6 +26,7 @@ import { ReportDialog } from "@/components/app/ReportDialog";
 import { useSubscription } from "@/lib/subscription";
 import { fetchQuotas, quotaErrorMessage, type Quotas } from "@/lib/quotas";
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_app/messages")({
   head: () => ({
@@ -524,6 +525,7 @@ async function loadConversations(userId: string): Promise<MatchChat[]> {
 // Messages Page
 // ─────────────────────────────────────────────────
 function MessagesPage() {
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<"all" | "unread" | "archived">("all");
   const [active, setActive] = useState<MatchChat | null>(null);
@@ -652,10 +654,10 @@ function MessagesPage() {
   return (
     <div className="px-4 pt-4">
       <div className="flex items-baseline gap-2 mb-3">
-        <h1 className="font-serif text-2xl font-semibold">Messages</h1>
+        <h1 className="font-serif text-2xl font-semibold">{t("messages.title")}</h1>
         {totalUnread > 0 && (
           <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary text-xs font-semibold">
-            {totalUnread} non lu{totalUnread > 1 ? "s" : ""}
+            {totalUnread} {t("common.unread")}
           </span>
         )}
       </div>
@@ -665,13 +667,13 @@ function MessagesPage() {
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Rechercher une conversation…"
+          placeholder={t("messages.search_placeholder")}
           className="w-full pl-10 pr-9 py-2.5 rounded-full bg-secondary border border-border focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm"
         />
         {query && (
           <button
             onClick={() => setQuery("")}
-            aria-label="Effacer la recherche"
+            aria-label={t("common.delete")}
             className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-muted-foreground/20 flex items-center justify-center hover:bg-muted-foreground/30"
           >
             <X className="w-3 h-3" />
@@ -681,12 +683,12 @@ function MessagesPage() {
 
       {/* Filtres */}
       <div className="flex gap-2 mb-4">
-        {([["all", "Toutes"], ["unread", "Non lues"], ["archived", "Archivées"]] as const)
+        {([["all", t("messages.tabs_all")], ["unread", t("messages.tabs_unread")], ["archived", t("messages.tabs_archived")]] as const)
           .filter(([key]) => key !== "archived" || archivedCount > 0)
           .map(([key, label]) => (
           <button
             key={key}
-            onClick={() => setTab(key)}
+            onClick={() => setTab(key as any)}
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${
               tab === key
                 ? "bg-primary text-primary-foreground"
@@ -708,7 +710,7 @@ function MessagesPage() {
           {newMatches.length > 0 && (
             <div className="mb-6">
               <div className="text-xs uppercase tracking-wider text-primary font-semibold mb-2">
-                Nouveaux matches · {newMatches.length}
+                {t("messages.empty_new_matches")} · {newMatches.length}
               </div>
               <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-none">
                 {newMatches.map(c => {

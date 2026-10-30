@@ -12,22 +12,28 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 const STORAGE_KEY = "eden_language";
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(() => {
+  // SSR-safe: initialize with "fr" on the server, then hydrate from
+  // localStorage / browser language on the client inside useEffect.
+  const [language, setLanguageState] = useState<Language>("fr");
+
+  useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY) as Language | null;
       if (stored === "fr" || stored === "en") {
-        return stored;
+        setLanguageState(stored);
+        document.documentElement.lang = stored;
+        return;
       }
-      // Detect browser language
+      // Auto-detect from browser language when no preference stored yet
       const browserLang = navigator.language?.toLowerCase() || "";
       if (browserLang.startsWith("en")) {
-        return "en";
+        setLanguageState("en");
+        document.documentElement.lang = "en";
       }
     } catch (e) {
-      // LocalStorage access might fail in private browsing
+      // localStorage unavailable (private browsing, etc.)
     }
-    return "fr";
-  });
+  }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);

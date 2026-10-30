@@ -21,6 +21,8 @@ import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { getSessionUser } from "@/lib/auth";
+import { useTranslation } from "@/lib/i18n";
+import type { TranslationKey } from "@/locales/translations";
 
 type Photo = { id: string; url: string; name: string };
 
@@ -132,11 +134,11 @@ const initialData: OnboardingData = {
   photos: [],
 };
 
-const steps = [
-  { id: 1, title: "Profil", subtitle: "Faisons connaissance", icon: Heart },
-  { id: 2, title: "Foi", subtitle: "Votre confession", icon: Church },
-  { id: 3, title: "Recherche", subtitle: "Vos critères", icon: Search },
-  { id: 4, title: "Photos", subtitle: "Montrez-vous", icon: Camera },
+const stepDefs: { id: number; titleKey: TranslationKey; subKey: TranslationKey; icon: any }[] = [
+  { id: 1, titleKey: "onboarding.step1_title", subKey: "onboarding.step1_sub", icon: Heart },
+  { id: 2, titleKey: "onboarding.step2_title", subKey: "onboarding.step2_sub", icon: Church },
+  { id: 3, titleKey: "onboarding.step3_title", subKey: "onboarding.step3_sub", icon: Search },
+  { id: 4, titleKey: "onboarding.step4_title", subKey: "onboarding.step4_sub", icon: Camera },
 ];
 
 export const Route = createFileRoute("/onboarding")({
@@ -161,6 +163,7 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 function OnboardingPage() {
+  const { t } = useTranslation();
   const [step, setStep] = useState<number>(() => {
     if (typeof window === "undefined") return 1;
     try {
@@ -243,11 +246,11 @@ function OnboardingPage() {
     return false;
   }, [step, data]);
 
-  const progress = (step / steps.length) * 100;
+  const progress = (step / stepDefs.length) * 100;
 
   const handleNext = async () => {
     if (!canNext) {
-      toast.error("Veuillez compléter tous les champs requis");
+      toast.error(t("onboarding.err_complete_fields"));
       return;
     }
     if (step < 4) {
@@ -296,7 +299,7 @@ function OnboardingPage() {
 
         if (!userId) throw new Error("Erreur: Utilisateur non connecté. Veuillez vous inscrire d'abord.");
 
-        toast.info("Enregistrement du profil en cours...", { id: "saving" });
+        toast.info(t("onboarding.saving"), { id: "saving" });
 
         const uploadedPhotos = [];
         let dernierEchec: string | null = null;
@@ -313,9 +316,6 @@ function OnboardingPage() {
               .upload(filePath, blob, { contentType: blob.type });
 
             if (uploadError) {
-              // L'erreur était SILENCIEUSEMENT ignorée : `if (!uploadError)`
-              // sans branche `else`. Un échec de stockage laissait donc
-              // l'inscription se terminer avec `photos: []`.
               console.error("[onboarding] téléversement refusé :", uploadError);
               dernierEchec = uploadError.message;
               continue;
@@ -329,8 +329,6 @@ function OnboardingPage() {
           }
         }
 
-        // AUCUNE photo n'est passée alors que l'utilisateur en a sélectionné :
-        // on interrompt au lieu de créer un profil vide en croyant que ça a marché.
         if (data.photos.length > 0 && uploadedPhotos.length === 0) {
           toast.dismiss("saving");
           toast.error("Votre photo n'a pas pu être envoyée", {
@@ -339,11 +337,9 @@ function OnboardingPage() {
               : "Vérifiez votre connexion et réessayez.",
             duration: 8000,
           });
-          // On reste à l'étape 4
           return;
         }
 
-        // Certaines sont passées, d'autres non : on continue, mais on le dit.
         if (uploadedPhotos.length < data.photos.length) {
           toast.warning(
             `${data.photos.length - uploadedPhotos.length} photo(s) n'ont pas pu être envoyées`,
@@ -369,35 +365,21 @@ function OnboardingPage() {
           marriage_intent: data.marriageIntent,
           has_children: data.hasChildren,
           wants_children: data.wantsChildren,
-          // La question « comment nous avez-vous connus ? » était posée à
-          // chaque inscription, affichée, puis jetée : aucune colonne ne
-          // la recevait. C'est pourtant la seule donnée qui dit où placer
-          // un budget publicitaire.
           acquisition_source: data.source || null,
           photos: uploadedPhotos
         });
 
         if (profileError) throw profileError;
 
-        // Le compte existe RÉELLEMENT à partir d'ici : le profil est
-        // écrit en base. Déclencher plus tôt — au clic sur « Créer mon
-        // compte » — compterait des inscriptions qui n'aboutissent pas.
-        //
-        // Import dynamique : le suivi publicitaire ne doit pas alourdir
-        // le fragment servi à chaque visiteur.
         import("@/lib/meta").then(async m => {
           await m.rattacherProvenance();
           await m.suivreMeta("CompleteRegistration");
 
-          // Un profil déjà complet à l'inscription : l'événement part
-          // aussi maintenant, sinon il ne partirait jamais pour ces
-          // membres-là.
           const { data: pct } = await supabase.rpc("my_profile_completion");
           if (typeof pct === "number" && pct >= 60) await m.suivreMeta("CompleteProfile");
         });
 
         toast.dismiss("saving");
-        // Nettoyer sessionStorage et localStorage après enregistrement réussi
         if (typeof window !== "undefined") {
           try {
             sessionStorage.removeItem("eden_pending_user_id");
@@ -408,7 +390,7 @@ function OnboardingPage() {
           } catch {}
         }
         setSubmitted(true);
-        toast.success("Profil créé avec succès !");
+        toast.success(t("onboarding.saved_success"));
 
       } catch (error: any) {
         toast.dismiss("saving");
@@ -427,7 +409,7 @@ function OnboardingPage() {
     return (
       <SourceScreen
         onSelect={(s) => update("source", s)}
-        onBack={() => {}} // Could redirect to home or login if needed
+        onBack={() => {}}
       />
     );
 
@@ -440,7 +422,7 @@ function OnboardingPage() {
             <span className="font-serif text-xl font-semibold">Eden Rencontre</span>
           </Link>
           <span className="text-sm text-muted-foreground">
-            Étape {step} <span className="text-foreground/40">/ {steps.length}</span>
+            {t("onboarding.step")} {step} <span className="text-foreground/40">/ {stepDefs.length}</span>
           </span>
         </div>
       </header>
@@ -448,7 +430,7 @@ function OnboardingPage() {
       {/* Progress */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-8">
         <div className="hidden sm:flex items-center justify-between mb-6">
-          {steps.map((s, i) => {
+          {stepDefs.map((s, i) => {
             const active = step === s.id;
             const done = step > s.id;
             const Icon = s.icon;
@@ -470,14 +452,14 @@ function OnboardingPage() {
                     <div
                       className={`text-sm font-medium ${active ? "text-foreground" : "text-muted-foreground"}`}
                     >
-                      {s.title}
+                      {t(s.titleKey)}
                     </div>
                     <div className="text-xs text-muted-foreground hidden md:block">
-                      {s.subtitle}
+                      {t(s.subKey)}
                     </div>
                   </div>
                 </div>
-                {i < steps.length - 1 && (
+                {i < stepDefs.length - 1 && (
                   <div
                     className={`flex-1 h-0.5 mx-2 mb-6 transition-colors ${
                       done ? "bg-primary" : "bg-border"
@@ -491,7 +473,7 @@ function OnboardingPage() {
         <div className="sm:hidden mb-6">
           <Progress value={progress} className="h-2" />
           <div className="mt-2 text-sm text-muted-foreground">
-            {steps[step - 1].title} — {steps[step - 1].subtitle}
+            {t(stepDefs[step - 1].titleKey)} — {t(stepDefs[step - 1].subKey)}
           </div>
         </div>
       </div>
@@ -525,7 +507,7 @@ function OnboardingPage() {
                 className="gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Retour
+                {t("onboarding.btn_back")}
               </Button>
             </motion.div>
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
@@ -535,7 +517,7 @@ function OnboardingPage() {
                 size="lg"
                 className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:opacity-95 shadow-elegant"
               >
-                {step === 4 ? (data.photos.length > 0 ? "Terminer" : "Ajouter la photo plus tard") : "Continuer"}
+                {step === 4 ? (data.photos.length > 0 ? t("onboarding.btn_finish") : t("onboarding.step4.add_photo_later")) : t("onboarding.btn_continue")}
                 {step < 4 && <ArrowRight className="w-4 h-4" />}
               </Button>
             </motion.div>
@@ -543,8 +525,7 @@ function OnboardingPage() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Vos informations sont confidentielles et servent uniquement à vous
-          proposer des profils compatibles.
+          {t("onboarding.privacy_notice")}
         </p>
       </main>
     </div>
@@ -559,16 +540,17 @@ function StepProfile({
   data: OnboardingData;
   update: <K extends keyof OnboardingData>(k: K, v: OnboardingData[K]) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div>
       <StepHeader
-        eyebrow="Étape 1"
-        title="Votre Profil"
-        description="Ces informations apparaîtront publiquement sur votre profil."
+        eyebrow={`${t("onboarding.step")} 1`}
+        title={t("onboarding.step1_header_title")}
+        description={t("onboarding.step1_header_desc")}
       />
       <div className="grid sm:grid-cols-2 gap-5 mt-8">
         <div className="sm:col-span-2">
-          <Field label="Date de naissance" htmlFor="birthDate">
+          <Field label={t("onboarding.birthdate")} htmlFor="birthDate">
             <Input
               id="birthDate"
               type="date"
@@ -589,48 +571,42 @@ function StepProfile({
             const isAdult = age > 18 || (age === 18 && m >= 0 && (m > 0 || today.getDate() >= birth.getDate()));
             if (!isAdult) return (
               <div className="mt-2 flex items-center gap-2 px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-sm font-medium">
-                <span>â›”</span>
-                <span>Vous devez avoir au moins <strong>18 ans</strong> pour vous inscrire sur Eden Rencontre.</span>
+                <span>⛔</span>
+                <span>{t("onboarding.min_age_err")}</span>
               </div>
             );
             return null;
           })()}
         </div>
         <div className="sm:col-span-2">
-          <Field label="Genre">
+          <Field label={t("onboarding.gender")}>
             <div className="grid grid-cols-2 gap-3">
               <GenderChoice
                 active={data.gender === "femme"}
                 onClick={() => update("gender", "femme")}
-                label="Femme"
+                label={t("onboarding.gender_woman")}
                 icon={WomanIcon}
               />
               <GenderChoice
                 active={data.gender === "homme"}
                 onClick={() => update("gender", "homme")}
-                label="Homme"
+                label={t("onboarding.gender_man")}
                 icon={ManIcon}
               />
             </div>
           </Field>
         </div>
-        {/* Pays d'abord : la liste des villes en dépend. L'ordre inverse
-            obligeait à saisir une ville « à l'aveugle », puis à changer de
-            pays — sans que la ville soit remise en cause. */}
-        <Field label="Pays" htmlFor="country">
+        <Field label={t("onboarding.country")} htmlFor="country">
           <PaysSelect
             id="country"
             value={data.country}
             onChange={(pays) => {
-              // Changer de pays invalide la ville : « Abidjan, Sénégal »
-              // n'a aucun sens, et le filtre par pays s'en trouverait
-              // faussé.
               if (pays !== data.country) update("city", "");
               update("country", pays);
             }}
           />
         </Field>
-        <Field label="Ville" htmlFor="city">
+        <Field label={t("onboarding.city")} htmlFor="city">
           <VilleSelect
             id="city"
             value={data.city}
@@ -639,13 +615,13 @@ function StepProfile({
           />
         </Field>
         <div className="sm:col-span-2">
-          <Field label="Présentation" htmlFor="bio">
+          <Field label={t("onboarding.bio")} htmlFor="bio">
             <Textarea
               id="bio"
               maxLength={500}
               value={data.bio}
               onChange={(e) => update("bio", e.target.value)}
-              placeholder="Parlez de vous, vos passions, votre foi, ce que vous recherchez..."
+              placeholder={t("onboarding.bio_placeholder")}
               rows={4}
             />
             <div className="text-xs text-muted-foreground text-right mt-1">
@@ -666,26 +642,21 @@ function StepFaith({
   data: OnboardingData;
   update: <K extends keyof OnboardingData>(k: K, v: OnboardingData[K]) => void;
 }) {
-  // « Autre » n'est pas une confession : c'est l'aveu qu'on n'a pas su
-  // proposer la sienne. Un profil « Autre » ne dit rien à personne, et le
-  // filtre par dénomination le range dans un fourre-tout. Ce qui est
-  // enregistré est donc toujours la dénomination réelle.
+  const { t } = useTranslation();
   const estAutre =
     data.denomination !== "" && !DENOMINATIONS_CONNUES.includes(data.denomination);
 
-  // État séparé : à l'instant du clic sur « Autre », le champ est vide,
-  // donc `estAutre` est faux — la puce paraîtrait inactive.
   const [autreOuvert, setAutreOuvert] = useState(estAutre);
 
   return (
     <div>
       <StepHeader
-        eyebrow="Étape 2"
-        title="Votre foi"
-        description="Le cÅ“ur de votre profil : votre relation avec Dieu."
+        eyebrow={`${t("onboarding.step")} 2`}
+        title={t("onboarding.step2_header_title")}
+        description={t("onboarding.step2_header_desc")}
       />
       <div className="grid gap-6 mt-8">
-        <Field label="Confession / Dénomination">
+        <Field label={t("onboarding.denomination")}>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {DENOMINATIONS_CONNUES.map((d) => (
               <ChoiceChip
@@ -702,11 +673,9 @@ function StepFaith({
               active={autreOuvert || estAutre}
               onClick={() => {
                 setAutreOuvert(true);
-                // Le choix précédent est effacé : le laisser afficherait
-                // « Baptiste » coché sous un champ libre en cours de saisie.
                 if (!estAutre) update("denomination", "");
               }}
-              label="Autre"
+              label={t("onboarding.other")}
             />
           </div>
 
@@ -717,24 +686,22 @@ function StepFaith({
                 maxLength={60}
                 value={estAutre ? data.denomination : ""}
                 onChange={(e) => update("denomination", e.target.value)}
-                placeholder="Assemblées de Dieu, Église du Christ, Anglicane…"
+                placeholder={t("onboarding.other_denomination_placeholder")}
               />
               <p className="text-xs text-muted-foreground mt-1.5">
-                Écrivez le nom de votre église ou dénomination. Il apparaîtra
-                sur votre profil et permettra aux membres de la même confession
-                de vous trouver.
+                {t("onboarding.other_denomination_hint")}
               </p>
             </div>
           )}
         </Field>
 
-        <Field label="Niveau de pratique">
+        <Field label={t("onboarding.practice_level")}>
           <div className="grid sm:grid-cols-2 gap-2">
             {[
-              { v: "tres-pratiquant", l: "Très pratiquant" },
-              { v: "pratiquant", l: "Pratiquant" },
-              { v: "croyant", l: "Croyant, peu pratiquant" },
-              { v: "en-recherche", l: "En recherche spirituelle" },
+              { v: "tres-pratiquant", l: t("onboarding.practice_very") },
+              { v: "pratiquant", l: t("onboarding.practice_regular") },
+              { v: "croyant", l: t("onboarding.practice_believer") },
+              { v: "en-recherche", l: t("onboarding.practice_seeking") },
             ].map((o) => (
               <ChoiceChip
                 key={o.v}
@@ -747,11 +714,11 @@ function StepFaith({
         </Field>
 
         <div className="grid sm:grid-cols-2 gap-5">
-          <Field label="Baptisé(e) ?">
+          <Field label={t("onboarding.baptized")}>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { v: "oui", l: "Oui" },
-                { v: "non", l: "Non" },
+                { v: "oui", l: t("onboarding.yes") },
+                { v: "non", l: t("onboarding.no") },
               ].map((o) => (
                 <ChoiceChip
                   key={o.v}
@@ -762,20 +729,20 @@ function StepFaith({
               ))}
             </div>
           </Field>
-          <Field label="Fréquence à l'église">
+          <Field label={t("onboarding.church_freq")}>
             <Select
               value={data.churchAttendance}
               onValueChange={(v) => update("churchAttendance", v)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionner" />
+                <SelectValue placeholder={t("onboarding.church_select")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="plusieurs-semaine">Plusieurs fois / semaine</SelectItem>
-                <SelectItem value="hebdo">Chaque semaine</SelectItem>
-                <SelectItem value="mensuel">Quelques fois par mois</SelectItem>
-                <SelectItem value="occasionnel">Occasionnellement</SelectItem>
-                <SelectItem value="rarement">Rarement</SelectItem>
+                <SelectItem value="plusieurs-semaine">{t("onboarding.church_several_week")}</SelectItem>
+                <SelectItem value="hebdo">{t("onboarding.church_weekly")}</SelectItem>
+                <SelectItem value="mensuel">{t("onboarding.church_monthly")}</SelectItem>
+                <SelectItem value="occasionnel">{t("onboarding.church_occasional")}</SelectItem>
+                <SelectItem value="rarement">{t("onboarding.church_rarely")}</SelectItem>
               </SelectContent>
             </Select>
           </Field>
@@ -793,58 +760,62 @@ function StepSearch({
   data: OnboardingData;
   update: <K extends keyof OnboardingData>(k: K, v: OnboardingData[K]) => void;
 }) {
+  const { t } = useTranslation();
+  const maritalLabels: Record<string, string> = {
+    celibataire: t("onboarding.marital_celibataire"),
+    divorce: t("onboarding.marital_divorce"),
+    veuf: t("onboarding.marital_veuf"),
+    separe: t("onboarding.marital_separe"),
+    annule: t("onboarding.marital_annule"),
+  };
+
   return (
     <div>
       <StepHeader
-        eyebrow="Étape 3"
-        title="Vos critères de recherche"
-        description="Aidez-nous à vous proposer les profils les plus compatibles."
+        eyebrow={`${t("onboarding.step")} 3`}
+        title={t("onboarding.step3_header_title")}
+        description={t("onboarding.step3_header_desc")}
       />
       <div className="grid gap-6 mt-8">
-        <Field label="Je recherche">
+        <Field label={t("onboarding.seeking_gender")}>
           <div className="grid grid-cols-2 gap-3">
             <GenderChoice
               active={data.seekingGender === "femme"}
               onClick={() => update("seekingGender", "femme")}
-              label="Une femme"
+              label={t("onboarding.seeking_woman")}
               icon={WomanIcon}
             />
             <GenderChoice
               active={data.seekingGender === "homme"}
               onClick={() => update("seekingGender", "homme")}
-              label="Un homme"
+              label={t("onboarding.seeking_man")}
               icon={ManIcon}
             />
           </div>
         </Field>
 
-        {/* Placée juste après « Je recherche » : c'est le premier critère
-            qu'un membre orienté vers le mariage vérifie, avant même
-            l'échéance. « Marié(e) » n'y figure pas — la contrainte CHECK
-            de la migration 40 le refuse aussi en base. */}
-        <Field label="Votre situation matrimoniale">
+        <Field label={t("onboarding.marital_status")}>
           <div className="grid sm:grid-cols-3 gap-2">
             {MARITAL_STATUSES.map((s) => (
               <ChoiceChip
                 key={s.key}
                 active={data.maritalStatus === s.key}
                 onClick={() => update("maritalStatus", s.key)}
-                label={s.label}
+                label={maritalLabels[s.key] || s.label}
               />
             ))}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Séparé(e) signifie que l'union n'est pas encore dissoute ;
-            « mariage annulé » qu'une annulation religieuse a été prononcée.
+            {t("onboarding.marital_hint")}
           </p>
         </Field>
 
-        <Field label="Intention par rapport au mariage">
+        <Field label={t("onboarding.marriage_intent")}>
           <div className="grid sm:grid-cols-3 gap-2">
             {[
-              { v: "1-2ans", l: "Dans 1 à 2 ans" },
-              { v: "2-5ans", l: "Dans 2 à 5 ans" },
-              { v: "ouvert", l: "Ouvert, sans échéance" },
+              { v: "1-2ans", l: t("onboarding.marriage_1_2") },
+              { v: "2-5ans", l: t("onboarding.marriage_2_5") },
+              { v: "ouvert", l: t("onboarding.marriage_open") },
             ].map((o) => (
               <ChoiceChip
                 key={o.v}
@@ -856,11 +827,11 @@ function StepSearch({
           </div>
         </Field>
 
-        <Field label="Avez-vous des enfants ?">
+        <Field label={t("onboarding.has_children")}>
           <div className="grid grid-cols-2 sm:grid-cols-2 gap-2">
             {[
-              { v: "oui", l: "Oui" },
-              { v: "non", l: "Non" },
+              { v: "oui", l: t("onboarding.yes") },
+              { v: "non", l: t("onboarding.no") },
             ].map((o) => (
               <ChoiceChip
                 key={o.v}
@@ -872,12 +843,12 @@ function StepSearch({
           </div>
         </Field>
 
-        <Field label="Souhaitez-vous avoir des enfants ?">
+        <Field label={t("onboarding.wants_children")}>
           <div className="grid grid-cols-3 gap-2">
             {[
-              { v: "oui", l: "Oui" },
-              { v: "peut-etre", l: "Peut-être" },
-              { v: "non", l: "Non" },
+              { v: "oui", l: t("onboarding.yes") },
+              { v: "peut-etre", l: t("onboarding.maybe") },
+              { v: "non", l: t("onboarding.no") },
             ].map((o) => (
               <ChoiceChip
                 key={o.v}
@@ -901,21 +872,13 @@ function StepPhotos({
   data: OnboardingData;
   update: <K extends keyof OnboardingData>(k: K, v: OnboardingData[K]) => void;
 }) {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const GenderAvatar =
     data.gender === "femme" ? WomanIcon : data.gender === "homme" ? ManIcon : null;
 
   const photo = data.photos[0] ?? null;
 
-  /**
-   * Une seule photo à l'inscription.
-   *
-   * L'étape affichait six emplacements dont cinq verrouillés : on
-   * demandait un effort en montrant surtout ce qui était refusé, juste
-   * avant la dernière validation. La galerie complète — photos
-   * supplémentaires et vidéo — vit dans « Mon profil », une fois le
-   * compte créé.
-   */
   const handleFile = (files: FileList | null) => {
     const file = files?.[0];
     if (!file) return;
@@ -947,20 +910,18 @@ function StepPhotos({
   return (
     <div>
       <StepHeader
-        eyebrow="Étape 4"
-        title="Votre photo de profil"
-        description="Ajoutez une photo de profil pour augmenter vos chances. Vous pourrez en ajouter une plus tard depuis votre profil."
+        eyebrow={`${t("onboarding.step")} 4`}
+        title={t("onboarding.step4_header_title")}
+        description={t("onboarding.step4_header_desc")}
       />
 
-      {/* Un seul emplacement, centré et large : c'est LA photo que les
-          autres membres verront en premier. */}
       <div className="mt-8 max-w-[15rem] mx-auto">
         {photo ? (
           <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-border/60">
             <img src={photo.url} alt="Votre photo de profil" className="w-full h-full object-cover" />
             <button
               type="button"
-              aria-label="Retirer la photo"
+              aria-label={t("onboarding.remove_photo")}
               onClick={() => update("photos", [])}
               className="absolute top-2 right-2 w-8 h-8 rounded-full bg-background/90 hover:bg-background flex items-center justify-center shadow-soft transition"
             >
@@ -971,7 +932,7 @@ function StepPhotos({
               onClick={() => inputRef.current?.click()}
               className="absolute inset-x-0 bottom-0 py-2.5 bg-background/90 backdrop-blur-sm text-sm font-medium hover:bg-background transition"
             >
-              Changer de photo
+              {t("onboarding.change_photo")}
             </button>
           </div>
         ) : (
@@ -989,8 +950,8 @@ function StepPhotos({
                 <Upload className="w-6 h-6" />
               </div>
             )}
-            <span className="text-sm font-semibold">Ajouter ma photo</span>
-            <span className="text-xs">JPG ou PNG · 8 Mo maximum</span>
+            <span className="text-sm font-semibold">{t("onboarding.add_photo")}</span>
+            <span className="text-xs">{t("onboarding.photo_format_hint")}</span>
           </button>
         )}
       </div>
@@ -1006,12 +967,8 @@ function StepPhotos({
         }}
       />
 
-
-
       <p className="mt-4 text-center text-xs text-muted-foreground">
-        Vos autres photos et votre vidéo de présentation s'ajoutent depuis
-        <span className="font-medium text-foreground"> Mon profil</span>, une
-        fois votre compte créé.
+        {t("onboarding.extra_photos_hint")}
       </p>
     </div>
   );
@@ -1019,6 +976,7 @@ function StepPhotos({
 
 // ---------- Success ----------
 function SuccessScreen({ data }: { data: OnboardingData }) {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-background to-secondary/40">
       <motion.div
@@ -1030,22 +988,18 @@ function SuccessScreen({ data }: { data: OnboardingData }) {
           <Sparkles className="w-10 h-10 text-primary-foreground" />
         </div>
         <h1 className="font-serif text-3xl mt-6">
-          Bienvenue !
+          {t("onboarding.success_title")}
         </h1>
         <p className="text-muted-foreground mt-3">
-          Votre profil Eden Rencontre est prêt. Nous préparons vos premières
-          suggestions de compatibilité.
+          {t("onboarding.success_desc")}
         </p>
-        {/* Une seule sortie : renvoyer vers la vitrine publique juste
-            après l'inscription ferait sortir de l'application le membre
-            qu'on vient d'y faire entrer. */}
         <div className="mt-8">
           <Link to="/accueil">
             <Button
               size="lg"
               className="bg-gradient-to-r from-primary to-primary/80 shadow-elegant w-full sm:w-auto"
             >
-              Découvrir des profils
+              {t("onboarding.success_cta")}
             </Button>
           </Link>
         </div>
@@ -1125,18 +1079,15 @@ function ChoiceChip({
 
 // ---------- Source (pre-step) ----------
 function SourceScreen({ onSelect, onBack }: { onSelect: (s: string) => void; onBack: () => void }) {
+  const { t } = useTranslation();
   const options: { id: string; label: string; icon: ReactElement; color: string }[] = [
     { id: "tiktok", label: "TikTok", icon: <Music2 className="w-6 h-6" />, color: "bg-foreground text-background" },
     { id: "instagram", label: "Instagram", icon: <Instagram className="w-6 h-6" />, color: "bg-gradient-to-tr from-fuchsia-500 via-pink-500 to-amber-400 text-white" },
     { id: "facebook", label: "Facebook", icon: <Facebook className="w-6 h-6" />, color: "bg-[#1877F2] text-white" },
     { id: "youtube", label: "YouTube", icon: <Youtube className="w-6 h-6" />, color: "bg-[#FF0000] text-white" },
-    // WhatsApp est vraisemblablement le premier canal réel sur ce marché :
-    // un lien partagé dans un groupe d'église circule plus qu'une
-    // publicité. Sans cette entrée, ces membres se rangeaient dans
-    // « Autre » — la case qui n'apprend rien.
     { id: "whatsapp", label: "WhatsApp", icon: <MessageCircle className="w-6 h-6" />, color: "bg-[#25D366] text-white" },
-    { id: "recommandation", label: "Une recommandation", icon: <Users className="w-6 h-6" />, color: "bg-primary text-primary-foreground" },
-    { id: "autre", label: "Autre", icon: <MoreHorizontal className="w-6 h-6" />, color: "bg-primary/10 text-primary" },
+    { id: "recommandation", label: t("onboarding.source_recommendation"), icon: <Users className="w-6 h-6" />, color: "bg-primary text-primary-foreground" },
+    { id: "autre", label: t("onboarding.source_other"), icon: <MoreHorizontal className="w-6 h-6" />, color: "bg-primary/10 text-primary" },
   ];
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-secondary/30">
@@ -1152,7 +1103,7 @@ function SourceScreen({ onSelect, onBack }: { onSelect: (s: string) => void; onB
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition"
           >
             <ArrowLeft className="w-4 h-4" />
-            Retour
+            {t("onboarding.btn_back")}
           </button>
         </div>
       </header>
@@ -1165,9 +1116,9 @@ function SourceScreen({ onSelect, onBack }: { onSelect: (s: string) => void; onB
         >
           <div className="text-center mb-8">
             <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-foreground">
-              Comment nous as-tu découvert ?
+              {t("onboarding.source_title")}
             </h1>
-            <p className="text-muted-foreground mt-2 text-sm">Dis-nous d'où tu viens 😊</p>
+            <p className="text-muted-foreground mt-2 text-sm">{t("onboarding.source_sub")}</p>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {options.map((o) => (
@@ -1190,7 +1141,7 @@ function SourceScreen({ onSelect, onBack }: { onSelect: (s: string) => void; onB
           </div>
         </motion.div>
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Cela nous aide à mieux vous connaître.
+          {t("onboarding.source_footer")}
         </p>
       </main>
     </div>

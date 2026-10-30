@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Heart, User, Check, X, ShieldAlert } from "lucide-react";
@@ -12,6 +12,7 @@ import {
   fetchDismissedIds,
 } from "@/lib/moderation";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n";
 
 export const Route = createFileRoute("/_app/demandes")({
   head: () => ({
@@ -62,6 +63,7 @@ function timeAgo(iso: string) {
 }
 
 function RequestsPage() {
+  const { t } = useTranslation();
   const [requests, setRequests] = useState<RequestEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
@@ -178,7 +180,10 @@ function RequestsPage() {
   return (
     <div className="min-h-screen bg-background pb-20 pt-6 px-4 max-w-2xl mx-auto flex flex-col">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold font-serif text-foreground">Demandes</h1>
+        <div>
+          <h1 className="text-3xl font-bold font-serif text-foreground">{t("requests.title")}</h1>
+          <p className="text-xs text-muted-foreground mt-1">{t("requests.subtitle")}</p>
+        </div>
         <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
           <Heart className="w-6 h-6 fill-current" />
         </div>
@@ -193,9 +198,9 @@ function RequestsPage() {
           <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-6">
             <Heart className="w-10 h-10 text-muted-foreground/50" />
           </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Aucune demande</h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">{t("requests.empty_title")}</h2>
           <p className="text-muted-foreground">
-            Continuez a utiliser l'application pour recevoir de nouvelles demandes de connexion.
+            {t("requests.empty_desc")}
           </p>
         </div>
       ) : (

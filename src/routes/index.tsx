@@ -22,6 +22,8 @@ import {
   Reveal, TitreCinetique, useParallaxe, CarteInclinable,
   Compteur, Bandeau, BarreProgression, LueurCurseur, Grain,
 } from "@/components/landing/motion";
+import { useTranslation } from "@/lib/i18n";
+import { LanguagePickerModal } from "@/components/landing/LanguagePickerModal";
 
 /** Domaine canonique. Toute URL de référencement doit en découler. */
 export const SITE_URL = "https://edenrencontre.com";
@@ -95,6 +97,7 @@ const fadeUp = { hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0 } };
 
 // ─── Nav ──────────────────────────────────────────────────────────────────────
 function Nav() {
+  const { t } = useTranslation();
   return (
     <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border/40 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
@@ -107,12 +110,12 @@ function Nav() {
           </span>
         </a>
         <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground" aria-label="Navigation principale">
-          <a href="#fonctionnalites" className="hover:text-foreground transition">Fonctionnalités</a>
-          <a href="#comment" className="hover:text-foreground transition">Comment ça marche</a>
-          <a href="#temoignages" className="hover:text-foreground transition">Témoignages</a>
-          <Link to="/tarifs" className="hover:text-foreground transition">Tarifs</Link>
-          <Link to="/blog" className="hover:text-foreground transition">Blog</Link>
-          <Link to="/faq" className="hover:text-foreground transition">FAQ</Link>
+          <a href="#fonctionnalites" className="hover:text-foreground transition">{t("landing.nav.features")}</a>
+          <a href="#comment" className="hover:text-foreground transition">{t("landing.nav.how")}</a>
+          <a href="#temoignages" className="hover:text-foreground transition">{t("landing.nav.testimonials")}</a>
+          <Link to="/tarifs" className="hover:text-foreground transition">{t("landing.nav.pricing")}</Link>
+          <Link to="/blog" className="hover:text-foreground transition">{t("landing.nav.blog")}</Link>
+          <Link to="/faq" className="hover:text-foreground transition">{t("landing.nav.faq")}</Link>
         </nav>
         <Link
           to="/inscription"
@@ -120,8 +123,8 @@ function Nav() {
         >
           {/* Libellé court sur mobile : « Rejoindre gratuitement » occupait
               toute la largeur et écrasait le nom de la plateforme. */}
-          <span className="sm:hidden">Rejoindre</span>
-          <span className="hidden sm:inline">Rejoindre gratuitement</span>
+          <span className="sm:hidden">{t("landing.nav.join_short")}</span>
+          <span className="hidden sm:inline">{t("landing.nav.join")}</span>
           <ArrowRight className="w-4 h-4 hidden sm:block" />
         </Link>
       </div>
@@ -131,6 +134,7 @@ function Nav() {
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 function Hero() {
+  const { t } = useTranslation();
   // Deux vitesses de parallaxe : l'écart entre elles crée la profondeur.
   // Une seule ferait glisser tout le bloc d'un seul tenant.
   const pImage = useParallaxe(70);
@@ -171,15 +175,15 @@ function Hero() {
               <span className="absolute inline-flex h-full w-full rounded-full bg-gold opacity-75 animate-ping" />
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-gold" />
             </span>
-            Le lieu de rencontre privilégié pour un mariage fondé sur la foi
+            {t("landing.hero.badge")}
           </motion.div>
 
           {/* Le titre reste un seul `h1` : le découpage est décoratif,
               les moteurs de recherche lisent le texte complet. */}
           <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl leading-[1.05] tracking-tight text-foreground drop-shadow-sm">
-            <TitreCinetique texte="L'Amour authentique" delay={0.15} />
+            <TitreCinetique texte={t("landing.hero.h1_line1")} delay={0.15} />
             <br />
-            <TitreCinetique texte="selon Son plan divin." delay={0.35} motsColores={[1, 2]} />
+            <TitreCinetique texte={t("landing.hero.h1_line2")} delay={0.35} motsColores={[1, 2]} />
           </h1>
 
           <motion.p
@@ -210,7 +214,7 @@ function Hero() {
                 className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent
                            -translate-x-full group-hover:translate-x-full transition-transform duration-700"
               />
-              <span className="relative">Commencer gratuitement</span>
+              <span className="relative">{t("landing.hero.cta_start")}</span>
               <ArrowRight className="relative w-4 h-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
@@ -223,10 +227,10 @@ function Hero() {
 
           <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
             {[
-              { i: ShieldCheck, t: "Profils vérifiés" },
-              { i: Lock, t: "100% sécurisé" },
-              { i: Church, t: "Foi au centre" },
-              { i: Heart, t: "Mariage sérieux" },
+              { i: ShieldCheck, t: t("landing.hero.badge_profiles") },
+              { i: Lock, t: t("landing.hero.badge_safe") },
+              { i: Church, t: t("landing.why.item1_title") },
+              { i: Heart, t: t("landing.hero.badge_values") },
             ].map((g, k) => (
               <motion.div
                 key={g.t}
@@ -281,7 +285,7 @@ function Hero() {
                 <CheckCircle2 className="w-5 h-5 text-emerald-500" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Compatibilité spirituelle</p>
+                <p className="text-xs text-muted-foreground">{t("landing.hero.card_compat")}</p>
                 <p className="text-lg font-semibold text-foreground">
                   <Compteur valeur={98} suffixe=" %" duree={1400} />
                 </p>
@@ -298,7 +302,7 @@ function Hero() {
                 <BookOpen className="w-5 h-5 text-gold" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Verset du jour partagé</p>
+                <p className="text-xs text-muted-foreground">{t("landing.hero.card_verse")}</p>
                 <p className="text-sm font-medium text-foreground leading-tight">
                   « Eccl. 4:9 — Deux valent mieux qu'un »
                 </p>
@@ -319,7 +323,7 @@ function Hero() {
             >
               <Heart className="w-5 h-5 text-gold fill-gold" />
               <div>
-                <p className="text-xs opacity-80">Nouveau match !</p>
+                <p className="text-xs opacity-80">{t("landing.hero.card_match")}</p>
                 <p className="text-sm font-semibold">Sarah, Abidjan 🇨🇮</p>
               </div>
             </motion.div>
@@ -332,13 +336,14 @@ function Hero() {
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 function Stats() {
+  const { t } = useTranslation();
   // `n` sépare le nombre à animer de ce qui l'entoure : un compteur qui
   // tenterait de faire défiler « 4,9 / 5 » n'aurait aucun sens.
   const stats = [
-    { n: 1200, suffixe: "+", label: "Chrétiens inscrits", sub: "en Afrique & diaspora" },
-    { n: 120, suffixe: "+", label: "Mariages bénis", sub: "célébrés depuis 2022" },
-    { n: 24, suffixe: " pays", label: "Présents dans", sub: "Afrique, Europe, Amériques" },
-    { fixe: "4,9 / 5", label: "Note des membres", sub: "sur 380 avis vérifiés" },
+    { n: 1200, suffixe: "+", label: t("landing.stats.active"), sub: t("landing.stats.active_sub") },
+    { n: 120, suffixe: "+", label: t("landing.stats.couples"), sub: t("landing.stats.couples_sub") },
+    { n: 24, suffixe: " pays", label: t("landing.stats.verified"), sub: t("landing.stats.verified_sub") },
+    { fixe: "4,9 / 5", label: t("landing.stats.rating"), sub: t("landing.stats.rating_sub") },
   ];
 
   return (
@@ -374,6 +379,7 @@ function Stats() {
  * pays : le bandeau ne peut pas annoncer un pays qui n'existe pas.
  */
 function BandeauPays() {
+  const { t } = useTranslation();
   const noms = COUNTRIES.map(c => c.name);
   const moitie = Math.ceil(noms.length / 2);
 
@@ -461,18 +467,19 @@ function MessagingFeature() {
 
 // ─── All Features ─────────────────────────────────────────────────────────────
 function AllFeatures() {
+  const { t } = useTranslation();
   const features = [
     {
       icon: Sparkles,
       title: "Algorithme de compatibilité spirituelle",
       desc: "Notre moteur croise dénomination, valeurs, projet de mariage, localisation et personnalité. Résultat : des profils qui vous correspondent vraiment.",
-      tag: "Exclusif"
+      tag: t("landing.feat.tag_trust")
     },
     {
       icon: Play,
       title: "Stories chrétiens",
       desc: "Partagez vos témoignages, vos versets du jour et vos moments de grâce en Stories visibles 24h. Soyez vu(e) par ceux qui vous cherchent.",
-      tag: "Nouveau"
+      tag: t("landing.feat.tag_values")
     },
     {
       icon: Eye,
@@ -535,13 +542,12 @@ function AllFeatures() {
     <section id="fonctionnalites" aria-label="Toutes les fonctionnalités Eden Rencontre" className="py-24 md:py-32 bg-secondary/40">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <p className="text-sm font-medium text-gold uppercase tracking-widest">Fonctionnalités</p>
+          <p className="text-sm font-medium text-gold uppercase tracking-widest">{t("landing.nav.features")}</p>
           <h2 className="mt-3 font-serif text-4xl md:text-5xl text-foreground">
-            Tout ce dont <span className="italic">votre cœur a besoin</span>
+            {t("landing.feat.title")}
           </h2>
           <p className="mt-5 text-muted-foreground text-lg leading-relaxed">
-            Eden Rencontre n'est pas une app de rencontre de plus. C'est un écosystème complet pour rencontrer,
-            communiquer, se découvrir et cheminer vers le mariage — le tout dans un cadre chrétien sécurisé.
+            {t("landing.feat.subtitle")}
           </p>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -571,35 +577,32 @@ function AllFeatures() {
 
 // ─── How It Works ─────────────────────────────────────────────────────────────
 function HowItWorks() {
+  const { t } = useTranslation();
   const steps = [
     {
       icon: Users,
-      title: "1. Créez votre profil en 4 minutes",
-      desc: "Parlez de vous, de votre foi, de votre dénomination, de vos critères pour un futur conjoint. Ajoutez vos plus belles photos. Votre profil devient votre vitrine.",
+      title: t("landing.how.step1_title"), desc: t("landing.how.step1_desc"),
     },
     {
       icon: Heart,
-      title: "2. Découvrez & swipez avec intention",
-      desc: "Parcourez des profils compatibles grâce à notre algorithme spirituel. J'adore, Super Like, Passe — chaque geste est un pas vers votre histoire.",
+      title: t("landing.how.step2_title"), desc: t("landing.how.step2_desc"),
     },
     {
       icon: MessageCircle,
-      title: "3. Échangez en toute profondeur",
-      desc: "Messages texte, vocaux, photos, appels audio ou vidéo — votre messagerie est un espace intime pour apprendre à vous connaître vraiment.",
+      title: t("landing.how.step3_title"), desc: t("landing.how.step3_desc"),
     },
     {
       icon: HeartHandshake,
-      title: "4. Bâtissez ensemble votre avenir",
-      desc: "Priez, partagez des versets, témoignez dans la communauté. Et un jour, marchez côte à côte vers l'autel — et vers l'éternité.",
+      title: t("landing.how.step4_title"), desc: t("landing.how.step4_desc"),
     },
   ];
   return (
     <section id="comment" aria-label="Comment fonctionne Eden Rencontre" className="py-24 md:py-32">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-sm font-medium text-gold uppercase tracking-widest">Comment ça marche</p>
+          <p className="text-sm font-medium text-gold uppercase tracking-widest">{t("landing.how.label")}</p>
           <h2 className="mt-3 font-serif text-4xl md:text-5xl text-foreground">
-            Quatre étapes vers <span className="italic">votre bien-aimé(e)</span>
+            {t("landing.how.title")}
           </h2>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -623,18 +626,17 @@ function HowItWorks() {
 
 // ─── Why Eden Rencontre (Differentiators) ─────────────────────────────────────────
 function Why() {
+  const { t } = useTranslation();
   return (
     <section id="pourquoi" aria-label="Pourquoi choisir Eden Rencontre" className="py-24 md:py-32 bg-secondary/40">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <p className="text-sm font-medium text-gold uppercase tracking-widest">Notre Promesse</p>
+          <p className="text-sm font-medium text-gold uppercase tracking-widest">{t("landing.why.label")}</p>
           <h2 className="mt-3 font-serif text-4xl md:text-5xl text-foreground">
-            L'exigence au service de <span className="italic">votre foi</span>
+            {t("landing.why.title")}
           </h2>
           <p className="mt-5 text-muted-foreground text-lg">
-            Eden Rencontre n'est pas une simple application. C'est un sanctuaire numérique conçu de A à Z 
-            pour les célibataires qui refusent de faire des compromis sur leurs valeurs spirituelles 
-            et qui placent Christ au centre de leur futur foyer.
+            {t("landing.why.desc")}
           </p>
         </div>
 
@@ -665,17 +667,16 @@ function Why() {
             className="rounded-3xl bg-gradient-to-br from-primary to-primary/70 p-8 text-primary-foreground shadow-elegant">
             <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-3 py-1 text-xs font-medium mb-6">
               <Sparkles className="w-3.5 h-3.5 text-gold" />
-              Notre philosophie
+              {t("landing.why.philo_label")}
             </div>
             <h3 className="font-serif text-3xl md:text-4xl leading-tight mb-6">
-              « Recherchez d'abord le Royaume de Dieu… <span className="italic text-gold">et tout le reste vous sera donné. »</span>
+              {t("landing.why.quote")}
             </h3>
             <p className="text-primary-foreground/80 leading-relaxed mb-8">
-              Matthieu 6:33. Ce verset guide tout ce que nous faisons. Eden Rencontre croit profondément que quand deux
-              personnes cherchent Dieu en premier, leur rencontre devient un miracle orchestré par Lui.
+              {t("landing.why.verse")}
             </p>
             <Link to="/inscription" className="inline-flex items-center gap-2 bg-gold text-gold-foreground rounded-full px-6 py-3 text-sm font-semibold hover:brightness-105 transition">
-              Commencer mon histoire <ArrowRight className="w-4 h-4" />
+              {t("landing.why.cta")} <ArrowRight className="w-4 h-4" />
             </Link>
           </motion.div>
         </div>
@@ -686,6 +687,7 @@ function Why() {
 
 // ─── Testimonials ─────────────────────────────────────────────────────────────
 function Testimonials() {
+  const { t } = useTranslation();
   const items = [
     {
       img: testimonial3,
@@ -710,11 +712,11 @@ function Testimonials() {
     <section id="temoignages" aria-label="Témoignages de membres Eden Rencontre" className="py-24 md:py-32">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-sm font-medium text-gold uppercase tracking-widest">Témoignages</p>
+          <p className="text-sm font-medium text-gold uppercase tracking-widest">{t("landing.test.label")}</p>
           <h2 className="mt-3 font-serif text-4xl md:text-5xl text-foreground">
-            Des histoires <span className="italic">écrites par Dieu</span>
+            {t("landing.test.title")}
           </h2>
-          <p className="mt-4 text-muted-foreground">Plus de 120 couples formés. Voici quelques-uns de leurs témoignages.</p>
+          <p className="mt-4 text-muted-foreground">{t("landing.test.subtitle")}</p>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {items.map((t, i) => (
@@ -757,6 +759,7 @@ function Testimonials() {
  * change ici, sur /tarifs et dans le tunnel de paiement, d'un seul geste.
  */
 function Pricing() {
+  const { t } = useTranslation();
   const premium = OFFERS.filter(o => o.planId === "premium");
 
   // Le mensuel sert de référence pour calculer l'économie des autres durées.
@@ -781,12 +784,12 @@ function Pricing() {
     <section id="tarifs" aria-label="Tarifs et abonnements Eden Rencontre" className="py-24 md:py-32 bg-secondary/40">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <p className="text-sm font-medium text-gold uppercase tracking-widest">Tarifs</p>
+          <p className="text-sm font-medium text-gold uppercase tracking-widest">{t("landing.pricing.label")}</p>
           <h2 className="mt-3 font-serif text-4xl md:text-5xl text-foreground">
-            Un plan pour <span className="italic">chaque cœur</span>
+            {t("landing.pricing.title")}
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Commencez gratuitement. Passez Premium quand votre cœur est prêt.
+            {t("landing.pricing.subtitle")}
           </p>
         </div>
 
@@ -796,13 +799,13 @@ function Pricing() {
           {/* Gratuit */}
           <Reveal>
             <div className="rounded-3xl p-8 border border-border bg-card hover:shadow-soft transition-all duration-500 h-full flex flex-col">
-              <h3 className="font-serif text-2xl">Gratuit</h3>
+              <h3 className="font-serif text-2xl">{t("landing.pricing.free_name")}</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Commencez votre voyage vers l'amour chrétien.
+                {t("landing.pricing.free_desc")}
               </p>
               <div className="mt-6 flex items-baseline gap-1">
                 <span className="font-serif text-4xl font-semibold">0</span>
-                <span className="text-sm text-muted-foreground"> FCFA · pour toujours</span>
+                <span className="text-sm text-muted-foreground"> FCFA · {t("landing.pricing.forever")}</span>
               </div>
               <ul className="mt-8 space-y-3 flex-1">
                 {[
@@ -832,12 +835,12 @@ function Pricing() {
           <Reveal delay={0.1}>
             <div className="relative rounded-3xl p-8 border border-primary bg-primary text-primary-foreground shadow-elegant h-full flex flex-col">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gold text-gold-foreground text-xs font-medium px-3 py-1 shadow-soft whitespace-nowrap">
-                ✦ Le plus choisi — Idéal mariage
+                ✦ {t("landing.pricing.premium_badge")}
               </div>
 
-              <h3 className="font-serif text-2xl">Premium</h3>
+              <h3 className="font-serif text-2xl">{t("landing.pricing.premium_name")}</h3>
               <p className="mt-1 text-sm text-primary-foreground/70">
-                Pour ceux qui visent le mariage et ne laissent rien au hasard.
+                {t("landing.pricing.premium_desc")}
               </p>
 
               {/* Les trois durées côte à côte plutôt qu'un prix unique :
@@ -888,7 +891,7 @@ function Pricing() {
                 to="/inscription"
                 className="mt-8 inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold bg-gold text-gold-foreground hover:bg-gold/90 transition"
               >
-                Devenir Premium <ArrowRight className="w-4 h-4" />
+                {t("landing.pricing.premium_cta")} <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
           </Reveal>
@@ -896,8 +899,7 @@ function Pricing() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-8">
-          Paiement par Mobile Money et carte bancaire. Sans engagement —
-          l'abonnement ne se renouvelle pas automatiquement.
+          {t("landing.pricing.payment_note")}
         </p>
       </div>
     </section>
@@ -906,6 +908,7 @@ function Pricing() {
 
 // ─── Blog Section ─────────────────────────────────────────────────────────────
 function Blog() {
+  const { t } = useTranslation();
   const posts = [
     {
       tag: "Rencontre chrétienne",
@@ -968,6 +971,7 @@ function Blog() {
 
 // ─── FAQ ──────────────────────────────────────────────────────────────────────
 function FAQ() {
+  const { t } = useTranslation();
   const faqs = [
     {
       q: "Eden Rencontre est-elle réservée à une seule dénomination chrétienne ?",
@@ -999,9 +1003,9 @@ function FAQ() {
     <section id="faq" aria-label="Foire aux questions Eden Rencontre" className="py-24 md:py-32 bg-secondary/40">
       <div className="max-w-3xl mx-auto px-6">
         <div className="text-center mb-14">
-          <p className="text-sm font-medium text-gold uppercase tracking-widest">Questions fréquentes</p>
+          <p className="text-sm font-medium text-gold uppercase tracking-widest">{t("landing.faq.label")}</p>
           <h2 className="mt-3 font-serif text-4xl md:text-5xl text-foreground">
-            On répond à vos <span className="italic">questions</span>
+            {t("landing.faq.title")}
           </h2>
         </div>
         <div className="space-y-3">
@@ -1029,6 +1033,7 @@ function FAQ() {
 
 // ─── Final CTA ────────────────────────────────────────────────────────────────
 function FinalCTA() {
+  const { t } = useTranslation();
   return (
     <section id="cta" aria-label="Rejoindre Eden Rencontre" className="py-24 md:py-32">
       <div className="max-w-5xl mx-auto px-6">
@@ -1038,28 +1043,24 @@ function FinalCTA() {
             style={{ backgroundImage: "radial-gradient(circle at 20% 20%, oklch(0.82 0.14 88) 0%, transparent 40%), radial-gradient(circle at 80% 80%, oklch(0.82 0.14 88) 0%, transparent 40%)" }} />
           <div className="relative">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 backdrop-blur-md border border-primary-foreground/20 px-3 py-1 text-xs text-primary-foreground mb-6">
-              <Sparkles className="w-3.5 h-3.5 text-gold" /> Plus de 1 200 chrétiens vous attendent
+              <Sparkles className="w-3.5 h-3.5 text-gold" /> {t("landing.final.badge")}
             </div>
             <h2 className="font-serif text-4xl md:text-6xl text-primary-foreground leading-tight">
-              Votre histoire d'amour
-              <br />
-              <span className="italic text-gradient-gold">commence ici.</span>
+              {t("landing.final.h2_line1")}<br /><span className="italic text-gradient-gold">{t("landing.final.h2_line2")}</span>
             </h2>
             <p className="mt-6 text-primary-foreground/80 max-w-2xl mx-auto text-lg leading-relaxed">
-              Gratuit. Sécurisé. Chrétien. Eden Rencontre est la plateforme que vous attendiez —
-              celle qui prend votre foi aussi au sérieux que votre désir d'aimer.
-              Votre futur conjoint est peut-être déjà inscrit.
+              {t("landing.final.desc")}
             </p>
             <div className="mt-10 flex flex-wrap justify-center gap-3">
               <Link to="/inscription" className="inline-flex items-center gap-2 rounded-full bg-gold text-gold-foreground px-8 py-4 text-base font-semibold hover:brightness-105 transition shadow-soft">
-                Créer mon profil gratuitement <ArrowRight className="w-4 h-4" />
+                {t("landing.final.cta_primary")} <ArrowRight className="w-4 h-4" />
               </Link>
               <a href="#temoignages" className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/30 text-primary-foreground px-8 py-4 text-base font-medium hover:bg-primary-foreground/10 transition">
                 Lire les témoignages
               </a>
             </div>
             <p className="mt-6 text-xs text-primary-foreground/60">
-              Inscription en 4 minutes · Sans carte bancaire · Annulable à tout moment
+              {t("landing.final.note")}
             </p>
           </div>
         </div>
@@ -1102,6 +1103,7 @@ function FooterContact() {
 }
 
 function Footer() {
+  const { t } = useTranslation();
   return (
     <>
     {/* Pays couverts — ces liens sont le seul chemin par lequel Google
@@ -1110,10 +1112,10 @@ function Footer() {
     <section className="border-t border-border bg-background py-10" aria-label="Rencontres chrétiennes par pays">
       <div className="max-w-7xl mx-auto px-6">
         <h2 className="font-serif text-2xl font-semibold text-center">
-          La rencontre chrétienne près de chez vous
+          {t("landing.footer.tagline")}
         </h2>
         <p className="text-sm text-muted-foreground text-center mt-2">
-          Découvrez la communauté Eden Rencontre dans votre pays.
+          {t("landing.countries.label")}
         </p>
         <div className="flex flex-wrap justify-center gap-2 mt-6">
           {COUNTRIES.map(c => (
@@ -1143,7 +1145,7 @@ function Footer() {
             Là où la foi unit les cœurs, en Afrique francophone et dans le monde entier.
           </p>
           <p className="mt-3 text-xs text-muted-foreground italic font-serif">
-            « L'Éternel Dieu dit : Il n'est pas bon que l'homme soit seul » — Genèse 2:18
+            {t("landing.footer.verse")}
           </p>
           <div className="mt-6 flex items-center gap-3">
             {[
@@ -1162,7 +1164,7 @@ function Footer() {
 
         {/* Product */}
         <div>
-          <h4 className="font-semibold text-foreground mb-4 text-sm">Application</h4>
+          <h4 className="font-semibold text-foreground mb-4 text-sm">{t("landing.footer.col_platform")}</h4>
           <ul className="space-y-2.5 text-sm text-muted-foreground">
             <li><a href="#fonctionnalites" className="hover:text-foreground transition">Fonctionnalités</a></li>
             <li><a href="#comment" className="hover:text-foreground transition">Comment ça marche</a></li>
@@ -1176,7 +1178,7 @@ function Footer() {
         {/* Blog — liens vers de VRAIS articles. Des ancres « #blog » ne
             créaient aucune URL : rien n'était indexable ni découvrable. */}
         <div>
-          <h4 className="font-semibold text-foreground mb-4 text-sm">Blog & Ressources</h4>
+          <h4 className="font-semibold text-foreground mb-4 text-sm">{t("landing.footer.col_resources")}</h4>
           <ul className="space-y-2.5 text-sm text-muted-foreground">
             {articlesPublies().slice(0, 6).map(a => (
               <li key={a.slug}>
@@ -1191,10 +1193,10 @@ function Footer() {
 
         {/* Legal */}
         <div>
-          <h4 className="font-semibold text-foreground mb-4 text-sm">Entreprise</h4>
+          <h4 className="font-semibold text-foreground mb-4 text-sm">{t("landing.footer.col_company")}</h4>
           <ul className="space-y-2.5 text-sm text-muted-foreground">
-            <li><Link to="/confidentialite" className="hover:text-foreground transition">Politique de confidentialité</Link></li>
-            <li><Link to="/conditions" className="hover:text-foreground transition">Conditions d'utilisation</Link></li>
+            <li><Link to="/confidentialite" className="hover:text-foreground transition">{t("landing.footer.link_privacy")}</Link></li>
+            <li><Link to="/conditions" className="hover:text-foreground transition">{t("landing.footer.link_cgu")}</Link></li>
             <li><Link to="/faq" className="hover:text-foreground transition">FAQ</Link></li>
             <li><Link to="/tarifs" className="hover:text-foreground transition">Tarifs</Link></li>
           </ul>
@@ -1213,7 +1215,7 @@ function Footer() {
               Créé par <a href="https://wa.me/22890624554" target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-primary transition-colors hover:underline">Africa Digi Tech</a>
             </p>
           </div>
-          <p className="italic font-serif text-sm mt-2 md:mt-0">« Là où la foi unit les cœurs. »</p>
+          <p className="italic font-serif text-sm mt-2 md:mt-0">{t("landing.footer.slogan")}</p>
         </div>
       </div>
     </footer>
@@ -1252,6 +1254,8 @@ function Index() {
       <Footer />
       {/* Flottante, après une minute. */}
       <InstallPrompt />
+      {/* Modal de sélection de langue pour les nouveaux visiteurs */}
+      <LanguagePickerModal />
     </div>
   );
 }
