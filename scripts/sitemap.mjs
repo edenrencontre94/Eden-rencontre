@@ -16,7 +16,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-const SITE = "https://agapemeet.com";
+const SITE = "https://edenrencontres.com";
 const racine = process.cwd();
 
 /** Extrait les valeurs d'un champ donné dans un fichier source. */
