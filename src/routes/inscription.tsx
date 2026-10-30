@@ -20,11 +20,11 @@ export const Route = createFileRoute("/inscription")({
           "Créez votre compte Eden Rencontre gratuitement et rejoignez une communauté de chrétiens qui cherchent une relation sérieuse orientée vers le mariage.",
       },
       { property: "og:title", content: "Créer votre compte — Eden Rencontre" },
-      { property: "og:url", content: "https://edenrencontre.com/inscription" },
+      { property: "og:url", content: "https://edenrencontres.com/inscription" },
       { property: "og:type", content: "website" },
     ],
     // Absolue, pour la même raison que sur la page d'accueil
-    links: [{ rel: "canonical", href: "https://edenrencontre.com/inscription" }],
+    links: [{ rel: "canonical", href: "https://edenrencontres.com/inscription" }],
   }),
   component: InscriptionPage,
 });

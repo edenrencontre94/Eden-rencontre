@@ -26,7 +26,7 @@ import { useTranslation } from "@/lib/i18n";
 import { LanguagePickerModal } from "@/components/landing/LanguagePickerModal";
 
 /** Domaine canonique. Toute URL de référencement doit en découler. */
-export const SITE_URL = "https://edenrencontre.com";
+export const SITE_URL = "https://edenrencontres.com";
 
 export const Route = createFileRoute("/")({
   head: () => ({
