@@ -1,4 +1,4 @@
-# AgapeMeet — https://agapemeet.com
+# Eden Rencontre — https://edenrencontres.com
 #
 # ── POURQUOI SI PEU DE « Disallow » ─────────────────────────────────────
 #
@@ -53,4 +53,4 @@ Disallow: /
 User-agent: meta-externalagent
 Disallow: /
 
-Sitemap: https://agapemeet.com/sitemap.xml
+Sitemap: https://edenrencontres.com/sitemap.xml
