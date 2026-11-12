@@ -232,11 +232,12 @@ function DiscoverPage() {
       const user = await getCurrentUser();
       if (user) {
         const dbAction = action === "left" ? "pass" : action === "right" ? "like" : "super_like";
-        const { error: swipeError } = await supabase.from('swipes').insert({
+        const { error: swipeError } = await supabase.from('swipes').upsert({
           actor_id: user.id,
           target_id: target.id,
-          action: dbAction
-        });
+          action: dbAction,
+          created_at: new Date().toISOString()
+        }, { onConflict: 'actor_id,target_id' });
 
         // La base a le dernier mot : elle peut refuser même si l'interface
         // pensait le quota disponible (deuxième onglet ouvert, par exemple).
@@ -249,7 +250,8 @@ function DiscoverPage() {
             refreshQuotas();
             return;
           }
-          throw swipeError;
+          // Si contrainte ou erreur non bloquante lors de re-swipe en boucle, on ignore proprement
+          console.warn("[swipe] upsert non-bloquant:", swipeError);
         }
 
         refreshQuotas();
@@ -335,16 +337,17 @@ function DiscoverPage() {
       const user = await getCurrentUser();
       if (!user) return;
 
-      const { error: swipeError } = await supabase.from('swipes').insert({
+      const { error: swipeError } = await supabase.from('swipes').upsert({
         actor_id: user.id,
         target_id: currentFiltered.id,
-        action: 'like'
-      });
+        action: 'like',
+        created_at: new Date().toISOString()
+      }, { onConflict: 'actor_id,target_id' });
 
       if (swipeError) {
         const message = quotaErrorMessage(swipeError);
         if (message) { upsell(message); return; }
-        throw swipeError;
+        console.warn("[sendRequest] upsert non-bloquant:", swipeError);
       }
 
       setHistory(h => [...h, { id: currentFiltered.id, action: 'right' }]);

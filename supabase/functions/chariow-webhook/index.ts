@@ -174,6 +174,7 @@ serve(async (req) => {
 
     // 3. Enregistrer ou mettre à jour dans la table payments
     const offerIdStr = metadata?.offer_id || `premium_${offerInfo.duration || '1m'}`
+    const nowIso = new Date().toISOString()
     const { error: insertPayError } = await supabaseAdmin
       .from('payments')
       .upsert({
@@ -184,8 +185,8 @@ serve(async (req) => {
         plan_id: offerInfo.planId || 'premium',
         status: 'completed',
         chariow_order_id: chariowOrderId,
-        completed_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
+        completed_at: nowIso,   // ← toujours renseigné → apparaît dans revenueMonth
+        created_at: nowIso,
         metadata: {
           chariow_event: eventType,
           product_id: productId,
@@ -204,7 +205,7 @@ serve(async (req) => {
         plan_id: offerInfo.planId || 'premium',
         status: 'completed',
         chariow_order_id: chariowOrderId,
-        completed_at: new Date().toISOString(),
+        completed_at: nowIso,   // ← toujours renseigné
       }).catch(e => console.error('[chariow-webhook] Direct insert retry error:', e))
     }
 
