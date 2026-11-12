@@ -89,6 +89,17 @@ function CountryPage() {
         <p className="text-sm mt-2 leading-relaxed">{c.conseil}</p>
       </section>
 
+      {c.sections?.map(s => (
+        <section key={s.heading} className="mt-8">
+          <h2 className="font-serif text-xl font-semibold text-primary">{s.heading}</h2>
+          <div className="mt-2 space-y-3">
+            {s.body.map((p, i) => (
+              <p key={i} className="text-sm leading-relaxed text-muted-foreground">{p}</p>
+            ))}
+          </div>
+        </section>
+      ))}
+
       <section className="mt-8">
         <h2 className="font-serif text-xl font-semibold mb-3">Questions fréquentes</h2>
         <div className="space-y-3">

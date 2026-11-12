@@ -4,7 +4,7 @@ import logoAsset from "@/assets/logo.png";
 import { Heart } from "lucide-react";
 
 /** Domaine canonique — toute URL de référencement en découle. */
-export const SITE_URL = "https://edenrencontre.com";
+export const SITE_URL = "https://edenrencontres.com";
 
 /**
  * Gabarit des pages publiques indexables.
