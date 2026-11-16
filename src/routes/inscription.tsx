@@ -101,7 +101,36 @@ function InscriptionPage() {
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        // Compte déjà créé (inscription commencée puis abandonnée) : au lieu
+        // d'afficher « User already registered », on tente la connexion avec
+        // le même mot de passe et on reprend là où la personne s'était arrêtée.
+        if (/already registered|already exists/i.test(authError.message)) {
+          const { data: resumed, error: resumeError } = await supabase.auth.signInWithPassword({
+            email: finalEmail,
+            password: finalPassword,
+          });
+          if (resumeError || !resumed.user) {
+            toast.error(t("inscription.err_exists"));
+            navigate({ to: "/login" });
+            return;
+          }
+          const { data: existingProfile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", resumed.user.id)
+            .maybeSingle();
+          if (existingProfile) {
+            toast.success(t("login.welcome_back"));
+            navigate({ to: "/accueil" });
+          } else {
+            toast.success(t("inscription.resume"));
+            navigate({ to: "/onboarding" });
+          }
+          return;
+        }
+        throw authError;
+      }
 
       // Effacer toute ancienne session / sessionStorage résiduel de
       // l'ancien projet Supabase avant de créer la nouvelle session.
