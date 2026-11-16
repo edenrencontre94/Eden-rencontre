@@ -45,8 +45,22 @@ function LoginPage() {
 
       if (error) throw error;
       if (data.session) {
+        // Inscription commencée mais jamais terminée (pas encore de fiche
+        // membre) : on renvoie vers la fin de l'onboarding au lieu de l'app,
+        // où rien ne fonctionnerait sans profil.
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", data.session.user.id)
+          .maybeSingle();
+        if (!profile) {
+          toast.success(t("inscription.resume"));
+          window.location.replace("/onboarding");
+          return;
+        }
+
         toast.success(t("login.welcome_back"));
-        
+
         // Petite pause pour s'assurer que la session locale est bien enregistrée
         setTimeout(() => {
           window.location.replace("/admin");

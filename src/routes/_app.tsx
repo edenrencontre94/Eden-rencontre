@@ -158,13 +158,19 @@ function AppLayout() {
             if (!cancelled && data) setSuspension(data);
           });
 
-          // Fetch user avatar
+          // Fetch user avatar — et si la fiche membre n'existe pas encore
+          // (inscription abandonnée avant la fin), renvoyer vers l'onboarding.
           supabase
             .from("profiles")
             .select("photos")
             .eq("id", session.user.id)
-            .single()
-            .then(({ data }: any) => {
+            .maybeSingle()
+            .then(({ data, error }: any) => {
+              if (cancelled) return;
+              if (!error && !data) {
+                navigate({ to: "/onboarding", replace: true });
+                return;
+              }
               if (data && data.photos && data.photos.length > 0) {
                 setAvatarUrl(data.photos[0]);
               }
