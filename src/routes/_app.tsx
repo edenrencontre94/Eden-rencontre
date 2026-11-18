@@ -39,6 +39,7 @@ import { MaintenanceScreen } from "@/components/MaintenanceScreen";
 import { SuspendedScreen } from "@/components/SuspendedScreen";
 import { InstallPrompt } from "@/components/app/InstallPrompt";
 import { InstallMenuItem } from "@/components/app/InstallMenuItem";
+import { BoutonTelecharger } from "@/components/app/BoutonTelecharger";
 import { DELETION_REASONS, motifErrorMessage, type DeletionReason } from "@/lib/motifs";
 
 export const Route = createFileRoute("/_app")({
@@ -261,6 +262,7 @@ function AppLayout() {
                   <Shield className="w-4 h-4" />
                 </Link>
               )}
+              <BoutonTelecharger variante="icone" />
               <Link
                 to="/abonnement"
                 aria-label="Abonnement"

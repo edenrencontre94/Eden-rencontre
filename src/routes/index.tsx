@@ -18,6 +18,7 @@ import { articlesPublies } from "@/content/articles";
 import { OFFERS, formatPrice } from "@/lib/plans";
 import { WhatsAppButton, useSupportContact } from "@/components/SupportContact";
 import { InstallBarTop, InstallSection, InstallPrompt } from "@/components/app/InstallPrompt";
+import { BoutonTelecharger } from "@/components/app/BoutonTelecharger";
 import {
   Reveal, TitreCinetique, useParallaxe, CarteInclinable,
   Compteur, Bandeau, BarreProgression, LueurCurseur, Grain,
@@ -223,6 +224,7 @@ function Hero() {
             >
               Se connecter
             </Link>
+            <BoutonTelecharger variante="plein" />
           </motion.div>
 
           <div className="mt-10 flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
